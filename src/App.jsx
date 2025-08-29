@@ -23,8 +23,10 @@ const CTMTextToRawObject = text => {
 const formatRawCTMObject = rawObject => {
   // Format configuration
   // Format Measures
-  // ...
-
+  // Format Data
+  rawObject.data = rawObject.data
+  .filter(arr => arr.length > 1)
+  .map(arr => arr.map(value => parseFloat(value.replace("\r", ""))));
   return rawObject;
 };
 
@@ -32,7 +34,8 @@ function App() {
   const [ctmData] = createResource(async () => {
     const text = await CTMFileToRawText("CTM448.CTM");
     const object = CTMTextToRawObject(text);
-    console.log(object);
+    const formatted = formatRawCTMObject(object);
+    console.log(formatted);
     return text;
   });
 
