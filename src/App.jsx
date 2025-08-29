@@ -26,7 +26,7 @@ const formatRawCTMObject = rawObject => {
   // Format Data
   rawObject.data = rawObject.data
   .filter(arr => arr.length > 1)
-  .map(arr => arr.map(value => parseFloat(value.replace("\r", ""))));
+  .map(arr => arr.map(parseFloat));
   return rawObject;
 };
 
