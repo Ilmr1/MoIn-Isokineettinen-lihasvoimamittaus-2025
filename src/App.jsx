@@ -20,18 +20,39 @@ const CTMTextToRawObject = text => {
   return rawObject;
 };
 
+const cleanMemo = memoText => {
+    return memoText
+        .replace(/\r/g, '')
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join(" ");
+};
 const formatRawCTMObject = rawObject => {
-  // Format configuration
-  // Format Measures
-  // ...
+    if (rawObject.data) {
+        rawObject.data = rawObject.data
+            .filter(arr => arr.length > 1)
+            .map(arr => arr.map(parseFloat));
+        rawObject.cleaned = rawObject.data
+            .map(arr => arr.map(val => String(val).replace(/\r/g, '').trim()))
+            .filter(arr => arr.every(str => str && str.length > 0));
+    }
 
-  return rawObject;
+    // käsitellään memo-osio
+    for (const key of Object.keys(rawObject)) {
+        if (key.toUpperCase().includes("MEMO")) {
+            rawObject[key] = cleanMemo(rawObject[key].join("\n"));
+        }
+    }
+
+    return rawObject;
 };
 
 function App() {
   const [ctmData] = createResource(async () => {
     const text = await CTMFileToRawText("CTM448.CTM");
     const object = CTMTextToRawObject(text);
+    const formatted = formatRawCTMObject(object);
     console.log(object);
     return text;
   });
