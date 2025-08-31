@@ -28,6 +28,7 @@ const cleanMemo = memoText => {
         .filter(line => line.length > 0)
         .join(" ");
 };
+
 const formatRawCTMObject = rawObject => {
     if (rawObject.data) {
         rawObject.data = rawObject.data
@@ -38,11 +39,10 @@ const formatRawCTMObject = rawObject => {
             .filter(arr => arr.every(str => str && str.length > 0));
     }
 
-    // käsitellään memo-osio
-    for (const key of Object.keys(rawObject)) {
-        if (key.toUpperCase().includes("MEMO")) {
-            rawObject[key] = cleanMemo(rawObject[key].join("\n"));
-        }
+    console.log(rawObject);
+
+    if (rawObject.memo) {
+        rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
     }
 
     return rawObject;
