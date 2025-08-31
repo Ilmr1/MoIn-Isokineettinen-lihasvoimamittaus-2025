@@ -30,30 +30,22 @@ const cleanMemo = memoText => {
 };
 
 const formatRawCTMObject = rawObject => {
-    if (rawObject.data) {
-        rawObject.data = rawObject.data
-            .filter(arr => arr.length > 1)
-            .map(arr => arr.map(parseFloat));
-        rawObject.cleaned = rawObject.data
-            .map(arr => arr.map(val => String(val).replace(/\r/g, '').trim()))
-            .filter(arr => arr.every(str => str && str.length > 0));
-    }
+    rawObject.data = rawObject.data
+        .filter(arr => arr.length > 1)
+        .map(arr => arr.map(parseFloat));
 
-    console.log(rawObject);
-
-    if (rawObject.memo) {
-        rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
-    }
+    rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
 
     return rawObject;
-};
+}
 
 function App() {
   const [ctmData] = createResource(async () => {
     const text = await CTMFileToRawText("CTM448.CTM");
     const object = CTMTextToRawObject(text);
     const formatted = formatRawCTMObject(object);
-    console.log(object);
+
+    console.log(formatted);
     return text;
   });
 
