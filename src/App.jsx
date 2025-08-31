@@ -21,22 +21,22 @@ const CTMTextToRawObject = text => {
 };
 
 const cleanMemo = memoText => {
-    return memoText
-        .replace(/\r/g, '')
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .join(" ");
+  return memoText
+    .replace(/\r/g, '')
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join(" ");
 };
 
 const formatRawCTMObject = rawObject => {
-    rawObject.data = rawObject.data
-        .filter(arr => arr.length > 1)
-        .map(arr => arr.map(parseFloat));
+  rawObject.data = rawObject.data
+    .filter(arr => arr.length > 1)
+    .map(arr => arr.map(parseFloat));
 
-    rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
+  rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
 
-    return rawObject;
+  return rawObject;
 }
 
 function App() {
