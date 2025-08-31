@@ -14,7 +14,7 @@ const CTMTextToRawObject = text => {
   for (let i = 1; i < sections.length; i += 2) {
     const header = sections[i];
     const data = sections[i + 1];
-    rawObject[header] = data.split("\n").map(row => row.split("\t"));
+    rawObject[header] = data.replaceAll("\r", "").trim().split("\n").map(row => row.split("\t"));
   }
 
   return rawObject;
@@ -30,11 +30,11 @@ const cleanMemo = memoText => {
 };
 
 const formatRawCTMObject = rawObject => {
-  rawObject.data = rawObject.data
-    .filter(arr => arr.length > 1)
-    .map(arr => arr.map(parseFloat));
+  rawObject.data = rawObject.data.map(arr => arr.map(parseFloat));
 
   rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
+
+  rawObject.session = Object.fromEntries(rawObject.session);
 
   return rawObject;
 }
