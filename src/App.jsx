@@ -14,9 +14,8 @@ const CTMTextToRawObject = text => {
   for (let i = 1; i < sections.length; i += 2) {
     const header = sections[i];
     const data = sections[i + 1];
-    rawObject[header] = data.replaceAll("\r", "").trim().split("\n").map(row => row.split("\t"));
+    rawObject[header] = data.replaceAll("\r", "",).trim().split("\n").map(row => row.split("\t"));
   }
-
   return rawObject;
 };
 
@@ -43,16 +42,12 @@ const formatRawObjectText = rawObject => {
 };
 
 const formatObjectValues = objectValue => {
-  objectValue = objectValue.replace(',', '.')
+  objectValue = objectValue.replace(',', '.');
   if (!isNaN(objectValue) && objectValue.trim() !== ""){
     return Number(objectValue);
-  }
-  
-  /* Add date/time formatting if necessary */
+  } 
   return objectValue;
 };
-  
-
 
 
 const formatRawCTMObject = rawObject => {
@@ -65,6 +60,16 @@ const formatRawCTMObject = rawObject => {
   rawObject.Measurement = formatRawObjectText(rawObject.Measurement);
   
   rawObject.Configuration = formatRawObjectText(rawObject.Configuration);
+
+  rawObject.SetUp = formatRawObjectText(rawObject.SetUp);
+
+  rawObject.filter = formatRawObjectText(rawObject.filter);
+  
+  
+
+
+
+  
 
   return rawObject;
 }
