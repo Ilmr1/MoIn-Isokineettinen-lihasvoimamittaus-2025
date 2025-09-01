@@ -29,12 +29,40 @@ const cleanMemo = memoText => {
     .join(" ");
 };
 
+
+const rawMeasurementToObject = rawMeasurement => {
+  let measurementObject = {};
+  for (let [key, ...values] of rawMeasurement) {
+    if (values.length === 1) {
+      measurementObject[key] = formatMeasurementValues(values[0]);
+    } else {
+      measurementObject[key] = values.map(formatMeasurementValues);
+      }
+    }
+  return measurementObject;
+};
+
+const formatMeasurementValues = measurementValue => {
+  if (!isNaN(measurementValue) && measurementValue.trim() !== ""){
+    return Number(measurementValue);
+  }
+  
+  /* Add date/time formatting if necessary */
+  return measurementValue;
+};
+  
+
+
+
 const formatRawCTMObject = rawObject => {
   rawObject.data = rawObject.data.map(arr => arr.map(parseFloat));
 
   rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
 
   rawObject.session = Object.fromEntries(rawObject.session);
+
+  rawObject.Measurement = rawMeasurementToObject(rawObject.Measurement);
+  
 
   return rawObject;
 }
