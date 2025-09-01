@@ -30,25 +30,26 @@ const cleanMemo = memoText => {
 };
 
 
-const rawMeasurementToObject = rawMeasurement => {
-  let measurementObject = {};
-  for (let [key, ...values] of rawMeasurement) {
+const formatRawObjectText = rawObject => {
+  let formattedObject = {};
+  for (let [key, ...values] of rawObject) {
     if (values.length === 1) {
-      measurementObject[key] = formatMeasurementValues(values[0]);
+      formattedObject[key] = formatObjectValues(values[0]);
     } else {
-      measurementObject[key] = values.map(formatMeasurementValues);
+      formattedObject[key] = values.map(formatObjectValues);
       }
     }
-  return measurementObject;
+  return formattedObject;
 };
 
-const formatMeasurementValues = measurementValue => {
-  if (!isNaN(measurementValue) && measurementValue.trim() !== ""){
-    return Number(measurementValue);
+const formatObjectValues = objectValue => {
+  objectValue = objectValue.replace(',', '.')
+  if (!isNaN(objectValue) && objectValue.trim() !== ""){
+    return Number(objectValue);
   }
   
   /* Add date/time formatting if necessary */
-  return measurementValue;
+  return objectValue;
 };
   
 
@@ -61,8 +62,9 @@ const formatRawCTMObject = rawObject => {
 
   rawObject.session = Object.fromEntries(rawObject.session);
 
-  rawObject.Measurement = rawMeasurementToObject(rawObject.Measurement);
+  rawObject.Measurement = formatRawObjectText(rawObject.Measurement);
   
+  rawObject.Configuration = formatRawObjectText(rawObject.Configuration);
 
   return rawObject;
 }
@@ -74,6 +76,7 @@ function App() {
     const formatted = formatRawCTMObject(object);
 
     console.log(formatted);
+    
     return text;
   });
 
