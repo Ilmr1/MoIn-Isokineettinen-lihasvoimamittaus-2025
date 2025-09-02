@@ -66,13 +66,17 @@ export function ForceChart(props) {
 
     hoverCtx.beginPath();
     // Horizontal line
-    hoverCtx.moveTo(30, paddingBlock / 2 + flipY(y) * yStep);
+    hoverCtx.moveTo(paddingInline / 2, paddingBlock / 2 + flipY(y) * yStep);
     hoverCtx.lineTo(hoverCanvas.width, paddingBlock / 2 + flipY(y) * yStep);
 
     // Vectical line
     hoverCtx.moveTo(paddingInline / 2 + x * xStep, 0);
     hoverCtx.lineTo(paddingInline / 2 + x * xStep, hoverCanvas.height);
     hoverCtx.stroke();
+    hoverCtx.textAlign = "right";
+    hoverCtx.textBaseline = "middle";
+    const textMoveLeft = 5;
+    hoverCtx.fillText(y, paddingInline / 2 - textMoveLeft, paddingBlock / 2 + flipY(y) * yStep);
   });
 
   return (
