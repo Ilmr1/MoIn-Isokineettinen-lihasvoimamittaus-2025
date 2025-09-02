@@ -1,4 +1,4 @@
-import { createResource } from 'solid-js'
+import { createResource, createSignal } from 'solid-js'
 import './App.css'
 import { fileUtils } from './utils/utils';
 import { GenericSVGChart } from './components/GenericSVGChart.jsx';
@@ -73,24 +73,34 @@ const formatRawCTMObject = rawObject => {
 }
 
 function App() {
-  const [ctmData] = createResource(async () => {
-    const text = await CTMFileToRawText("CTM448.CTM");
+  const [fileName, setFileName] = createSignal("CTM448.CTM");
+
+  const [ctmData] = createResource(fileName, async name => {
+    const text = await CTMFileToRawText(name);
     const object = CTMTextToRawObject(text);
     const formatted = formatRawCTMObject(object);
+
+    console.log(formatted);
 
     return { text, formatted };
   });
 
   return (
-    <Show when={ctmData()}>
-      <GenericSVGChart parsedCTM={ctmData().formatted} dataIndex={0} min={ctmData().formatted.minmax.minPower} max={ctmData().formatted.minmax.maxPower} />
-      <GenericSVGChart parsedCTM={ctmData().formatted} dataIndex={1} min={ctmData().formatted.minmax.minSpeed} max={ctmData().formatted.minmax.maxSpeed} />
-      <GenericSVGChart parsedCTM={ctmData().formatted} dataIndex={2} min={ctmData().formatted.minmax.minAngle} max={ctmData().formatted.minmax.maxAngle} />
-      <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
-      <pre>
-        <code>{ctmData()?.text}</code>
-      </pre>
-    </Show>
+    <>
+      <button onClick={() => setFileName("CTM448-bad.CTM")}>CTM448-bad.CTM</button>
+      <button onClick={() => setFileName("CTM448.CTM")}>CTM448.CTM</button>
+      <button onClick={() => setFileName("CTM450.CTM")}>CTM450.CTM</button>
+      <br />
+      <Show when={ctmData()}>
+        <GenericSVGChart parsedCTM={ctmData().formatted} dataIndex={0} min={ctmData().formatted.minmax.minPower} max={ctmData().formatted.minmax.maxPower} /><br />
+        <GenericSVGChart parsedCTM={ctmData().formatted} dataIndex={1} min={ctmData().formatted.minmax.minSpeed} max={ctmData().formatted.minmax.maxSpeed} /><br />
+        <GenericSVGChart parsedCTM={ctmData().formatted} dataIndex={2} min={ctmData().formatted.minmax.minAngle} max={ctmData().formatted.minmax.maxAngle} /><br />
+        <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
+        <pre>
+          <code>{ctmData()?.text}</code>
+        </pre>
+      </Show>
+    </>
   )
 }
 
