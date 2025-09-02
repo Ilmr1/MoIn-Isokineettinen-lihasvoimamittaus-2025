@@ -1,6 +1,8 @@
 import { createResource } from 'solid-js'
 import './App.css'
 import { fileUtils } from './utils/utils';
+import { ForceChart } from './components/forceChart.jsx';
+import { asserts } from './collections/collections';
 
 const CTMFileToRawText = async fileName => {
   const response = await fetch("./" + fileName);
@@ -53,24 +55,16 @@ const formatObjectValues = objectValue => {
 
 const formatRawCTMObject = rawObject => {
   rawObject.data = rawObject.data.map(arr => arr.map(parseFloat));
-
   rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
-
   rawObject.session = Object.fromEntries(rawObject.session);
-
   rawObject.Measurement = formatRawObjectText(rawObject.Measurement);
-  
   rawObject.Configuration = formatRawObjectText(rawObject.Configuration);
-
   rawObject.SetUp = formatRawObjectText(rawObject.SetUp);
-
   rawObject.filter = formatRawObjectText(rawObject.filter);
-  
-  
-
-
-
-  
+  rawObject.minmax = {
+    minPower: rawObject.data.reduce((acc, row) => Math.min(row[0], acc), Infinity),
+    maxPower: rawObject.data.reduce((acc, row) => Math.max(row[0], acc), -Infinity),
+  }
 
   return rawObject;
 }
@@ -81,18 +75,17 @@ function App() {
     const object = CTMTextToRawObject(text);
     const formatted = formatRawCTMObject(object);
 
-    console.log(formatted);
-
     return { text, formatted };
   });
 
   return (
-    <>
+    <Show when={ctmData()}>
+      <ForceChart parsedCTM={ctmData().formatted} />
       <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
       <pre>
         <code>{ctmData()?.text}</code>
       </pre>
-    </>
+    </Show>
   )
 }
 

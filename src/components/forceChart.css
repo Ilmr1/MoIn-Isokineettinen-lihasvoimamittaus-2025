@@ -1,0 +1,10 @@
+.cp-canvas-container {
+  position: relative;
+  width: min-content;
+  margin-inline: auto;
+
+  canvas:not(:first-child) {
+    position: absolute;
+    left: 0px;
+  }
+}
