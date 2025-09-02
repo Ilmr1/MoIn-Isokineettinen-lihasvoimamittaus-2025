@@ -1,7 +1,8 @@
 import { batch, createEffect, createMemo, createRenderEffect, createSignal, ErrorBoundary } from "solid-js";
 import { SVGChartContext } from "../providers";
-import { chartUtils, signalUtils } from "../utils/utils";
+import { chartUtils, CTMUtils, signalUtils } from "../utils/utils";
 import { asserts } from "../collections/collections";
+import "./GenericSVGChart.css";
 
 export function GenericSVGChart(props) {
   return (
@@ -75,8 +76,8 @@ function Chart(props) {
   return (
     <Show when={!error()} fallback="Asserts failed">
       <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.min, max: () => props.max, hoverX, hoverY, hoverValue, paddingBlock, paddingInline, height, width }}>
-        <svg width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-          <path d={path()} stroke="black" fill="none" />
+        <svg class="cp-chart" classList={{ left: CTMUtils.isLeftLeg(props.parsedCTM), right: CTMUtils.isRightLeg(props.parsedCTM) }} width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
+          <path d={path()} class="data" fill="none" />
           <line x1={paddingInline / 2} x2={width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
           <line x1={paddingInline / 2} x2={width} y1={hoverY()} y2={hoverY()} stroke="black" />
           <line x1={hoverX()} x2={hoverX()} y1={0} y2={height} stroke="black" />
