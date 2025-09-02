@@ -3,6 +3,8 @@ import './App.css'
 import { fileUtils } from './utils/utils';
 import { ForceChart } from './components/ForceChart.jsx';
 import { asserts } from './collections/collections';
+import { SpeedChart } from './components/SpeedChart.jsx';
+import { AngleChart } from './components/AngleChart.jsx';
 
 const CTMFileToRawText = async fileName => {
   const response = await fetch("./" + fileName);
@@ -64,6 +66,10 @@ const formatRawCTMObject = rawObject => {
   rawObject.minmax = {
     minPower: rawObject.data.reduce((acc, row) => Math.min(row[0], acc), Infinity),
     maxPower: rawObject.data.reduce((acc, row) => Math.max(row[0], acc), -Infinity),
+    minSpeed: rawObject.data.reduce((acc, row) => Math.min(row[1], acc), Infinity),
+    maxSpeed: rawObject.data.reduce((acc, row) => Math.max(row[1], acc), -Infinity),
+    minAngle: rawObject.data.reduce((acc, row) => Math.min(row[2], acc), Infinity),
+    maxAngle: rawObject.data.reduce((acc, row) => Math.max(row[2], acc), -Infinity),
   }
 
   return rawObject;
@@ -81,6 +87,8 @@ function App() {
   return (
     <Show when={ctmData()}>
       <ForceChart parsedCTM={ctmData().formatted} />
+      <SpeedChart parsedCTM={ctmData().formatted} />
+      <AngleChart parsedCTM={ctmData().formatted} />
       <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
       <pre>
         <code>{ctmData()?.text}</code>
