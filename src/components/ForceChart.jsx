@@ -1,20 +1,25 @@
 import { createRenderEffect, createSignal } from "solid-js";
-import "./forceChart.css";
+import "./ForceChart.css";
 
 export function ForceChart(props) {
   const chartCanvas = document.createElement("canvas");
   const chartCtx = chartCanvas.getContext("2d");
+  const hoverCanvas = document.createElement("canvas");
+  const hoverCtx = hoverCanvas.getContext("2d");
 
   const width = 800;
   const height = 200;
   const paddingBlock = 100;
   const paddingInline = 100;
 
+  hoverCanvas.width = width;
+  hoverCanvas.height = height;
+  chartCanvas.width = width;
+  chartCanvas.height = height;
+
   const flipY = y => Math.abs(y - props.parsedCTM.minmax.maxPower);
 
   createRenderEffect(() => {
-    chartCanvas.width = width;
-    chartCanvas.height = height;
     chartCanvas.style.outline = "solid 1px black";
     chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 
@@ -44,12 +49,7 @@ export function ForceChart(props) {
     chartCtx.stroke();
   });
 
-  const hoverCanvas = document.createElement("canvas");
-  const hoverCtx = hoverCanvas.getContext("2d");
-
   hoverCanvas.addEventListener("mousemove", e => {
-    hoverCanvas.width = width;
-    hoverCanvas.height = height;
     hoverCtx.clearRect(0, 0, hoverCanvas.width, hoverCanvas.height);
 
     const totalDataWidth = props.parsedCTM.data.length;
@@ -77,6 +77,10 @@ export function ForceChart(props) {
     hoverCtx.textBaseline = "middle";
     const textMoveLeft = 5;
     hoverCtx.fillText(y, paddingInline / 2 - textMoveLeft, paddingBlock / 2 + flipY(y) * yStep);
+  });
+
+  hoverCanvas.addEventListener("mouseleave", e => {
+    hoverCtx.clearRect(0, 0, hoverCanvas.width, hoverCanvas.height);
   });
 
   return (

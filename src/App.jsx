@@ -1,7 +1,7 @@
 import { createResource } from 'solid-js'
 import './App.css'
 import { fileUtils } from './utils/utils';
-import { ForceChart } from './components/forceChart.jsx';
+import { ForceChart } from './components/ForceChart.jsx';
 import { asserts } from './collections/collections';
 
 const CTMFileToRawText = async fileName => {
