@@ -1,5 +1,6 @@
 import { createResource } from 'solid-js'
 import './App.css'
+import { fileUtils } from './utils/utils';
 
 const CTMFileToRawText = async fileName => {
   const response = await fetch("./" + fileName);
@@ -81,14 +82,17 @@ function App() {
     const formatted = formatRawCTMObject(object);
 
     console.log(formatted);
-    
-    return text;
+
+    return { text, formatted };
   });
 
   return (
-    <pre>
-      <code>{ctmData()}</code>
-    </pre>
+    <>
+      <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
+      <pre>
+        <code>{ctmData()?.text}</code>
+      </pre>
+    </>
   )
 }
 
