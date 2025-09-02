@@ -2,6 +2,7 @@ import { createResource } from 'solid-js'
 import './App.css'
 import { fileUtils } from './utils/utils';
 import { ForceChart } from './components/ForceChart.jsx';
+import { GenericSVGChart } from './components/GenericSVGChart.jsx';
 import { asserts } from './collections/collections';
 import { SpeedChart } from './components/SpeedChart.jsx';
 import { AngleChart } from './components/AngleChart.jsx';
@@ -86,13 +87,14 @@ function App() {
 
   return (
     <Show when={ctmData()}>
+      <GenericSVGChart parsedCTM={ctmData().formatted} />
       <ForceChart parsedCTM={ctmData().formatted} />
       <SpeedChart parsedCTM={ctmData().formatted} />
       <AngleChart parsedCTM={ctmData().formatted} />
       <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
-      <pre>
-        <code>{ctmData()?.text}</code>
-      </pre>
+      {/* <pre> */}
+      {/*   <code>{ctmData()?.text}</code> */}
+      {/* </pre> */}
     </Show>
   )
 }
