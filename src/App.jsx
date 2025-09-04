@@ -33,13 +33,14 @@ const cleanMemo = memoText => {
 
 const formatRawObjectText = rawObject => {
   let formattedObject = {};
+  
   for (let [key, ...values] of rawObject) {
     if (values.length === 1) {
-      formattedObject[key] = formatObjectValues(values[0]);
+       formattedObject[key] = formatObjectValues(values[0]);
     } else {
       formattedObject[key] = values.map(formatObjectValues);
-      }
     }
+  }
   return formattedObject;
 };
 
@@ -52,14 +53,17 @@ const formatObjectValues = objectValue => {
 };
 
 
+
 const formatRawCTMObject = rawObject => {
   rawObject.data = rawObject.data.map(arr => arr.map(parseFloat));
   rawObject.memo = cleanMemo(rawObject.memo.join("\n"));
-  rawObject.session = Object.fromEntries(rawObject.session);
+  rawObject.session = formatRawObjectText(rawObject.session);
   rawObject.Measurement = formatRawObjectText(rawObject.Measurement);
   rawObject.Configuration = formatRawObjectText(rawObject.Configuration);
   rawObject.SetUp = formatRawObjectText(rawObject.SetUp);
   rawObject.filter = formatRawObjectText(rawObject.filter);
+  rawObject["markers by index"] = formatRawObjectText(rawObject["markers by index"]);
+  rawObject["system strings"] = formatRawObjectText(rawObject["system strings"]);
   rawObject.minmax = {
     minPower: rawObject.data.reduce((acc, row) => Math.min(row[0], acc), Infinity),
     maxPower: rawObject.data.reduce((acc, row) => Math.max(row[0], acc), -Infinity),
