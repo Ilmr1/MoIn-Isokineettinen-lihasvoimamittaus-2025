@@ -91,9 +91,10 @@ function ChartContent(props) {
   const xStep = createMemo(() => props.width / totalDataWidth());
 
   const hover = createMemo(() => {
-    const x = Math.round((mouseX() - props.x) / xStep());
-    const y = parsedCTM().data[x]?.[dataIndex()];
-    if (y == null) {
+    const mX = mouseX();
+    const x = Math.round((mX - props.x) / xStep());
+    const y = parsedCTM().data[x + minIndex()]?.[dataIndex()];
+    if (y == null || x < 0 || mX > props.x + props.width) {
       return [-1, -1, null];
     }
 
