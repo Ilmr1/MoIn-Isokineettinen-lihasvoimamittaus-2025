@@ -1,5 +1,5 @@
 import { batch, createEffect, createMemo, createRenderEffect, createSignal, ErrorBoundary } from "solid-js";
-import { SVGChartContext } from "../providers";
+import { SVGChartContext, useSVGChartContext } from "../providers";
 import { chartUtils, CTMUtils, signalUtils } from "../utils/utils";
 import { asserts } from "../collections/collections";
 import "./GenericSVGChart.css";
@@ -22,71 +22,97 @@ function Chart(props) {
     asserts.assertTrue(props.dataIndex >= 0 && props.dataIndex <= 2, "dataIndex is not a number between 0-2");
   });
 
-  const [hoverX, setHoverX] = createSignal(-1);
-  const [hoverY, setHoverY] = createSignal(-1);
-  const [hoverValue, setHoverValue] = createSignal(null);
+  const [mouseX, setMouseX] = createSignal(-1);
+  const [mouseY, setMouseY] = createSignal(-1);
 
   const width = 800;
   const height = 200;
-  const paddingBlock = 100;
-  const paddingInline = 100;
 
-  const totalDataWidth = createMemo(() => props.parsedCTM.data.length);
-  const totalDataHeight = createMemo(() => props.max - props.min);
+  const paddingLeft = 100;
+  const paddingRight = 10;
+  const paddingTop = 18;
+  const paddingBottom = 10;
 
-  const yStep = createMemo(() => (height - paddingBlock) / totalDataHeight());
-  const xStep = createMemo(() => (width - paddingInline) / totalDataWidth());
-
-  const updateHoverCoords = e => {
-    const x = Math.round((e.offsetX - paddingInline / 2) / xStep());
-    const y = props.parsedCTM.data[x]?.[props.dataIndex];
-    if (y == null) {
-      clearHoverCoors();
-      return;
-    }
-
-    batch(() => {
-      setHoverY(paddingBlock / 2 + chartUtils.flipYAxes(y, props.max) * yStep());
-      setHoverX(paddingInline / 2 + x * xStep());
-      setHoverValue(y);
-    });
-  };
-
-  const clearHoverCoors = () => {
-    batch(() => {
-      setHoverX(-1);
-      setHoverY(-1);
-      setHoverValue(null);
-    });
-  };
-
-  const path = createMemo(() => {
-    return props.parsedCTM.data.map((row, x) => {
-      const y = row[props.dataIndex];
-      const flippedY = chartUtils.flipYAxes(y, props.max);
-      if (x === 0) {
-        return `M ${paddingInline / 2 + x * xStep()} ${paddingBlock / 2 + flippedY * yStep()}`;
-      }
-      return `L ${paddingInline / 2 + x * xStep()} ${paddingBlock / 2 + flippedY * yStep()}`;
-    }).join(" ");
+  const updateHoverCoords = e => batch(() => {
+    setMouseX(e.offsetX);
+    setMouseY(e.offsetY);
   });
 
-  const zeroLineY = createMemo(() => paddingBlock / 2 + chartUtils.flipYAxes(0, props.max) * yStep());
+  const clearHoverCoors = () => batch(() => {
+    setMouseX(-1);
+    setMouseY(-1);
+  });
 
   return (
     <Show when={!error()} fallback="Asserts failed">
-      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.min, max: () => props.max, hoverX, hoverY, hoverValue, paddingBlock, paddingInline, height, width }}>
+      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.min, max: () => props.max, dataIndex: () => props.dataIndex, mouseX, mouseY }}>
         <svg class="cp-chart" classList={{ left: CTMUtils.isLeftLeg(props.parsedCTM), right: CTMUtils.isRightLeg(props.parsedCTM) }} width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-          <path d={path()} class="data" fill="none" />
-          <line x1={paddingInline / 2} x2={width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
-          <line x1={paddingInline / 2} x2={width} y1={hoverY()} y2={hoverY()} stroke="black" />
-          <line x1={hoverX()} x2={hoverX()} y1={0} y2={height} stroke="black" />
-          <Show when={hoverValue()}>
-            <text dominant-baseline="middle" text-anchor="end" x={paddingInline / 2} y={hoverY()}>{hoverValue()}</text>
-          </Show>
-          {props.children}
+          <ChartWrapper title={props.title} width={width - paddingLeft - paddingRight} height={height - paddingTop - paddingBottom} x={paddingLeft} y={paddingTop} />
         </svg>
       </SVGChartContext.Provider>
     </Show>
+  );
+}
+
+function ChartWrapper(props) {
+  const paddingTop = 25;
+  const paddingBottom = 25;
+
+  return (
+    <>
+      <text dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y="0">{props.title}</text>
+      <rect x={props.x} y={props.y} width={props.width} height={props.height} fill="none" stroke="black" />
+      <ChartContent {...props} height={props.height - paddingBottom - paddingTop} y={props.y + paddingTop} parentHeight={props.height} parentY={props.y} />
+    </>
+  );
+}
+
+function ChartContent(props) {
+  const { mouseX, parsedCTM, min, max, dataIndex } = useSVGChartContext();
+
+  const totalDataWidth = createMemo(() => parsedCTM().data.length);
+  const totalDataHeight = createMemo(() => max() - min());
+
+  const yStep = createMemo(() => props.height / totalDataHeight());
+  const xStep = createMemo(() => props.width / totalDataWidth());
+
+  const hover = createMemo(() => {
+    const x = Math.round((mouseX() - props.x) / xStep());
+    const y = parsedCTM().data[x]?.[dataIndex()];
+    if (y == null) {
+      return [-1, -1, null];
+    }
+
+    return [
+      props.x + x * xStep(),
+      props.y + chartUtils.flipYAxes(y, max()) * yStep(),
+      y
+    ];
+  });
+  const hoverX = createMemo(() => hover()[0]);
+  const hoverY = createMemo(() => hover()[1]);
+  const hoverValue = createMemo(() => hover()[2]);
+
+  const path = createMemo(() => {
+    return parsedCTM().data.map((row, x) => {
+      const y = row[dataIndex()];
+      const flippedY = chartUtils.flipYAxes(y, max());
+      if (x === 0) {
+        return `M ${props.x + x * xStep()} ${props.y + flippedY * yStep()}`;
+      }
+      return `L ${props.x + x * xStep()} ${props.y + flippedY * yStep()}`;
+    }).join(" ");
+  });
+
+  const zeroLineY = createMemo(() => props.y + chartUtils.flipYAxes(0, max()) * yStep());
+
+  return (
+    <>
+      <line x1={props.x} x2={props.x + props.width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
+      <line x1={props.x} x2={props.x + props.width} y1={hoverY()} y2={hoverY()} stroke="black" />
+      <line x1={hoverX()} x2={hoverX()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
+      <path d={path()} class="data" fill="none" />
+      <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hoverY()}>{hoverValue()}</text>
+    </>
   );
 }

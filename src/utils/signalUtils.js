@@ -7,6 +7,7 @@ export const createAssertError = callback => {
       callback();
       setError(false);
     } catch (e) {
+      console.error(e);
       setError(true);
     }
   });
