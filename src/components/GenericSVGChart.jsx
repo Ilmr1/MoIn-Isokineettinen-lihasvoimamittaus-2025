@@ -1,4 +1,4 @@
-import { batch, createEffect, createMemo, createRenderEffect, createSignal, ErrorBoundary } from "solid-js";
+import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
 import { SVGChartContext, useSVGChartContext } from "../providers";
 import { chartUtils, CTMUtils, signalUtils } from "../utils/utils";
 import { asserts } from "../collections/collections";
@@ -82,7 +82,9 @@ function ChartWrapper(props) {
 function ChartContent(props) {
   const { mouseX, parsedCTM, min, max, dataIndex } = useSVGChartContext();
 
-  const totalDataWidth = createMemo(() => parsedCTM().data.length);
+  const minIndex = createMemo(() => Math.min(parsedCTM().markersByIndex["move 1"][0], parsedCTM().markersByIndex["move 2"][0]));
+  const maxIndex = createMemo(() => Math.max(parsedCTM().markersByIndex["move 1"].at(-1), parsedCTM().markersByIndex["move 2"].at(-1)));
+  const totalDataWidth = createMemo(() => maxIndex() - minIndex() + 1);
   const totalDataHeight = createMemo(() => max() - min());
 
   const yStep = createMemo(() => props.height / totalDataHeight());
@@ -105,25 +107,47 @@ function ChartContent(props) {
   const hoverY = createMemo(() => hover()[1]);
   const hoverValue = createMemo(() => hover()[2]);
 
-  const path = createMemo(() => {
-    return parsedCTM().data.map((row, x) => {
+  const generatePath = (points, startX) => {
+    return points.map((row, x) => {
       const y = row[dataIndex()];
       const flippedY = chartUtils.flipYAxes(y, max());
       if (x === 0) {
-        return `M ${props.x + x * xStep()} ${props.y + flippedY * yStep()}`;
+        return `M ${props.x + (startX + x) * xStep()} ${props.y + flippedY * yStep()}`;
       }
-      return `L ${props.x + x * xStep()} ${props.y + flippedY * yStep()}`;
+      return `L ${props.x + (startX + x) * xStep()} ${props.y + flippedY * yStep()}`;
     }).join(" ");
+  }
+
+  const path1 = createMemo(() => {
+    return parsedCTM().splitData.move1.map((v, i) => {
+      return generatePath(v, parsedCTM().markersByIndex["move 1"][i] - minIndex());
+    })
+  });
+  const path2 = createMemo(() => {
+    return parsedCTM().splitData.move2.map((v, i) => {
+      return generatePath(v, parsedCTM().markersByIndex["move 2"][i] - minIndex());
+    })
   });
 
   const zeroLineY = createMemo(() => props.y + chartUtils.flipYAxes(0, max()) * yStep());
 
   return (
     <>
+      {/* <For each={parsedCTM().markersByIndex["move 1"]}>{x => ( */}
+      {/*   <line x1={props.x + (x - minIndex()) * xStep()} x2={props.x + (x - minIndex()) * xStep()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="red" /> */}
+      {/* )}</For> */}
+      {/* <For each={parsedCTM().markersByIndex["move 2"]}>{x => ( */}
+      {/*   <line x1={props.x + (x - minIndex()) * xStep()} x2={props.x + (x - minIndex()) * xStep()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="blue" /> */}
+      {/* )}</For> */}
       <line x1={props.x} x2={props.x + props.width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
       <line x1={props.x} x2={props.x + props.width} y1={hoverY()} y2={hoverY()} stroke="black" />
       <line x1={hoverX()} x2={hoverX()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
-      <path d={path()} class="data" fill="none" />
+      <For each={path1()}>{path => (
+        <path d={path} class="data" fill="none" stroke="red" />
+      )}</For>
+      <For each={path2()}>{path => (
+        <path d={path} class="data" fill="none" stroke="blue" />
+      )}</For>
       <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hoverY()}>{hoverValue()}</text>
     </>
   );

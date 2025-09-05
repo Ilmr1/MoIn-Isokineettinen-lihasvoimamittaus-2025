@@ -16,7 +16,7 @@ const CTMTextToRawObject = text => {
   for (let i = 1; i < sections.length; i += 2) {
     const header = sections[i];
     const data = sections[i + 1];
-    rawObject[header] = data.replaceAll("\r", "").trim().split("\n").map(row => row.split("\t"));
+    rawObject[header] = data.replaceAll("\r", "").trim().split("\n").map(row => row.trim().split("\t"));
   }
   return rawObject;
 };
@@ -53,6 +53,17 @@ const formatObjectValues = objectValue => {
 };
 
 
+const splitData = (rawObject) => {
+  const move1 = [];
+  const move2 = [];
+  for (let i = 0; i < rawObject.markersByIndex["move 1"].length - 1; i++) {
+    move1.push(rawObject.data.slice(rawObject.markersByIndex["move 1"][i], rawObject.markersByIndex["move 2"][i]));
+    move2.push(rawObject.data.slice(rawObject.markersByIndex["move 2"][i], rawObject.markersByIndex["move 1"][i + 1]));
+  }
+
+  return { move1, move2 };
+}
+
 
 const formatRawCTMObject = rawObject => {
   rawObject.data = rawObject.data.map(arr => arr.map(parseFloat));
@@ -62,7 +73,9 @@ const formatRawCTMObject = rawObject => {
   rawObject.Configuration = formatRawObjectText(rawObject.Configuration);
   rawObject.SetUp = formatRawObjectText(rawObject.SetUp);
   rawObject.filter = formatRawObjectText(rawObject.filter);
-  rawObject["markers by index"] = formatRawObjectText(rawObject["markers by index"]);
+  rawObject.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
+  delete rawObject["markers by index"];
+  rawObject.splitData = splitData(rawObject);
   rawObject["system strings"] = formatRawObjectText(rawObject["system strings"]);
   rawObject.minmax = {
     minPower: rawObject.data.reduce((acc, row) => Math.min(row[0], acc), Infinity),

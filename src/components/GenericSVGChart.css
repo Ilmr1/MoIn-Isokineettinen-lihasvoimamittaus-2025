@@ -1,14 +1,5 @@
 .cp-chart {
   .data {
-    stroke: black;
     stroke-width: 2px;
-  }
-
-  &.left .data {
-    stroke: red;
-  }
-
-  &.right .data {
-    stroke: skyblue;
   }
 }
