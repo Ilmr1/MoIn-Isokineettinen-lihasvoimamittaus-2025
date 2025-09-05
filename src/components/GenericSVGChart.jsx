@@ -58,10 +58,22 @@ function ChartWrapper(props) {
   const paddingTop = 25;
   const paddingBottom = 25;
 
+  const grid = createMemo(() => {
+    const string = [];
+    for (let i = 0; i < props.height / 50; i++) {
+      string.push(`M ${props.x} ${props.y + i * 50} l ${props.width} 0`);
+    }
+    for (let i = 0; i < props.width / 50; i++) {
+      string.push(`M ${props.x + i * 50} ${props.y} l 0 ${props.height}`);
+    }
+    return string.join(" ");
+  });
+
   return (
     <>
       <text dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y="0">{props.title}</text>
       <rect x={props.x} y={props.y} width={props.width} height={props.height} fill="none" stroke="black" />
+      <path d={grid()} stroke="black" stroke-width=".25" stroke-dasharray="2" fill="none" />
       <ChartContent {...props} height={props.height - paddingBottom - paddingTop} y={props.y + paddingTop} parentHeight={props.height} parentY={props.y} />
     </>
   );
