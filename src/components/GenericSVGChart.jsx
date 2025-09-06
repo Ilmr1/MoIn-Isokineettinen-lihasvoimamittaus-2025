@@ -54,7 +54,7 @@ function Chart(props) {
   );
 }
 
-function ChartWrapper(props) {
+export function ChartWrapper(props) {
   const paddingTop = 25;
   const paddingBottom = 25;
 
@@ -79,7 +79,7 @@ function ChartWrapper(props) {
   );
 }
 
-function ChartContent(props) {
+export function ChartContent(props) {
   const { mouseX, parsedCTM, min, max, dataIndex } = useSVGChartContext();
 
   const minIndex = createMemo(() => Math.min(parsedCTM().markersByIndex["move 1"][0], parsedCTM().markersByIndex["move 2"][0]));
