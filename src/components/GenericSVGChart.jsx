@@ -95,33 +95,32 @@ export function ChartContent(props) {
     const x = Math.round((mX - props.x) / xStep());
     const y = parsedCTM().data[x + minIndex()]?.[dataIndex()];
     if (y == null || x < 0 || mX > props.x + props.width) {
-      return [-1, -1, null];
+      return { x: -1, y: -1, value: null };
     }
 
-    return [
-      props.x + x * xStep(),
-      props.y + chartUtils.flipYAxes(y, max()) * yStep(),
-      y
-    ];
+    return {
+      x: props.x + x * xStep(),
+      y: props.y + chartUtils.flipYAxes(y, max()) * yStep(),
+      value: y
+    };
   });
-  const hoverX = createMemo(() => hover()[0]);
-  const hoverY = createMemo(() => hover()[1]);
-  const hoverValue = createMemo(() => hover()[2]);
 
   const generatePath = (points, startX) => {
+    const dI = dataIndex(), xS = xStep(), yS = yStep(), m = max();
     return points.map((row, x) => {
-      const y = row[dataIndex()];
-      const flippedY = chartUtils.flipYAxes(y, max());
+      const y = row[dI];
+      const flippedY = chartUtils.flipYAxes(y, m);
       if (x === 0) {
-        return `M ${props.x + (startX + x) * xStep()} ${props.y + flippedY * yStep()}`;
+        return `M ${props.x + (startX + x) * xS} ${props.y + flippedY * yS}`;
       }
-      return `L ${props.x + (startX + x) * xStep()} ${props.y + flippedY * yStep()}`;
+      return `L ${props.x + (startX + x) * xS} ${props.y + flippedY * yS}`;
     }).join(" ");
   }
 
-  const path1 = createMemo(() => {
-    return parsedCTM().splitData.map((v, i) => {
-      return generatePath(v.data, v.start - minIndex());
+  const paths = createMemo(() => {
+    const mI = minIndex();
+    return parsedCTM().splitData.map(section => {
+      return generatePath(section.data, section.start - mI);
     })
   });
 
@@ -136,12 +135,12 @@ export function ChartContent(props) {
       {/*   <line x1={props.x + (x - minIndex()) * xStep()} x2={props.x + (x - minIndex()) * xStep()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="blue" /> */}
       {/* )}</For> */}
       <line x1={props.x} x2={props.x + props.width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
-      <line x1={props.x} x2={props.x + props.width} y1={hoverY()} y2={hoverY()} stroke="black" />
-      <line x1={hoverX()} x2={hoverX()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
-      <For each={path1()}>{(path, i) => (
+      <line x1={props.x} x2={props.x + props.width} y1={hover().y} y2={hover().y} stroke="black" />
+      <line x1={hover().x} x2={hover().x} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
+      <For each={paths()}>{(path, i) => (
         <path d={path} class="data" fill="none" stroke={parsedCTM().splitData[i()].color} />
       )}</For>
-      <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hoverY()}>{hoverValue()}</text>
+      <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hover().y}>{hover().value}</text>
     </>
   );
 }

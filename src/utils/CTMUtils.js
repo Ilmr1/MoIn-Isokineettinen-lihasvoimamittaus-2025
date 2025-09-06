@@ -84,11 +84,6 @@ const formatRawCTMObject = rawObject => {
   return object
 }
 
-const markersByIndex = ctmObject => {
-  const markersByIndex = formatRawObjectText(ctmObject["markers by index"]);
-  console.log(markersByIndex);
-}
-
 
 /**
  * Generate minmax object in O(n)
