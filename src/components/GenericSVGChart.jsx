@@ -82,8 +82,8 @@ export function ChartWrapper(props) {
 export function ChartContent(props) {
   const { mouseX, parsedCTM, min, max, dataIndex } = useSVGChartContext();
 
-  const minIndex = createMemo(() => Math.min(parsedCTM().markersByIndex["move 1"][0], parsedCTM().markersByIndex["move 2"][0]));
-  const maxIndex = createMemo(() => Math.max(parsedCTM().markersByIndex["move 1"].at(-1), parsedCTM().markersByIndex["move 2"].at(-1)));
+  const minIndex = createMemo(() => parsedCTM().minmax.minIndex);
+  const maxIndex = createMemo(() => parsedCTM().minmax.maxIndex);
   const totalDataWidth = createMemo(() => maxIndex() - minIndex() + 1);
   const totalDataHeight = createMemo(() => max() - min());
 
@@ -120,13 +120,8 @@ export function ChartContent(props) {
   }
 
   const path1 = createMemo(() => {
-    return parsedCTM().splitData.move1.map((v, i) => {
-      return generatePath(v, parsedCTM().markersByIndex["move 1"][i] - minIndex());
-    })
-  });
-  const path2 = createMemo(() => {
-    return parsedCTM().splitData.move2.map((v, i) => {
-      return generatePath(v, parsedCTM().markersByIndex["move 2"][i] - minIndex());
+    return parsedCTM().splitData.map((v, i) => {
+      return generatePath(v.data, v.start - minIndex());
     })
   });
 
@@ -143,11 +138,8 @@ export function ChartContent(props) {
       <line x1={props.x} x2={props.x + props.width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
       <line x1={props.x} x2={props.x + props.width} y1={hoverY()} y2={hoverY()} stroke="black" />
       <line x1={hoverX()} x2={hoverX()} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
-      <For each={path1()}>{path => (
-        <path d={path} class="data" fill="none" stroke="red" />
-      )}</For>
-      <For each={path2()}>{path => (
-        <path d={path} class="data" fill="none" stroke="blue" />
+      <For each={path1()}>{(path, i) => (
+        <path d={path} class="data" fill="none" stroke={parsedCTM().splitData[i()].color} />
       )}</For>
       <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hoverY()}>{hoverValue()}</text>
     </>

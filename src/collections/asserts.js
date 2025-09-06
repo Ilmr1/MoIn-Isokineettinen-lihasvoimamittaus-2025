@@ -14,3 +14,5 @@ export const assert2DArray = (array, message = "Value is not 2D array") => {
   assertTypeArray(array, message);
   assertTypeArray(array[0], message);
 }
+
+export const arrayNotEmpty = (array, message = "Assertion failed because array is empty") => assertTrue(array?.length, message);

@@ -34,3 +34,10 @@ export const formatToCSV = (table, columns) => {
 
   return csv;
 }
+
+export const fetchCTMFileWithName = async fileName => {
+  const response = await fetch("./" + fileName);
+  const buffer = await response.arrayBuffer();
+  const decoder = new TextDecoder("ISO-8859-1");
+  return decoder.decode(buffer);
+}
