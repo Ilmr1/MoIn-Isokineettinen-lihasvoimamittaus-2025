@@ -41,3 +41,14 @@ export const fetchCTMFileWithName = async fileName => {
   const decoder = new TextDecoder("ISO-8859-1");
   return decoder.decode(buffer);
 }
+
+export const openDirectoryPicker = async () => {
+  try {
+    const directoryHandle = await window.showDirectoryPicker();
+    console.log(directoryHandle);
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error(err);
+    }
+  }
+}
