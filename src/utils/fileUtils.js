@@ -1,4 +1,5 @@
 import { asserts } from "../collections/collections";
+import { CTMUtils } from "./utils";
 
 export const generateFileAndDownload = (data, filename, type) => {
   const file = new Blob([data], {type: type}),
@@ -42,13 +43,30 @@ export const fetchCTMFileWithName = async fileName => {
   return decoder.decode(buffer);
 }
 
-export const openDirectoryPicker = async () => {
+export const openDirectoryAndGetFiles = async () => {
   try {
+    let files = [];
     const directoryHandle = await window.showDirectoryPicker();
-    console.log(directoryHandle);
+    for await (const handle of directoryHandle.values()) {
+      if (handle.kind === "file") {
+        const file = await handle.getFile();
+        const text = await file.text();
+        const rawObject = CTMUtils.parseTextToObject(text);
+        files.push({
+          name: file.name,
+          rawObject
+        });
+    }
+  }
+  console.log(files);
   } catch (err) {
     if (err.name !== "AbortError") {
       console.error(err);
     }
   }
 }
+
+
+
+
+
