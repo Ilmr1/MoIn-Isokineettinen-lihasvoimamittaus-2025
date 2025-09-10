@@ -1,3 +1,4 @@
+import h from "solid-js/h";
 import { asserts } from "../collections/collections";
 import { stringUtils } from "./utils";
 
@@ -45,19 +46,40 @@ const formatObjectValues = objectValue => {
   return objectValue;
 };
 
+
+
 const splitData = (rawObject) => {
   const data = [];
+  const reference = 0.01;
   for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
-    data.push({
-      data: rawObject.data.slice(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i] + 1),
-      start: rawObject.markersByIndex.move1[i],
-      end: rawObject.markersByIndex.move2[i],
-      color: "red",
+    const startRed = rawObject.markersByIndex.move1[i];
+    const endRed = rawObject.markersByIndex.move2[i];
+    const slicedRed = rawObject.data.slice(startRed, endRed + 1);
+    const filteredRed = slicedRed.map((row, idx) => ({ row, originalIndex: startRed + idx })).filter((item, j, arr) => {
+      if (j === 0) return false;
+      const halfway = Math.floor(arr.length / 2);
+      const halfwayDelta = Math.abs(arr[halfway].row[2] - arr[halfway - 1].row[2]) - reference;
+      return Math.abs(item.row[2] - arr[j - 1].row[2]) > halfwayDelta;
     });
     data.push({
-      data: rawObject.data.slice(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1] + 1),
-      start: rawObject.markersByIndex.move2[i],
-      end: rawObject.markersByIndex.move1[i + 1],
+      data: filteredRed.map(item => item.row),
+      start: filteredRed[0].originalIndex,
+      end: filteredRed[filteredRed.length - 1].originalIndex,
+      color: "red",
+    });
+    const startBlue = rawObject.markersByIndex.move2[i];
+    const endBlue = rawObject.markersByIndex.move1[i + 1];
+    const slicedBlue = rawObject.data.slice(startBlue, endBlue + 1);
+    const filteredBlue = slicedBlue.map((row, idx) => ({ row, originalIndex: startBlue + idx })).filter((item, j, arr) => {
+        if (j === 0) return false;
+        const halfway = Math.floor(arr.length / 2);
+        const halfwayDelta = Math.abs(arr[halfway].row[2] - arr[halfway - 1].row[2]) - reference;
+        return Math.abs(item.row[2] - arr[j - 1].row[2]) > halfwayDelta;
+      });
+    data.push({
+      data: filteredBlue.map(item => item.row),
+      start: filteredBlue[0].originalIndex,
+      end: filteredBlue[filteredBlue.length - 1].originalIndex,
       color: "blue",
     });
   }
