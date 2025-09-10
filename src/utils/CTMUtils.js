@@ -49,17 +49,11 @@ const formatObjectValues = objectValue => {
 
 const splitData = (rawObject) => {
   const data = [];
-  const reference = 0.01;
   for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
     const startRed = rawObject.markersByIndex.move1[i];
     const endRed = rawObject.markersByIndex.move2[i];
     const slicedRed = rawObject.data.slice(startRed, endRed + 1);
-    const filteredRed = slicedRed.map((row, idx) => ({ row, originalIndex: startRed + idx })).filter((item, j, arr) => {
-      if (j === 0) return false;
-      const halfway = Math.floor(arr.length / 2);
-      const halfwayDelta = Math.abs(arr[halfway].row[2] - arr[halfway - 1].row[2]) - reference;
-      return Math.abs(item.row[2] - arr[j - 1].row[2]) > halfwayDelta;
-    });
+    const filteredRed = slicedRed.map((row, idx) => ({ row, originalIndex: startRed + idx })).filter(removeOddAngles);
     data.push({
       data: filteredRed.map(item => item.row),
       start: filteredRed[0].originalIndex,
@@ -69,12 +63,7 @@ const splitData = (rawObject) => {
     const startBlue = rawObject.markersByIndex.move2[i];
     const endBlue = rawObject.markersByIndex.move1[i + 1];
     const slicedBlue = rawObject.data.slice(startBlue, endBlue + 1);
-    const filteredBlue = slicedBlue.map((row, idx) => ({ row, originalIndex: startBlue + idx })).filter((item, j, arr) => {
-        if (j === 0) return false;
-        const halfway = Math.floor(arr.length / 2);
-        const halfwayDelta = Math.abs(arr[halfway].row[2] - arr[halfway - 1].row[2]) - reference;
-        return Math.abs(item.row[2] - arr[j - 1].row[2]) > halfwayDelta;
-      });
+    const filteredBlue = slicedBlue.map((row, idx) => ({ row, originalIndex: startBlue + idx })).filter(removeOddAngles);
     data.push({
       data: filteredBlue.map(item => item.row),
       start: filteredBlue[0].originalIndex,
@@ -84,6 +73,14 @@ const splitData = (rawObject) => {
   }
 
   return data;
+}
+
+const removeOddAngles = (item, i, arr) => {
+  const reference = 0.01;
+  if (i === 0) return false;
+  const halfway = Math.floor(arr.length / 2);
+  const halfwayDelta = Math.abs(arr[halfway].row[2] - arr[halfway - 1].row[2]) - reference;
+  return Math.abs(item.row[2] - arr[i - 1].row[2]) > halfwayDelta;
 }
 
 const formatRawCTMObject = rawObject => {
