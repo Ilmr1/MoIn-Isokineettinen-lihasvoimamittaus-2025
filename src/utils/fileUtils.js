@@ -1,6 +1,10 @@
 import { asserts } from "../collections/collections";
 
 export const generateFileAndDownload = (data, filename, type) => {
+  asserts.assertTypeString(data);
+  asserts.assertTypeString(filename);
+  asserts.assertTypeString(type);
+
   const file = new Blob([data], {type: type}),
   a = document.createElement("a"),
   url = URL.createObjectURL(file);

@@ -8,8 +8,9 @@ export const assertFalse = (condition, message = "Not false") => assertTrue(!con
 
 export const unreachable = (message = "Unreachable code path reached") => assertTrue(false, message);
 
-export const assertTypeArray = (array, message = "Value is array") => assertTrue(Array.isArray(array), message);
-export const assertTypeNumber = (number, message = "Value is number") => assertTrue(typeof number === "number" && !Number.isNaN(number), message);
+export const assertTypeArray = (array, message = "Value is not type array") => assertTrue(Array.isArray(array), message);
+export const assertTypeNumber = (number, message = "Value is not type of number") => assertTrue(typeof number === "number" && !Number.isNaN(number), message);
+export const assertTypeString = (string, message = "Value is not type of string") => assertTrue(typeof string === "string", message);
 export const assert2DArray = (array, message = "Value is not 2D array") => {
   assertTypeArray(array, message);
   assertTypeArray(array[0], message);
