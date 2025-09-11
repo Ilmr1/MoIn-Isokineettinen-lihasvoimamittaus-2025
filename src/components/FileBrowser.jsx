@@ -58,9 +58,9 @@ export function FileBrowser() {
     }
 
     folders.push(directoryHandler);
-    await await indexedDBUtils.setValue("file-handlers", "recent-files", folders);
+    await indexedDBUtils.setValue("file-handlers", "recent-files", folders);
 
-    setRecentFolders(recentFolders);
+    setRecentFolders(folders);
   }
 
   return (
