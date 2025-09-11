@@ -58,12 +58,14 @@ export const openDirectoryAndGetFiles = async () => {
         });
     }
   }
-  console.log(files);
+  
+  return files;
   } catch (err) {
     if (err.name !== "AbortError") {
       console.error(err);
     }
   }
+  
 }
 
 
