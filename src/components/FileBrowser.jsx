@@ -25,7 +25,6 @@ export function FileBrowser() {
         setRecentFolders(files);
     });
 
-    createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
 
     let worker;
     const sendToWorker = () => {
@@ -46,23 +45,27 @@ export function FileBrowser() {
         }
     }
 
-    const handleOpenDirectory = async() => {
-        const directoryHandle = await window.showDirectoryPicker({ id: "innovation-project", mode: "readwrite" });
-        const recentFiles = await indexedDBUtils.mutateValue("file-handlers", "recent-files", (result) => {
-            const recentArray = result || [];
-            recentArray.push(directoryHandle);
+    createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
 
-            return recentArray;
-        });
+    const handleOpenDirectory = async () => {
+        const directoryHandler = await window.showDirectoryPicker({ id: "innovation-project", mode: "readwrite" });
+        const folders = await indexedDBUtils.getValue("file-handlers", "recent-files") || [];
 
-        setRecentFolders(recentFiles);
+        for (const folder of folders) {
+            if (await folder.isSameEntry(directoryHandler)) {
+                return;
+            }
+        }
 
-        console.log(recentFiles);
+        folders.push(directoryHandler);
+        await await indexedDBUtils.setValue("file-handlers", "recent-files", folders);
+
+        setRecentFolders(recentFolders);
     }
 
     return (
         <div>
-            <button onClick={() => handleOpenDirectory()}>Open Folder</button>
+            <button onClick={handleOpenDirectory}>Open Folder</button>
             <ul>
                 <For each={recentFolders()}>{(directoryHandler, i) => (
                     <li>

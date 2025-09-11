@@ -64,9 +64,9 @@ export const mutateValue = (storeName, key, mutate) => {
   return new Promise(async (res, rej) => {
     const getStore = await openStore(storeName, "readwrite");
     const value = await storeGet(getStore, key);
-    const setStore = await openStore(storeName, "readwrite");
 
-    const result = mutate(value);
+    const result = await mutate(value);
+    const setStore = await openStore(storeName, "readwrite");
     const setRequest = setStore.put(result, key);
     setRequest.onerror = rej;
     setRequest.onsuccess = () => res(result);
