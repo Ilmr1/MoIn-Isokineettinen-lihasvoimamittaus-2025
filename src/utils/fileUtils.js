@@ -68,7 +68,24 @@ export const openDirectoryAndGetFiles = async () => {
   
 }
 
+export const askForFileAccess = async (directoryHandler, mode = "readwrite") => {
+  const opts = { mode };
+  const access = await directoryHandler.requestPermission(opts);
+  return access === "granted";
+}
 
 
+export const checkFileAccess = async (directoryHandler, mode = "readwrite") => {
+  const opts = { mode };
+  const access = await directoryHandler.queryPermission(opts);
+  return access === "granted";
+}
 
+export const checkOrGrantFileAccess = async (directoryHandler, mode = "readwrite") => {
+  const access = await checkFileAccess(directoryHandler, mode);
+  if (access) {
+    return true
+  }
 
+  return await askForFileAccess(directoryHandler, mode);
+}

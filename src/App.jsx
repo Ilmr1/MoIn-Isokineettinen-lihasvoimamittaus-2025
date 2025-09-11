@@ -1,6 +1,6 @@
 import { createResource, createSignal } from 'solid-js'
 import './App.css'
-import { CTMUtils, fileUtils } from './utils/utils';
+import { CTMUtils, fileUtils, indexedDBUtils } from './utils/utils';
 import { GenericSVGChart } from './components/GenericSVGChart.jsx';
 import { ThreeCharts } from './components/ThreeCharts.jsx';
 import { FileBrowser } from './components/FileBrowser.jsx';
@@ -17,6 +17,8 @@ function App() {
 
     return { text, formatted };
   });
+
+  indexedDBUtils.openStore("file-handlers", "readwrite");
 
   return (
     <>
