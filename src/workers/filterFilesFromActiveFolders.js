@@ -14,7 +14,7 @@ onmessage = async (message) => {
 
         filteredFiles.push({
           fileHandler,
-          name: fileHandler.name,
+          name: fileHandler.name.replace(/\.CTM$/i, ""),
           lastModifiedDate: fileHandler.lastModifiedDate,
           subjectFirstName: "first name",
           subjectLastName: "last name",

@@ -22,9 +22,9 @@ function App() {
 
   return (
     <>
-      <button onClick={() => setFileName("CTM448-bad.CTM")}>CTM448-bad.CTM</button>
+      {/* <button onClick={() => setFileName("CTM448-bad.CTM")}>CTM448-bad.CTM</button>
       <button onClick={() => setFileName("CTM448.CTM")}>CTM448.CTM</button>
-      <button onClick={() => setFileName("CTM450.CTM")}>CTM450.CTM</button>
+      <button onClick={() => setFileName("CTM450.CTM")}>CTM450.CTM</button> */}
       
       
       <br />

@@ -6,6 +6,7 @@ export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
+  const [selectedFiles, setSelectedFiles] = createSignal([]);
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
@@ -62,6 +63,16 @@ export function FileBrowser() {
 
     setRecentFolders(folders);
   }
+  
+
+
+  const handleFileSelect = (file) => {
+    const alreadySelected = selectedFiles().some(
+      (f) => f.name === file.fileHandler.name
+    );
+    if (alreadySelected) return;
+    setSelectedFiles((prev) => [...prev, file.fileHandler]);
+  }
 
   return (
     <div>
@@ -90,11 +101,23 @@ export function FileBrowser() {
           </li>
         )}</For>
         {files().map((file) => (
-          <li>
+           <li
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              handleFileSelect(file);
+            }}
+          >
             <p>{file.name} {file.measurementDate} {file.subjectFirstName} {file.subjectLastName}</p>
           </li>
         ))}
       </ul>
+      <For each={selectedFiles()}>{(fileHandler, i) =>(
+          <li key={i}>
+            {fileHandler.name}
+          </li>
+        )}
+      </For>
+      <button>parse</button>
     </div>
   );
 }
