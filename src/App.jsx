@@ -1,13 +1,14 @@
 import { createResource, createSignal } from 'solid-js'
 import './App.css'
-import { CTMUtils, fileUtils } from './utils/utils';
+import { CTMUtils, fileUtils, indexedDBUtils } from './utils/utils';
 import { GenericSVGChart } from './components/GenericSVGChart.jsx';
 import { ThreeCharts } from './components/ThreeCharts.jsx';
+import { FileBrowser } from './components/FileBrowser.jsx';
 
 
 function App() {
   const [fileName, setFileName] = createSignal("CTM448.CTM");
-
+  
   const [ctmData] = createResource(fileName, async name => {
     const text = await fileUtils.fetchCTMFileWithName(name);
     const formatted = CTMUtils.parseTextToObject(text);
@@ -17,11 +18,15 @@ function App() {
     return { text, formatted };
   });
 
+  indexedDBUtils.openStore("file-handlers", "readwrite");
+
   return (
     <>
       <button onClick={() => setFileName("CTM448-bad.CTM")}>CTM448-bad.CTM</button>
       <button onClick={() => setFileName("CTM448.CTM")}>CTM448.CTM</button>
       <button onClick={() => setFileName("CTM450.CTM")}>CTM450.CTM</button>
+      
+      
       <br />
       <Show when={ctmData()}>
         <ThreeCharts parsedCTM={ctmData().formatted} />
@@ -31,6 +36,7 @@ function App() {
         {/* <GenericSVGChart title="Angle" parsedCTM={ctmData().formatted} dataIndex={2} min={ctmData().formatted.minmax.minAngle} max={ctmData().formatted.minmax.maxAngle} /><br /> */}
         <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
         <button onClick={() => console.log(ctmData().formatted.data.map(row => row.map(val => val.toFixed(3)).join("\t")).join("\n"))}>txt</button>
+        <FileBrowser />
         <pre>
           <code>{ctmData()?.text}</code>
         </pre>

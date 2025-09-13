@@ -1,4 +1,5 @@
 import { asserts } from "../collections/collections";
+import { CTMUtils } from "./utils";
 
 export const generateFileAndDownload = (data, filename, type) => {
   asserts.assertTypeString(data);
@@ -44,4 +45,51 @@ export const fetchCTMFileWithName = async fileName => {
   const buffer = await response.arrayBuffer();
   const decoder = new TextDecoder("ISO-8859-1");
   return decoder.decode(buffer);
+}
+
+export const openDirectoryAndGetFiles = async () => {
+  try {
+    let files = [];
+    const directoryHandle = await window.showDirectoryPicker();
+    for await (const handle of directoryHandle.values()) {
+      if (handle.kind === "file") {
+        const file = await handle.getFile();
+        const text = await file.text();
+        const rawObject = CTMUtils.parseTextToObject(text);
+        files.push({
+          name: file.name,
+          rawObject
+        });
+    }
+  }
+  
+  return files;
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error(err);
+    }
+  }
+  
+}
+
+export const askForFileAccess = async (directoryHandler, mode = "readwrite") => {
+  const opts = { mode };
+  const access = await directoryHandler.requestPermission(opts);
+  return access === "granted";
+}
+
+
+export const checkFileAccess = async (directoryHandler, mode = "readwrite") => {
+  const opts = { mode };
+  const access = await directoryHandler.queryPermission(opts);
+  return access === "granted";
+}
+
+export const checkOrGrantFileAccess = async (directoryHandler, mode = "readwrite") => {
+  const access = await checkFileAccess(directoryHandler, mode);
+  if (access) {
+    return true
+  }
+
+  return await askForFileAccess(directoryHandler, mode);
 }
