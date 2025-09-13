@@ -35,6 +35,7 @@ function App() {
         {/* <GenericSVGChart title="Speed" parsedCTM={ctmData().formatted} dataIndex={1} min={ctmData().formatted.minmax.minSpeed} max={ctmData().formatted.minmax.maxSpeed} /><br /> */}
         {/* <GenericSVGChart title="Angle" parsedCTM={ctmData().formatted} dataIndex={2} min={ctmData().formatted.minmax.minAngle} max={ctmData().formatted.minmax.maxAngle} /><br /> */}
         <button onClick={() => fileUtils.generateFileAndDownload(fileUtils.formatToCSV(ctmData().formatted.data, ["Kammen voima", "Kammen nopeus", "Kammen kulma"]), "data.csv", "csv")}>CSV</button>
+        <button onClick={() => console.log(ctmData().formatted.data.map(row => row.map(val => val.toFixed(3)).join("\t")).join("\n"))}>txt</button>
         <FileBrowser />
         <pre>
           <code>{ctmData()?.text}</code>

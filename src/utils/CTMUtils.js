@@ -50,32 +50,36 @@ const formatObjectValues = objectValue => {
 const splitData = (rawObject) => {
   const data = [];
   for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
-    const startRed = rawObject.markersByIndex.move1[i];
-    const endRed = rawObject.markersByIndex.move2[i];
-    const slicedRed = rawObject.data.slice(startRed, endRed + 1);
-    const filteredRed = slicedRed.map((row, idx) => ({ row, originalIndex: startRed + idx })).filter(removeOddAngles);
+    push(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i], "red");
+    push(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1], "blue");
+  }
+
+  function push(start, end, color) {
+    for(let i = start; i < end; i++) {
+      if (rawObject.data[i + 2][0] === 0) {
+        start++;
+      } else break;
+    }
+
+    for(let i = end; i > start; i--) {
+      if (rawObject.data[i - 2][0] === 0) {
+        end--;
+      } else break;
+    }
+
+    console.log(start, end, color);
     data.push({
-      data: filteredRed.map(item => item.row),
-      start: filteredRed[0].originalIndex,
-      end: filteredRed[filteredRed.length - 1].originalIndex,
-      color: "red",
-    });
-    const startBlue = rawObject.markersByIndex.move2[i];
-    const endBlue = rawObject.markersByIndex.move1[i + 1];
-    const slicedBlue = rawObject.data.slice(startBlue, endBlue + 1);
-    const filteredBlue = slicedBlue.map((row, idx) => ({ row, originalIndex: startBlue + idx })).filter(removeOddAngles);
-    data.push({
-      data: filteredBlue.map(item => item.row),
-      start: filteredBlue[0].originalIndex,
-      end: filteredBlue[filteredBlue.length - 1].originalIndex,
-      color: "blue",
+      data: rawObject.data.slice(start, end),
+      start: start,
+      end: end,
+      color
     });
   }
 
   return data;
 }
 
-const removeOddAngles = (item, i, arr) => {
+const changedInAngle = (item, i, arr) => {
   const reference = 0.01;
   if (i === 0) return false;
   const halfway = Math.floor(arr.length / 2);
@@ -87,13 +91,114 @@ const formatRawCTMObject = rawObject => {
   const object = {};
 
   object.data = rawObject.data.map(arr => arr.map(parseFloat));
+  object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
+  object.setUp = formatRawObjectText(rawObject.SetUp);
+
+  // for (let i = 0; i < 1341; i++) {
+  //   object.data[i][0] = 0;
+  // }
+  //
+  // for (let i = 1679; i < 1800; i++) {
+  //   object.data[i][0] = 0;
+  // }
+  // const reference = 0.01;
+  // for (let i = 0; i < object.data.length - 1; i++) {
+  //   const delta = Math.abs(object.data[i][0] - object.data[i + 1][0]) + reference;
+  //   if (delta > max) {
+  //     object.data[i][0] = 0
+  //   }
+  // }
+  const delta = (i) => Math.abs(object.data[i][2] - object.data[i + 1][2]);
+
+  const fillZerosBlue = (start, end) => {
+    const half = Math.floor(start + (end - start) / 2);
+    const goodDelta = delta(half);
+    const diff = 0.208
+    for (let i = end; i > start; i--) {
+      const d = delta(i);
+      if (Math.abs(d - goodDelta) > diff) {
+        object.data[i][0] = 0;
+      } else {
+        break;
+      }
+    }
+  }
+
+  const fillZerosRed = (start, end) => {
+    for (let i = end; i > start; i--) {
+      if (object.data[i][0] < 0) {
+        object.data[i][0] = 0;
+      } else break;
+    }
+  }
+
+  const exponentialMovingAverage = (alpha) => {
+    let y = object.data[0][0];
+
+    for (let i = 1; i < object.data.length; i++) {
+      let x = object.data[i][0];
+      y = Math.trunc((y + alpha * (x - y)) * 1000) / 1000;
+      object.data[i][0] = y;
+    }
+  }
+
+
+  for (let i = 0; i <= object.markersByIndex.move1[0]; i++) {
+    object.data[i][0] = 0;
+  }
+
+  for (let i = object.markersByIndex.move1.at(-1); i < object.data.length; i++) {
+    object.data[i][0] = 0;
+  }
+
+  for (let i = 0; i < object.markersByIndex.move1.length - 1; i++) {
+    fillZerosRed(object.markersByIndex.move1[i], object.markersByIndex.move2[i]);
+    fillZerosBlue(object.markersByIndex.move2[i], object.markersByIndex.move1[i + 1]);
+  }
+
+  // exponentialMovingAverage(.4);
+
+  // let diff = 4;
+  // for (let smoothing = 1; smoothing < 30; smoothing += 1) {
+  //   const clone = [...arr];
+  //   let value = 0
+  //   for (let i = 1200; i < 2000; i++) {
+  //     let value = 0;
+  //     for (let j = 0; j <= smoothing; j++) {
+  //       value += arr[i - j];
+  //     }
+  //     // value += (clone[i] - value) / smoothing
+  //     clone[i] = value / smoothing;
+  //   }
+  //
+  //   if (diff > Math.abs(5.482 - clone[1341])) {
+  //     diff = Math.abs(5.482 - clone[1341]);
+  //   }
+  //
+  //   if (test(clone[1341], "5.482")) {
+  //     console.log("Victory", smoothing);
+  //     if (test(clone[1342], "11.226")) {
+  //       // console.log("Victory", alpha);
+  //     }
+  //   }
+  // }
+
+  // for (let i = 20; i < object.data.length - 20; i++) {
+  //   let value = 0;
+  //   for (let j = 0; j <= 20; j++) {
+  //     value += arr[i + j];
+  //   }
+  //   // value += (clone[i] - value) / smoothing
+  //   object.data[i][0] = Math.round((value / 20) * 1000) / 1000;
+  // }
+
+
+
   object.memo = cleanMemo(rawObject.memo.join("\n"));
   object.session = formatRawObjectText(rawObject.session);
   object.measurement = formatRawObjectText(rawObject.Measurement);
   object.configuration = formatRawObjectText(rawObject.Configuration);
-  object.setUp = formatRawObjectText(rawObject.SetUp);
   object.filter = formatRawObjectText(rawObject.filter);
-  object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
 
   object.splitData = splitData(object);
