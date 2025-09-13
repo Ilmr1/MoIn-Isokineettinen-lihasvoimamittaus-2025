@@ -50,17 +50,29 @@ const formatObjectValues = objectValue => {
 const splitData = (rawObject) => {
   const data = [];
   for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
+    push(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i], "red");
+    push(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1], "blue");
+  }
+
+  function push(start, end, color) {
+    for(let i = start; i < end; i++) {
+      if (rawObject.data[i + 2][0] === 0) {
+        start++;
+      } else break;
+    }
+
+    for(let i = end; i > start; i--) {
+      if (rawObject.data[i - 2][0] === 0) {
+        end--;
+      } else break;
+    }
+
+    console.log(start, end, color);
     data.push({
-      data: rawObject.data.slice(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i]),
-      start: rawObject.markersByIndex.move1[i],
-      end: rawObject.markersByIndex.move2[i],
-      color: "red",
-    });
-    data.push({
-      data: rawObject.data.slice(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1]),
-      start: rawObject.markersByIndex.move2[i],
-      end: rawObject.markersByIndex.move1[i + 1],
-      color: "blue",
+      data: rawObject.data.slice(start, end),
+      start: start,
+      end: end,
+      color
     });
   }
 
@@ -97,17 +109,6 @@ const formatRawCTMObject = rawObject => {
   //   }
   // }
   const delta = (i) => Math.abs(object.data[i][2] - object.data[i + 1][2]);
-  const filterThis = (start, end) => {
-    const reference = 0.05;
-    const halfway = Math.floor(start + (end - start) / 2);
-    const halfwayDelta = delta(halfway);
-    console.log(halfwayDelta, start, end, halfway);
-    for (let i = start; i < end; i++) {
-      if (Math.abs(delta(i) - halfwayDelta) > reference) {
-        object.data[i][0] = 0;
-      }
-    }
-  }
 
   const fillZerosBlue = (start, end) => {
     const half = Math.floor(start + (end - start) / 2);
@@ -130,6 +131,18 @@ const formatRawCTMObject = rawObject => {
       } else break;
     }
   }
+
+  const exponentialMovingAverage = (alpha) => {
+    let y = object.data[0][0];
+
+    for (let i = 1; i < object.data.length; i++) {
+      let x = object.data[i][0];
+      y = Math.trunc((y + alpha * (x - y)) * 1000) / 1000;
+      object.data[i][0] = y;
+    }
+  }
+
+
   for (let i = 0; i <= object.markersByIndex.move1[0]; i++) {
     object.data[i][0] = 0;
   }
@@ -143,12 +156,7 @@ const formatRawCTMObject = rawObject => {
     fillZerosBlue(object.markersByIndex.move2[i], object.markersByIndex.move1[i + 1]);
   }
 
-
-  const arr = object.data.map(row => row[0]);
-
-  const test = (num, string) => {
-    return num.toFixed(3) === string;
-  }
+  // exponentialMovingAverage(.4);
 
   // let diff = 4;
   // for (let smoothing = 1; smoothing < 30; smoothing += 1) {
