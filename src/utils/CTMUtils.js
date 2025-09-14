@@ -82,55 +82,27 @@ const generateCollection = (markersByIndex, points, skipZeros) => {
   return collection;
 }
 
-const averagePoints = (splits, points) => {
+const createAverageSplitCollection = (splits) => {
   const collection = {
+    startIndex: 0,
     splits: [],
   };
 
-  const averages = [];
-  let count = 0;
-
   splits.forEach(split => {
-    collection.startIndex ??= split.startIndex;
-    collection.endIndex ??= split.endIndex;
-    count++;
-    for (let i = split.startIndex; i < split.endIndex; i++) {
-      averages[i] ??= 0;
-      averages[i] += points[i];
-      collection.maxValue ??= split.maxValue;
-      collection.minValue ??= split.minValue;
-
-      if (collection.maxValue < points[i]) {
-        collection.maxValue = points[i]
-      } else if (collection.minValue > points[i]) {
-        collection.minValue = points[i]
-      }
+    const delta = split.endIndex - split.startIndex;
+    collection.endIndex ??= delta;
+    if (collection.endIndex < delta) {
+      collection.endIndex = delta;
     }
   });
 
-  function createSplit(data, color, count) {
-    let min, max;
-    return {
-      color,
-      data: data.map(val => {
-        const value = numberUtils.truncDecimals(val / count, 3)
-        if (min == undefined || min > value) {
-          min = value;
-        }
-        if (max == undefined || max < value) {
-          max = value;
-        }
-      }),
-      min,
-      max,
-      start: 0,
-      end: data.length,
-    }
-  };
+  collection.splits.push({
+    color: splits[0].color,
+    startIndex: collection.startIndex,
+    endIndex: collection.endIndex,
+  });
 
-  return [
-    createSplit(averages, "blue", count),
-  ];
+  return collection;
 }
 
 const getPointCollections = (markersByIndex, data) => {
@@ -196,8 +168,8 @@ const createSplitCollections = (markersByIndex, pointCollections) => {
     power: powerCollection,
     speed: generateCollection(markersByIndex, pointCollections.speed.points, false),
     angle: generateCollection(markersByIndex, pointCollections.angle.points, false),
-    // averagePowerExt: averagePoints(pointCollections.averagePowerExt.points, powerCollection.splits.filter(split => split.color === "blue")),
-    // averagePowerFlex: averagePoints(pointCollections.averagePowerFlex.points, powerCollection.splits.filter(split => split.color === "red")),
+    averagePowerFlex: createAverageSplitCollection(powerCollection.splits.filter(split => split.color === "blue")),
+    averagePowerExt: createAverageSplitCollection(powerCollection.splits.filter(split => split.color === "red")),
   }
 };
 
@@ -252,45 +224,6 @@ const formatRawCTMObject = rawObject => {
   object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections);
   object.setUp = formatRawObjectText(rawObject.SetUp);
 
-  // const delta = (i) => Math.abs(object.data[i][2] - object.data[i + 1][2]);
-  //
-  // const fillZerosBlue = (start, end) => {
-  //   const half = Math.floor(start + (end - start) / 2);
-  //   const goodDelta = delta(half);
-  //   const diff = 0.208
-  //   for (let i = end; i > start; i--) {
-  //     const d = delta(i);
-  //     if (Math.abs(d - goodDelta) > diff) {
-  //       object.data[i][0] = 0;
-  //     } else {
-  //       break;
-  //     }
-  //   }
-  // }
-  //
-  // const fillZerosRed = (start, end) => {
-  //   for (let i = end; i > start; i--) {
-  //     if (object.data[i][0] < 0) {
-  //       object.data[i][0] = 0;
-  //     } else break;
-  //   }
-  // }
-  //
-  //
-  // for (let i = 0; i <= object.markersByIndex.move1[0]; i++) {
-  //   object.data[i][0] = 0;
-  // }
-  //
-  // for (let i = object.markersByIndex.move1.at(-1); i < object.data.length; i++) {
-  //   object.data[i][0] = 0;
-  // }
-  //
-  // for (let i = 0; i < object.markersByIndex.move1.length - 1; i++) {
-  //   fillZerosRed(object.markersByIndex.move1[i], object.markersByIndex.move2[i]);
-  //   fillZerosBlue(object.markersByIndex.move2[i], object.markersByIndex.move1[i + 1]);
-  // }
-
-
   object.memo = cleanMemo(rawObject.memo.join("\n"));
   object.session = formatRawObjectText(rawObject.session);
   object.measurement = formatRawObjectText(rawObject.Measurement);
@@ -298,14 +231,8 @@ const formatRawCTMObject = rawObject => {
   object.filter = formatRawObjectText(rawObject.filter);
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
 
-  // object.splitData = splitData(object);
-  // object.powerSplit = splitData2(object, true, 0);
-  // object.speedSplit = splitData2(object, false, 0);
-  // object.angleSplit = splitData2(object, false, 0);
-  // object.averagePowerSplit = averageSplitValues(object.powerSplit, 0);
-  // object.minmax = minmax(object);
-
-  console.log("main object", object.splitCollections.power.splits);
+  console.log("main object", object.splitCollections.averagePowerExt);
+  console.log("main object", object.pointCollections.averagePowerExt);
 
   return object
 }

@@ -25,10 +25,10 @@ function App() {
 
   return (
     <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
+      <AverageChart listOfParsedCTM={parsedFileData} />
       <For each={parsedFileData()}>{parsedData => (
         <>
           <ThreeCharts parsedCTM={parsedData.rawObject} />
-          {/* <AverageChart parsedCTM={parsedData.rawObject} /> */}
           <br />
           {/* <GenericSVGChart title="Power" parsedCTM={ctmData().formatted} dataIndex={0} min={ctmData().formatted.minmax.minPower} max={ctmData().formatted.minmax.maxPower} /><br /> */}
           {/* <GenericSVGChart title="Speed" parsedCTM={ctmData().formatted} dataIndex={1} min={ctmData().formatted.minmax.minSpeed} max={ctmData().formatted.minmax.maxSpeed} /><br /> */}
