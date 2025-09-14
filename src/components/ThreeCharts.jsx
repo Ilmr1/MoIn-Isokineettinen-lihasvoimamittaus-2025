@@ -35,17 +35,17 @@ function Chart(props) {
 
   return (
     <>
-      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.parsedCTM.minmax.minPower, max: () => props.parsedCTM.minmax.maxPower, dataIndex: () => 0, mouseX, mouseY }}>
+      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, splitData: () => props.parsedCTM.powerSplit, min: () => props.parsedCTM.minmax.minPower, max: () => props.parsedCTM.minmax.maxPower, dataIndex: () => 0, mouseX, mouseY }}>
         <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
           <ChartWrapper title="Power" width={width - paddingLeft - paddingRight} height={height - paddingTop - paddingBottom} x={paddingLeft} y={paddingTop} />
         </svg>
       </SVGChartContext.Provider>
-      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.parsedCTM.minmax.minSpeed, max: () => props.parsedCTM.minmax.maxSpeed, dataIndex: () => 1, mouseX, mouseY }}>
+      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, splitData: () => props.parsedCTM.speedSplit, min: () => props.parsedCTM.minmax.minSpeed, max: () => props.parsedCTM.minmax.maxSpeed, dataIndex: () => 1, mouseX, mouseY }}>
         <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
           <ChartWrapper title="Speed" width={width - paddingLeft - paddingRight} height={height - paddingTop - paddingBottom} x={paddingLeft} y={paddingTop} />
         </svg>
       </SVGChartContext.Provider>
-      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.parsedCTM.minmax.minAngle, max: () => props.parsedCTM.minmax.maxAngle, dataIndex: () => 2, mouseX, mouseY }}>
+      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, splitData: () => props.parsedCTM.angleSplit, min: () => props.parsedCTM.minmax.minAngle, max: () => props.parsedCTM.minmax.maxAngle, dataIndex: () => 2, mouseX, mouseY }}>
         <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
           <ChartWrapper title="Angle" width={width - paddingLeft - paddingRight} height={height - paddingTop - paddingBottom} x={paddingLeft} y={paddingTop} />
         </svg>

@@ -79,6 +79,42 @@ const splitData = (rawObject) => {
   return data;
 }
 
+const splitData2 = (rawObject, skipZeros, index) => {
+  const data = [];
+  for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
+    filterAndPush(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i], "red");
+    filterAndPush(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1], "blue");
+  }
+
+  function filterAndPush(start, end, color) {
+    if (skipZeros) {
+      console.log("index", index)
+      for (let i = start; i < end; i++) {
+        console.log(rawObject.data[i + 2][index]);
+        if (rawObject.data[i + 2][index] === 0) {
+          start++;
+        } else break;
+      }
+
+      for (let i = end; i > start; i--) {
+        if (rawObject.data[i - 2][index] === 0) {
+          end--;
+        } else break;
+      }
+    }
+
+    data.push({
+      data: rawObject.data.slice(start, end),
+      start: start,
+      index,
+      end: end,
+      color
+    });
+  }
+
+  return data;
+}
+
 const changedInAngle = (item, i, arr) => {
   const reference = 0.01;
   if (i === 0) return false;
@@ -202,6 +238,9 @@ const formatRawCTMObject = rawObject => {
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
 
   object.splitData = splitData(object);
+  object.powerSplit = splitData2(object, true, 0);
+  object.speedSplit = splitData2(object, false, 0);
+  object.angleSplit = splitData2(object, false, 0);
   object.minmax = minmax(object);
 
   return object
