@@ -1,14 +1,15 @@
-import { createResource, createSignal } from 'solid-js'
+import { createResource, createSignal, mergeProps } from 'solid-js'
 import './App.css'
 import { CTMUtils, fileUtils, indexedDBUtils } from './utils/utils';
 import { GenericSVGChart } from './components/GenericSVGChart.jsx';
 import { ThreeCharts } from './components/ThreeCharts.jsx';
 import { FileBrowser } from './components/FileBrowser.jsx';
 import { parsedFileContext } from './providers.js';
+import { AverageChart } from './components/AverageChart.jsx';
 
 
 function App() {
-  const [fileName, setFileName] = createSignal("CTM448.CTM");
+  const [fileName, setFileName] = createSignal("CTM450.CTM");
   const [parsedFileData, setParsedFileData] = createSignal([]);
   
   const [ctmData] = createResource(fileName, async name => {
@@ -27,6 +28,7 @@ function App() {
       <For each={parsedFileData()}>{parsedData => (
         <>
           <ThreeCharts parsedCTM={parsedData.rawObject} />
+          {/* <AverageChart parsedCTM={parsedData.rawObject} /> */}
           <br />
           {/* <GenericSVGChart title="Power" parsedCTM={ctmData().formatted} dataIndex={0} min={ctmData().formatted.minmax.minPower} max={ctmData().formatted.minmax.maxPower} /><br /> */}
           {/* <GenericSVGChart title="Speed" parsedCTM={ctmData().formatted} dataIndex={1} min={ctmData().formatted.minmax.minSpeed} max={ctmData().formatted.minmax.maxSpeed} /><br /> */}

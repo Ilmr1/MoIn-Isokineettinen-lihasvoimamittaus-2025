@@ -33,7 +33,7 @@ export const openStore = (storeName, mode) => {
     request.onerror = rej;
     request.onsuccess = (evt) => {
       const db = evt.target.result;
-      asserts.assertTrue(db.objectStoreNames.contains(storeName), `Unknown store name "${storeName}"`);
+      asserts.assertTruthy(db.objectStoreNames.contains(storeName), `Unknown store name "${storeName}"`);
       const transaction = db.transaction(storeName, mode);
 
       res(transaction.objectStore(storeName));

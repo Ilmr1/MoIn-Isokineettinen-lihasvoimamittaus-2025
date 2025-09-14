@@ -4,3 +4,4 @@ export * as signalUtils from "./signalUtils.js";
 export * as CTMUtils from "./CTMUtils.js";
 export * as stringUtils from "./stringUtils.js";
 export * as indexedDBUtils from "./indexedDBUtils.js";
+export * as numberUtils from "./numberUtils.js";

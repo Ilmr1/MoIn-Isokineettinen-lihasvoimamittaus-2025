@@ -1,16 +1,13 @@
-import { createRenderEffect, createSignal } from "solid-js";
+import { createMemo, createRenderEffect, createSignal } from "solid-js";
 
 export const createAssertError = callback => {
-  const [error, setError] = createSignal();
-  createRenderEffect(() => {
+  return createMemo(() => {
     try {
       callback();
-      setError(false);
+      return false;
     } catch (e) {
       console.error(e);
-      setError(true);
+      return true;
     }
   });
-
-  return error;
 }

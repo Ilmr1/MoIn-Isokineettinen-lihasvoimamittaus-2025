@@ -1,5 +1,5 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { SVGChartContext, useSVGChartContext } from "../providers";
+import { SVGChartContext } from "../providers";
 import { chartUtils, CTMUtils, signalUtils } from "../utils/utils";
 import { asserts } from "../collections/collections";
 import "./GenericSVGChart.css";
@@ -17,9 +17,9 @@ function Chart(props) {
     asserts.assertTypeNumber(props.min, "min is not a number");
     asserts.assertTypeNumber(props.max, "max is not a number");
 
-    asserts.assertTrue(props.max >= 0, "Max on pienempi kuin 0. Saattaa aiheuttaa ongelmia keskiviivan piirrossa, jos max on pienempi kuin 0. Tutki asiaa ja tämän voi poistaa sitten");
+    asserts.assertTruthy(props.max >= 0, "Max on pienempi kuin 0. Saattaa aiheuttaa ongelmia keskiviivan piirrossa, jos max on pienempi kuin 0. Tutki asiaa ja tämän voi poistaa sitten");
 
-    asserts.assertTrue(props.dataIndex >= 0 && props.dataIndex <= 2, "dataIndex is not a number between 0-2");
+    asserts.assertTruthy(props.dataIndex >= 0 && props.dataIndex <= 2, "dataIndex is not a number between 0-2");
   });
 
   const [mouseX, setMouseX] = createSignal(-1);
@@ -80,54 +80,48 @@ export function ChartWrapper(props) {
 }
 
 export function ChartContent(props) {
-  const { mouseX, parsedCTM, splitData, min, max, dataIndex } = useSVGChartContext();
+  asserts.assertTypeNumber(props.minValue);
+  asserts.assertTypeNumber(props.maxValue);
 
-  console.log("split", dataIndex(), splitData());
-
-  const minIndex = createMemo(() => parsedCTM().minmax.minIndex);
-  const maxIndex = createMemo(() => parsedCTM().minmax.maxIndex);
+  const minIndex = createMemo(() => props.startIndex);
+  const maxIndex = createMemo(() => props.endIndex);
   const totalDataWidth = createMemo(() => maxIndex() - minIndex() + 1);
-  const totalDataHeight = createMemo(() => max() - min());
+  const totalDataHeight = createMemo(() => props.maxValue - props.minValue);
 
   const yStep = createMemo(() => props.height / totalDataHeight());
   const xStep = createMemo(() => props.width / totalDataWidth());
 
   const hover = createMemo(() => {
-    const mX = mouseX();
+    const mX = props.mouseX();
     const x = Math.round((mX - props.x) / xStep());
-    const y = parsedCTM().data[x + minIndex()]?.[dataIndex()];
+    const y = props.points[x + minIndex()];
     if (y == null || x < 0 || mX > props.x + props.width) {
       return { x: -1, y: -1, value: null };
     }
 
+
     return {
       x: props.x + x * xStep(),
-      y: props.y + chartUtils.flipYAxes(y, max()) * yStep(),
+      y: props.y + chartUtils.flipYAxes(y, props.maxValue) * yStep(),
       value: y,
       index: x + minIndex()
     };
   });
 
-  const generatePath = (points, startX) => {
-    const dI = dataIndex(), xS = xStep(), yS = yStep(), m = max();
-    return points.map((row, x) => {
-      const y = row[dI];
-      const flippedY = chartUtils.flipYAxes(y, m);
-      if (x === 0) {
-        return `M ${props.x + (startX + x) * xS} ${props.y + flippedY * yS}`;
-      }
-      return `L ${props.x + (startX + x) * xS} ${props.y + flippedY * yS}`;
-    }).join(" ");
-  }
-
   const paths = createMemo(() => {
-    const mI = minIndex();
-    return splitData().map(section => {
-      return generatePath(section.data, section.start - mI);
+    return props.splits.map(split => {
+      const xS = xStep(), yS = yStep(), m = props.maxValue;
+      const paths = [`M ${props.x + (split.startIndex - props.startIndex) * xS} ${props.y + chartUtils.flipYAxes(props.points[split.startIndex], m) * yS}`]
+      for (let x = split.startIndex + 1; x < split.endIndex; x++) {
+        const y = props.points[x];
+        const flippedY = chartUtils.flipYAxes(y, m);
+        paths.push(`L ${props.x + (x - props.startIndex) * xS} ${props.y + flippedY * yS}`);
+      }
+      return paths.join(" ");
     })
   });
 
-  const zeroLineY = createMemo(() => props.y + chartUtils.flipYAxes(0, max()) * yStep());
+  const zeroLineY = createMemo(() => props.y + chartUtils.flipYAxes(0, props.maxValue) * yStep());
 
   return (
     <>
@@ -142,7 +136,7 @@ export function ChartContent(props) {
       <line x1={hover().x} x2={hover().x} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
       <text dominant-baseline="start" text-anchor="end" x={hover().x} y={props.parentY}>{hover().index}</text>
       <For each={paths()}>{(path, i) => (
-        <path d={path} class="data" fill="none" stroke={splitData()[i()].color} />
+        <path d={path} class="data" fill="none" stroke={props.splits[i()].color} />
       )}</For>
       <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hover().y}>{hover().value}</text>
     </>

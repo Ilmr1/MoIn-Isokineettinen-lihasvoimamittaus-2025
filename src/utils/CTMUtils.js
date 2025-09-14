@@ -1,5 +1,5 @@
 import { asserts } from "../collections/collections";
-import { stringUtils } from "./utils";
+import { numberUtils, stringUtils } from "./utils";
 
 const ctmTextToRawObject = text => {
   const sections = text.split(/\[(.*)\]/g);
@@ -46,105 +46,163 @@ const formatObjectValues = objectValue => {
 };
 
 
-
-const splitData = (rawObject) => {
-  const data = [];
-  for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
-    push(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i], "red");
-    push(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1], "blue");
-  }
-
-  function push(start, end, color) {
-    for(let i = start; i < end; i++) {
-      if (rawObject.data[i + 2][0] === 0) {
-        start++;
-      } else break;
-    }
-
-    for(let i = end; i > start; i--) {
-      if (rawObject.data[i - 2][0] === 0) {
-        end--;
-      } else break;
-    }
-
-    console.log(start, end, color);
-    data.push({
-      data: rawObject.data.slice(start, end),
-      start: start,
-      end: end,
-      color
-    });
-  }
-
-  return data;
-}
-
-const splitData2 = (rawObject, skipZeros, index) => {
-  const data = [];
-  for (let i = 0; i < rawObject.markersByIndex.move1.length - 1; i++) {
-    filterAndPush(rawObject.markersByIndex.move1[i], rawObject.markersByIndex.move2[i], "red");
-    filterAndPush(rawObject.markersByIndex.move2[i], rawObject.markersByIndex.move1[i + 1], "blue");
+const generateCollection = (markersByIndex, points, skipZeros) => {
+  const collection = {
+    startIndex: markersByIndex.move1[0],
+    endIndex: markersByIndex.move1.at(-1),
+    splits: [],
+  };
+  for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
+    filterAndPush(markersByIndex.move1[i], markersByIndex.move2[i], "red");
+    filterAndPush(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
   }
 
   function filterAndPush(start, end, color) {
     if (skipZeros) {
-      console.log("index", index)
       for (let i = start; i < end; i++) {
-        console.log(rawObject.data[i + 2][index]);
-        if (rawObject.data[i + 2][index] === 0) {
+        if (points[i + 2] === 0) {
           start++;
         } else break;
       }
 
       for (let i = end; i > start; i--) {
-        if (rawObject.data[i - 2][index] === 0) {
+        if (points[i - 2] === 0) {
           end--;
         } else break;
       }
     }
 
-    data.push({
-      data: rawObject.data.slice(start, end),
-      start: start,
-      index,
-      end: end,
+    collection.splits.push({
+      startIndex: start,
+      endIndex: end,
       color
     });
   }
 
-  return data;
+  return collection;
 }
 
-const changedInAngle = (item, i, arr) => {
-  const reference = 0.01;
-  if (i === 0) return false;
-  const halfway = Math.floor(arr.length / 2);
-  const halfwayDelta = Math.abs(arr[halfway].row[2] - arr[halfway - 1].row[2]) - reference;
-  return Math.abs(item.row[2] - arr[i - 1].row[2]) > halfwayDelta;
+const averagePoints = (splits, points) => {
+  const collection = {
+    splits: [],
+  };
+
+  const averages = [];
+  let count = 0;
+
+  splits.forEach(split => {
+    collection.startIndex ??= split.startIndex;
+    collection.endIndex ??= split.endIndex;
+    count++;
+    for (let i = split.startIndex; i < split.endIndex; i++) {
+      averages[i] ??= 0;
+      averages[i] += points[i];
+      collection.maxValue ??= split.maxValue;
+      collection.minValue ??= split.minValue;
+
+      if (collection.maxValue < points[i]) {
+        collection.maxValue = points[i]
+      } else if (collection.minValue > points[i]) {
+        collection.minValue = points[i]
+      }
+    }
+  });
+
+  function createSplit(data, color, count) {
+    let min, max;
+    return {
+      color,
+      data: data.map(val => {
+        const value = numberUtils.truncDecimals(val / count, 3)
+        if (min == undefined || min > value) {
+          min = value;
+        }
+        if (max == undefined || max < value) {
+          max = value;
+        }
+      }),
+      min,
+      max,
+      start: 0,
+      end: data.length,
+    }
+  };
+
+  return [
+    createSplit(averages, "blue", count),
+  ];
 }
 
-const formatRawCTMObject = rawObject => {
-  const object = {};
+const getPointCollections = (markersByIndex, data) => {
+  const powerCollection = createPointCollection(fillZerosToPower(markersByIndex, data.map(row => row[0])));
+  return {
+    power: powerCollection,
+    speed: createPointCollection(data.map(row => row[1])),
+    angle: createPointCollection(data.map(row => row[2])),
+    averagePowerExt: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]])), powerCollection.points),
+    averagePowerFlex: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m])), powerCollection.points),
+  }
+};
 
-  object.data = rawObject.data.map(arr => arr.map(parseFloat));
-  object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
-  object.setUp = formatRawObjectText(rawObject.SetUp);
+const createPointCollection = (points) => {
+  const pointCollection = { points };
 
-  // for (let i = 0; i < 1341; i++) {
-  //   object.data[i][0] = 0;
-  // }
-  //
-  // for (let i = 1679; i < 1800; i++) {
-  //   object.data[i][0] = 0;
-  // }
-  // const reference = 0.01;
-  // for (let i = 0; i < object.data.length - 1; i++) {
-  //   const delta = Math.abs(object.data[i][0] - object.data[i + 1][0]) + reference;
-  //   if (delta > max) {
-  //     object.data[i][0] = 0
-  //   }
-  // }
-  const delta = (i) => Math.abs(object.data[i][2] - object.data[i + 1][2]);
+  for (const point of points) {
+    pointCollection.maxValue ??= point;
+    pointCollection.minValue ??= point;
+
+    if (pointCollection.maxValue < point) {
+      pointCollection.maxValue = point
+    } else if (pointCollection.minValue > point) {
+      pointCollection.minValue = point
+    }
+  }
+
+  return pointCollection;
+}
+
+const createAveragePointCollection = (indecies, points) => {
+  const averages = [];
+  const collection = { points: averages };
+  let count = 0;
+
+  indecies.forEach(([start, end]) => {
+    count++;
+    for (let i = start; i < end; i++) {
+      averages[i - start] ??= 0;
+      averages[i - start] += points[i];
+    }
+  });
+
+  for (let i = 0; i < averages.length; i++) {
+    const average = numberUtils.truncDecimals(averages[i] / count, 3);
+    averages[i] = average;
+    collection.maxValue ??= average;
+    collection.minValue ??= average;
+
+    if (collection.maxValue < average) {
+      collection.maxValue = average
+    } else if (collection.minValue > average) {
+      collection.minValue = average
+    }
+  }
+
+  return collection;
+}
+
+const createSplitCollections = (markersByIndex, pointCollections) => {
+  const powerCollection = generateCollection(markersByIndex, pointCollections.power.points, true);
+  return {
+    power: powerCollection,
+    speed: generateCollection(markersByIndex, pointCollections.speed.points, false),
+    angle: generateCollection(markersByIndex, pointCollections.angle.points, false),
+    // averagePowerExt: averagePoints(pointCollections.averagePowerExt.points, powerCollection.splits.filter(split => split.color === "blue")),
+    // averagePowerFlex: averagePoints(pointCollections.averagePowerFlex.points, powerCollection.splits.filter(split => split.color === "red")),
+  }
+};
+
+const fillZerosToPower = (markersByIndex, powerData) => {
+  const delta = (i) => Math.abs(powerData[i] - powerData[i - 1]);
 
   const fillZerosBlue = (start, end) => {
     const half = Math.floor(start + (end - start) / 2);
@@ -153,7 +211,7 @@ const formatRawCTMObject = rawObject => {
     for (let i = end; i > start; i--) {
       const d = delta(i);
       if (Math.abs(d - goodDelta) > diff) {
-        object.data[i][0] = 0;
+        powerData[i] = 0;
       } else {
         break;
       }
@@ -162,72 +220,75 @@ const formatRawCTMObject = rawObject => {
 
   const fillZerosRed = (start, end) => {
     for (let i = end; i > start; i--) {
-      if (object.data[i][0] < 0) {
-        object.data[i][0] = 0;
+      if (powerData[i] < 0) {
+        powerData[i] = 0;
       } else break;
     }
   }
 
-  const exponentialMovingAverage = (alpha) => {
-    let y = object.data[0][0];
 
-    for (let i = 1; i < object.data.length; i++) {
-      let x = object.data[i][0];
-      y = Math.trunc((y + alpha * (x - y)) * 1000) / 1000;
-      object.data[i][0] = y;
-    }
+  for (let i = 0; i <= markersByIndex.move1[0]; i++) {
+    powerData[i] = 0;
   }
 
-
-  for (let i = 0; i <= object.markersByIndex.move1[0]; i++) {
-    object.data[i][0] = 0;
+  for (let i = markersByIndex.move1.at(-1); i < powerData.length; i++) {
+    powerData[i] = 0;
   }
 
-  for (let i = object.markersByIndex.move1.at(-1); i < object.data.length; i++) {
-    object.data[i][0] = 0;
+  for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
+    fillZerosRed(markersByIndex.move1[i], markersByIndex.move2[i]);
+    fillZerosBlue(markersByIndex.move2[i], markersByIndex.move1[i + 1]);
   }
 
-  for (let i = 0; i < object.markersByIndex.move1.length - 1; i++) {
-    fillZerosRed(object.markersByIndex.move1[i], object.markersByIndex.move2[i]);
-    fillZerosBlue(object.markersByIndex.move2[i], object.markersByIndex.move1[i + 1]);
-  }
+  return powerData;
+}
 
-  // exponentialMovingAverage(.4);
+const formatRawCTMObject = rawObject => {
+  const object = {};
 
-  // let diff = 4;
-  // for (let smoothing = 1; smoothing < 30; smoothing += 1) {
-  //   const clone = [...arr];
-  //   let value = 0
-  //   for (let i = 1200; i < 2000; i++) {
-  //     let value = 0;
-  //     for (let j = 0; j <= smoothing; j++) {
-  //       value += arr[i - j];
-  //     }
-  //     // value += (clone[i] - value) / smoothing
-  //     clone[i] = value / smoothing;
-  //   }
+  object.data = rawObject.data.map(arr => arr.map(parseFloat));
+  object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
+  object.pointCollections = getPointCollections(object.markersByIndex, object.data);
+  object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections);
+  object.setUp = formatRawObjectText(rawObject.SetUp);
+
+  // const delta = (i) => Math.abs(object.data[i][2] - object.data[i + 1][2]);
   //
-  //   if (diff > Math.abs(5.482 - clone[1341])) {
-  //     diff = Math.abs(5.482 - clone[1341]);
-  //   }
-  //
-  //   if (test(clone[1341], "5.482")) {
-  //     console.log("Victory", smoothing);
-  //     if (test(clone[1342], "11.226")) {
-  //       // console.log("Victory", alpha);
+  // const fillZerosBlue = (start, end) => {
+  //   const half = Math.floor(start + (end - start) / 2);
+  //   const goodDelta = delta(half);
+  //   const diff = 0.208
+  //   for (let i = end; i > start; i--) {
+  //     const d = delta(i);
+  //     if (Math.abs(d - goodDelta) > diff) {
+  //       object.data[i][0] = 0;
+  //     } else {
+  //       break;
   //     }
   //   }
   // }
-
-  // for (let i = 20; i < object.data.length - 20; i++) {
-  //   let value = 0;
-  //   for (let j = 0; j <= 20; j++) {
-  //     value += arr[i + j];
+  //
+  // const fillZerosRed = (start, end) => {
+  //   for (let i = end; i > start; i--) {
+  //     if (object.data[i][0] < 0) {
+  //       object.data[i][0] = 0;
+  //     } else break;
   //   }
-  //   // value += (clone[i] - value) / smoothing
-  //   object.data[i][0] = Math.round((value / 20) * 1000) / 1000;
   // }
-
+  //
+  //
+  // for (let i = 0; i <= object.markersByIndex.move1[0]; i++) {
+  //   object.data[i][0] = 0;
+  // }
+  //
+  // for (let i = object.markersByIndex.move1.at(-1); i < object.data.length; i++) {
+  //   object.data[i][0] = 0;
+  // }
+  //
+  // for (let i = 0; i < object.markersByIndex.move1.length - 1; i++) {
+  //   fillZerosRed(object.markersByIndex.move1[i], object.markersByIndex.move2[i]);
+  //   fillZerosBlue(object.markersByIndex.move2[i], object.markersByIndex.move1[i + 1]);
+  // }
 
 
   object.memo = cleanMemo(rawObject.memo.join("\n"));
@@ -237,45 +298,16 @@ const formatRawCTMObject = rawObject => {
   object.filter = formatRawObjectText(rawObject.filter);
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
 
-  object.splitData = splitData(object);
-  object.powerSplit = splitData2(object, true, 0);
-  object.speedSplit = splitData2(object, false, 0);
-  object.angleSplit = splitData2(object, false, 0);
-  object.minmax = minmax(object);
+  // object.splitData = splitData(object);
+  // object.powerSplit = splitData2(object, true, 0);
+  // object.speedSplit = splitData2(object, false, 0);
+  // object.angleSplit = splitData2(object, false, 0);
+  // object.averagePowerSplit = averageSplitValues(object.powerSplit, 0);
+  // object.minmax = minmax(object);
+
+  console.log("main object", object.splitCollections.power.splits);
 
   return object
-}
-
-
-/**
- * Generate minmax object in O(n)
- * @param {Object} ctmObject
- * @param {Array<Array<Number>>} ctmObject.data
- * @param {Object} ctmObject.markersByIndex
- * @param {Array<Number>} ctmObject.markersByIndex.move1
- */
-const minmax = ctmObject => {
-  asserts.arrayNotEmpty(ctmObject.data);
-  asserts.assert2DArray(ctmObject.data);
-  asserts.assertTypeNumber(ctmObject.data[0][0]);
-
-  let minPower = ctmObject.data[0][0], maxPower = ctmObject.data[0][0],
-      minSpeed = ctmObject.data[0][1], maxSpeed = ctmObject.data[0][1],
-      minAngle = ctmObject.data[0][2], maxAngle = ctmObject.data[0][2],
-      minSplit = ctmObject.data[0][2], maxSplit = ctmObject.data[0][2];
-  const minIndex = ctmObject.markersByIndex.move1[0],
-        maxIndex = ctmObject.markersByIndex.move1.at(-1);
-
-  ctmObject.data.forEach(row => {
-    if      (row[0] < minPower) { minPower = row[0]; }
-    else if (row[0] > maxPower) { maxPower = row[0]; }
-    if      (row[1] < minSpeed) { minSpeed = row[1]; }
-    else if (row[1] > maxSpeed) { maxSpeed = row[1]; }
-    if      (row[2] < minAngle) { minAngle = row[2]; }
-    else if (row[2] > maxAngle) { maxAngle = row[2]; }
-  });
-
-  return { minPower, maxPower, minSpeed, maxSpeed, minAngle, maxAngle, minIndex, maxIndex };
 }
 
 export const parseTextToObject = text => {
@@ -285,7 +317,7 @@ export const parseTextToObject = text => {
 };
 
 export const getLegSide = CTMdata => {
-  asserts.assertTrue(CTMdata, "CTM data is missing");
+  asserts.assertTruthy(CTMdata, "CTM data is missing");
   let side = CTMdata.Configuration.side.at(-1);
   if (side === "left" || side === "right") {
     return side;
