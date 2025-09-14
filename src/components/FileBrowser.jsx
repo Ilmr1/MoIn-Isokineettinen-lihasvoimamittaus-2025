@@ -8,6 +8,12 @@ export function FileBrowser() {
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
+  const [filterText, setFilterText] = createSignal("");
+
+  const filteredFiles = () =>
+    files().filter(file=>
+      file.name.toLowerCase().includes(filterText().toLowerCase())
+    )
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
@@ -118,15 +124,20 @@ export function FileBrowser() {
               setRecentFolders(files);
             }}>delete</button>
           </li>
-        )}</For>
-        {files().map((file) => (
+        )}
+        </For>
+        <input
+          value={filterText()}
+          onInput={e => setFilterText(e.target.value)}
+        />
+        {filteredFiles().map((file) => (
            <li
             style={{ cursor: "pointer" }}
             onClick={() => {
               handleFileSelect(file);
             }}
           >
-            <p>{file.name} {file.measurementDate} {file.subjectFirstName} {file.subjectLastName}</p>
+            <p>{file.name} {file.lastModifiedDate} {file.subjectFirstName} {file.subjectLastName}</p>
           </li>
         ))}
       </ul>
