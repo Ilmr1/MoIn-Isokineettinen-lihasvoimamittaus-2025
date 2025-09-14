@@ -2,6 +2,7 @@ import { createRenderEffect, createSignal, on } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
+import { useParsedFiles } from "../providers";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -9,6 +10,7 @@ export function FileBrowser() {
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
   const [filterText, setFilterText] = createSignal("");
+  const { setParsedFileData } = useParsedFiles();
 
   const filteredFiles = () =>
     files().filter(file=>
@@ -55,17 +57,18 @@ export function FileBrowser() {
   let worker2;
   const sendFilesToParse = () => {
     if (window.Worker) {
-        worker2 = worker2 instanceof Worker ? worker2 : new parseSelectedFiles();
-        
-        worker2.postMessage({
-            filesToParse: selectedFiles(),
-        });
+      worker2 = worker2 instanceof Worker ? worker2 : new parseSelectedFiles();
 
-        worker2.onmessage = async message => {
-            if (message.data.type === "parsedFiles") {
-                console.log(message.data.files)
-            }
+      worker2.postMessage({
+        filesToParse: selectedFiles(),
+      });
+
+      worker2.onmessage = async message => {
+        if (message.data.type === "parsedFiles") {
+          console.log(message.data.files)
+          setParsedFileData(message.data.files);
         }
+      }
     }
   }
 
@@ -87,7 +90,7 @@ export function FileBrowser() {
 
     setRecentFolders(folders);
   }
-  
+
 
 
   const handleFileSelect = (file) => {
@@ -131,7 +134,7 @@ export function FileBrowser() {
           onInput={e => setFilterText(e.target.value)}
         />
         {filteredFiles().map((file) => (
-           <li
+          <li
             style={{ cursor: "pointer" }}
             onClick={() => {
               handleFileSelect(file);
@@ -142,10 +145,10 @@ export function FileBrowser() {
         ))}
       </ul>
       <For each={selectedFiles()}>{(fileHandler, i) =>(
-          <li key={i}>
-            {fileHandler.name}
-          </li>
-        )}
+        <li key={i}>
+          {fileHandler.name}
+        </li>
+      )}
       </For>
       <button onClick={sendFilesToParse}>parse</button>
     </div>
