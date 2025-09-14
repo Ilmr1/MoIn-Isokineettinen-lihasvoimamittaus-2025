@@ -47,30 +47,7 @@ export const fetchCTMFileWithName = async fileName => {
   return decoder.decode(buffer);
 }
 
-export const openDirectoryAndGetFiles = async () => {
-  try {
-    let files = [];
-    const directoryHandle = await window.showDirectoryPicker();
-    for await (const handle of directoryHandle.values()) {
-      if (handle.kind === "file") {
-        const file = await handle.getFile();
-        const text = await file.text();
-        const rawObject = CTMUtils.parseTextToObject(text);
-        files.push({
-          name: file.name,
-          rawObject
-        });
-    }
-  }
-  
-  return files;
-  } catch (err) {
-    if (err.name !== "AbortError") {
-      console.error(err);
-    }
-  }
-  
-}
+
 
 export const askForFileAccess = async (directoryHandler, mode = "readwrite") => {
   const opts = { mode };

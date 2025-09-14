@@ -1,6 +1,7 @@
 import { createRenderEffect, createSignal, on } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
+import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -45,8 +46,25 @@ export function FileBrowser() {
       }
     }
   }
+  let worker2;
+  const sendFilesToParse = () => {
+    if (window.Worker) {
+        worker2 = worker2 instanceof Worker ? worker2 : new parseSelectedFiles();
+        
+        worker2.postMessage({
+            filesToParse: selectedFiles(),
+        });
+
+        worker2.onmessage = async message => {
+            if (message.data.type === "parsedFiles") {
+                console.log(message.data.files)
+            }
+        }
+    }
+  }
 
   createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
+
 
   const handleOpenDirectory = async () => {
     const directoryHandler = await window.showDirectoryPicker({ id: "innovation-project", mode: "readwrite" });
@@ -71,6 +89,7 @@ export function FileBrowser() {
       (f) => f.name === file.fileHandler.name
     );
     if (alreadySelected) return;
+    console.log(file.fileHandler)
     setSelectedFiles((prev) => [...prev, file.fileHandler]);
   }
 
@@ -117,7 +136,7 @@ export function FileBrowser() {
           </li>
         )}
       </For>
-      <button>parse</button>
+      <button onClick={sendFilesToParse}>parse</button>
     </div>
   );
 }

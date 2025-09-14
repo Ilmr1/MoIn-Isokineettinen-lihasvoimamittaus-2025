@@ -45,10 +45,11 @@ onmessage = async (message) => {
 
 async function* getFilesRecursively(entry) {
   if (entry.kind === "file") {
-    const file = await entry.getFile();
+    yield entry;
+    /* const file = await entry.getFile();
     if (file !== null) {
       yield file;
-    }
+    } */
   } else if (entry.kind === "directory") {
     for await (const handle of entry.values()) {
       yield* getFilesRecursively(handle);
