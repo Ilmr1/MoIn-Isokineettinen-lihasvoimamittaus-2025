@@ -106,15 +106,84 @@ const createAverageSplitCollection = (splits) => {
 }
 
 const getPointCollections = (markersByIndex, data) => {
-  const powerCollection = createPointCollection(fillZerosToPower(markersByIndex, data.map(row => row[0])));
+  const angleCollection = createPointCollection(data.map(row => row[2]));
+  const powerCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
   return {
     power: powerCollection,
     speed: createPointCollection(data.map(row => row[1])),
-    angle: createPointCollection(data.map(row => row[2])),
-    averagePowerExt: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]])), powerCollection.points),
-    averagePowerFlex: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m])), powerCollection.points),
+    angle: angleCollection,
+    averagePowerFlex: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]])), powerCollection.points),
+    averagePowerExt: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m])), powerCollection.points),
   }
 };
+
+// TODO: Change the chatGPT implementation :D
+function createLowpass11Hz(sampleRate) {
+  if (!sampleRate || sampleRate <= 0) throw new Error('sampleRate must be > 0');
+
+  const fc = 11.0; // cutoff in Hz
+  const omega = 2 * Math.PI * fc;
+  const alpha = omega / (sampleRate + omega); // alpha = 2πfc / (fs + 2πfc)
+
+  let y = 0.0; // filter state (previous output)
+  let initialized = false;
+
+  return {
+    // process one sample (x). Returns filtered sample (y).
+    process(x) {
+      if (!initialized) {
+        // initialize to first input to avoid startup transient
+        y = x;
+        initialized = true;
+      } else {
+        y = y + alpha * (x - y); // single-pole IIR
+      }
+      return y;
+    },
+
+    // optional: reset filter state (defaults to 0 or provided value)
+    reset(value = 0.0) {
+      y = value;
+      initialized = value !== 0.0;
+    },
+
+    // expose alpha for diagnostics
+    getAlpha() {
+      return alpha;
+    }
+  };
+}
+
+const filterByStartEndAndPoints = (start, end, points) => {
+  const filter = createLowpass11Hz(256);
+  let highestPoint = Math.floor(start + (end - start) / 2);
+  let max;
+  for (let i = start; i < end; i++) {
+    max ??= points[i];
+    if (Math.abs(points[i]) > max) {
+      max = Math.abs(points[i]);
+      highestPoint = i;
+    }
+  }
+  for (let i = start; i <= highestPoint; i++) {
+    points[i] = filter.process(points[i]);
+  }
+
+  filter.reset(0);
+
+  for (let i = end; i >= highestPoint; i--) {
+    points[i] = filter.process(points[i]);
+  }
+}
+
+const lowpass11Hz= (markersByIndex, points) => {
+  for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
+    filterByStartEndAndPoints(markersByIndex.move1[i], markersByIndex.move2[i], points);
+    filterByStartEndAndPoints(markersByIndex.move2[i], markersByIndex.move1[i + 1], points);
+  }
+
+  return points;
+}
 
 const createPointCollection = (points) => {
   const pointCollection = { points };
@@ -173,13 +242,13 @@ const createSplitCollections = (markersByIndex, pointCollections) => {
   }
 };
 
-const fillZerosToPower = (markersByIndex, powerData) => {
-  const delta = (i) => Math.abs(powerData[i] - powerData[i - 1]);
+const fillZerosToPower = (markersByIndex, powerData, angleData) => {
+  const delta = (i) => Math.abs(angleData[i] - angleData[i - 1]);
 
   const fillZerosBlue = (start, end) => {
     const half = Math.floor(start + (end - start) / 2);
     const goodDelta = delta(half);
-    const diff = 0.208
+    const diff = 0.1
     for (let i = end; i > start; i--) {
       const d = delta(i);
       if (Math.abs(d - goodDelta) > diff) {
