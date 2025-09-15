@@ -166,13 +166,13 @@ const filterByStartEndAndPoints = (start, end, points) => {
     }
   }
   for (let i = start; i <= highestPoint; i++) {
-    points[i] = filter.process(points[i]);
+    points[i] = numberUtils.truncDecimals(filter.process(points[i]), 3);
   }
 
   filter.reset(0);
 
   for (let i = end; i >= highestPoint; i--) {
-    points[i] = filter.process(points[i]);
+    points[i] = numberUtils.truncDecimals(filter.process(points[i]), 3);
   }
 }
 
