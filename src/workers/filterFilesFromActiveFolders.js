@@ -11,13 +11,19 @@ onmessage = async (message) => {
   for (const folderHandler of activeFolders) {
     for await (const fileHandler of getFilesRecursively(folderHandler)) {
       if (fileHandler.name.endsWith(".CTM")) {
-
+        const file = await fileHandler.getFile();
+        const text = await file.text();
+        const parsedFile = parseCTMForFiltering(text);
+        const measurement = parsedFile.Measurement;
+        const session = parsedFile.session;
         filteredFiles.push({
           fileHandler,
           name: fileHandler.name.replace(/\.CTM$/i, ""),
-          lastModifiedDate: fileHandler.lastModifiedDate,
-          subjectFirstName: "first name",
-          subjectLastName: "last name",
+          measurementType: measurement.name,
+          date: measurement["date (dd/mm/yyyy)"],
+          time: measurement["time (hh/mm/ss)"],
+          subjectFirstName: session["subject name first"],
+          subjectLastName: session
         });
         // console.log("From worker", fileHandler);
       }
@@ -55,5 +61,21 @@ async function* getFilesRecursively(entry) {
       yield* getFilesRecursively(handle);
     }
   }
+}
+
+function parseCTMForFiltering(text) {
+  
+  const sections = text.split(/\[(.*)\]/g);
+  const filteredObject = {}
+
+  for (let i = 1; i < sections.length; i += 2) {
+    const header = sections[i];
+    if (header === "Measurement" || header === "session"){
+      const data = sections[i + 1];
+      const rows = data.replaceAll("\r", "").trim().split("\n").map(row => row.trim().split("\t"));
+      filteredObject[header] = Object.fromEntries(rows.filter(row => row.length > 1))
+    }
+  }
+  return filteredObject;
 }
 

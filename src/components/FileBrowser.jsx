@@ -140,7 +140,7 @@ export function FileBrowser() {
               handleFileSelect(file);
             }}
           >
-            <p>{file.name} {file.lastModifiedDate} {file.subjectFirstName} {file.subjectLastName}</p>
+            <p>{file.name} {file.date} {file.time} {file.subjectLastName}</p>
           </li>
         ))}
       </ul>
