@@ -150,6 +150,7 @@ export function FileBrowser() {
         </li>
       )}
       </For>
+      <button onClick={() => setSelectedFiles([])}>clear</button>
       <button onClick={sendFilesToParse}>parse</button>
     </div>
   );
