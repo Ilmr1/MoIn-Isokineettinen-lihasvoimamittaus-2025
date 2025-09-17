@@ -133,21 +133,26 @@ export function FileBrowser() {
           value={filterText()}
           onInput={e => setFilterText(e.target.value)}
         />
-        {fileNameFilter().map((file) => (
-          <li
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              handleFileSelect(file);
-            }}
-          >
-            <p>{file.name} {file.date} {file.time} {file.subjectLastName}</p>
-          </li>
-        ))}
       </ul>
+      <For each={fileNameFilter()}>
+        {(file) => (
+          <ul>
+            <li
+              style={{ cursor: "pointer" }}
+              onClick={() => handleFileSelect(file)}
+            >
+              <p>{file.name} {file.date} {file.time} {file.subjectLastName}</p>
+            </li>
+          </ul>
+        )}
+      </For>
+    
       <For each={selectedFiles()}>{(fileHandler) =>(
-        <li>
-          {fileHandler.name}
-        </li>
+        <ul>
+          <li>
+            {fileHandler.name}
+          </li>
+        </ul>
       )}
       </For>
       <button onClick={sendFilesToParse}>parse</button>
