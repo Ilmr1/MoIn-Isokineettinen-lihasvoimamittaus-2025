@@ -12,7 +12,7 @@ export function FileBrowser() {
   const [filterText, setFilterText] = createSignal("");
   const { setParsedFileData } = useParsedFiles();
 
-  const filteredFiles = () =>
+  const fileNameFilter = () =>
     files().filter(file=>
       file.name.toLowerCase().includes(filterText().toLowerCase())
     )
@@ -133,7 +133,7 @@ export function FileBrowser() {
           value={filterText()}
           onInput={e => setFilterText(e.target.value)}
         />
-        {filteredFiles().map((file) => (
+        {fileNameFilter().map((file) => (
           <li
             style={{ cursor: "pointer" }}
             onClick={() => {
@@ -144,8 +144,8 @@ export function FileBrowser() {
           </li>
         ))}
       </ul>
-      <For each={selectedFiles()}>{(fileHandler, i) =>(
-        <li key={i}>
+      <For each={selectedFiles()}>{(fileHandler) =>(
+        <li>
           {fileHandler.name}
         </li>
       )}

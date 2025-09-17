@@ -23,7 +23,7 @@ onmessage = async (message) => {
           date: measurement["date (dd/mm/yyyy)"],
           time: measurement["time (hh/mm/ss)"],
           subjectFirstName: session["subject name first"],
-          subjectLastName: session
+          subjectLastName: session["subject name"]
         });
         // console.log("From worker", fileHandler);
       }
