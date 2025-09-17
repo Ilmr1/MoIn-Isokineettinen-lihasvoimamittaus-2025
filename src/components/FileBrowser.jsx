@@ -1,4 +1,4 @@
-import { createRenderEffect, createSignal, on } from "solid-js";
+import { createRenderEffect, createSignal, on, Show } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
@@ -9,6 +9,7 @@ export function FileBrowser() {
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
+  const [searchTriggered, setSearchTriggered] = createSignal(false);
   const [filterText, setFilterText] = createSignal("");
   const { setParsedFileData } = useParsedFiles();
 
@@ -104,58 +105,66 @@ export function FileBrowser() {
 
   return (
     <div>
-      <button onClick={handleOpenDirectory}>Open Folder</button>
-      <ul>
-        <For each={recentFolders()}>{(directoryHandler, i) => (
-          <li>
-            <span>{directoryHandler.name} </span>
-            <button onClick={async () => {
-              const access = await fileUtils.checkOrGrantFileAccess(directoryHandler, "readwrite");
-              if (!access) {
-                return;
-              }
+      <div> {/* folder management & pre-load files  */}
+        <button onClick={handleOpenDirectory}>Open Folder</button>
+        <ul>
+          <For each={recentFolders()}>{(directoryHandler, i) => (
+            <li>
+              <span>{directoryHandler.name} </span>
+              <button onClick={async () => {
+                const access = await fileUtils.checkOrGrantFileAccess(directoryHandler, "readwrite");
+                if (!access) {
+                  return;
+                }
 
-              setFoldersThatHaveAccess(folders => [...folders, directoryHandler]);
-            }}>load</button>
-            <button onClick={async () => {
-              const files = await indexedDBUtils.mutateValue("file-handlers", "recent-files", result => {
-                const recentFiles = result || [];
-                recentFiles.splice(i(), 1);
-                return recentFiles;
-              });
+                setFoldersThatHaveAccess(folders => [...folders, directoryHandler]);
+              }}>load</button>
+              <button onClick={async () => {
+                const files = await indexedDBUtils.mutateValue("file-handlers", "recent-files", result => {
+                  const recentFiles = result || [];
+                  recentFiles.splice(i(), 1);
+                  return recentFiles;
+                });
 
-              setRecentFolders(files);
-            }}>delete</button>
-          </li>
-        )}
+                setRecentFolders(files);
+              }}>delete</button>
+            </li>
+          )}
+          </For>
+        </ul>
+          <input
+            value={filterText()}
+            onInput={e => setFilterText(e.target.value)}
+          />
+        <button onClick={() => setSearchTriggered(true)}>search</button>
+        <button onClick={() => setSearchTriggered(false)}>clear</button>
+    </div>
+    <div> {/* show files after name search */}
+      <Show when={searchTriggered()}>
+        <For each={fileNameFilter()}>
+          {(file) => (
+            <ul>
+              <li
+                style={{ cursor: "pointer" }}
+                onClick={() => handleFileSelect(file)}
+              >
+                <p>{file.name} {file.date} {file.time} {file.subjectLastName}</p>
+              </li>
+            </ul>
+          )}
         </For>
-        <input
-          value={filterText()}
-          onInput={e => setFilterText(e.target.value)}
-        />
-      </ul>
-      <For each={fileNameFilter()}>
-        {(file) => (
+      
+        <For each={selectedFiles()}>{(fileHandler) =>(
           <ul>
-            <li
-              style={{ cursor: "pointer" }}
-              onClick={() => handleFileSelect(file)}
-            >
-              <p>{file.name} {file.date} {file.time} {file.subjectLastName}</p>
+            <li>
+              {fileHandler.name}
             </li>
           </ul>
         )}
-      </For>
-    
-      <For each={selectedFiles()}>{(fileHandler) =>(
-        <ul>
-          <li>
-            {fileHandler.name}
-          </li>
-        </ul>
-      )}
-      </For>
-      <button onClick={sendFilesToParse}>parse</button>
+        </For>
+        <button onClick={sendFilesToParse}>parse</button>
+      </Show>
     </div>
+  </div>
   );
 }
