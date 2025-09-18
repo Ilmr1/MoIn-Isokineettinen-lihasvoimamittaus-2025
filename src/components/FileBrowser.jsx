@@ -1,17 +1,35 @@
-import { createRenderEffect, createSignal, on, Show } from "solid-js";
+import { createMemo, createRenderEffect, createSignal, on, Show } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import { useParsedFiles } from "../providers";
+import { addEventListener } from "solid-js/web";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
-  const [searchTriggered, setSearchTriggered] = createSignal(false);
+  const [filterByLastName, setFilterByLastName] = createSignal("");
+  const [filterByFirstName, setFilterByFirstName] = createSignal("");
+  const [firstNameInput, setFirstNameInput] = createSignal("");
+  const [lastNameInput, setLastNameInput] = createSignal("");
   const [filterText, setFilterText] = createSignal("");
   const { setParsedFileData } = useParsedFiles();
+
+  const filesMemo = createMemo(() => {
+    if (!filterByLastName() || !filterByFirstName()){
+      return;
+    }
+    return files().filter((file) => {
+      const firstName = file.subjectFirstName.toLowerCase() ?? "";
+      const lastName = file.subjectLastName.toLowerCase() ?? "";
+      return (
+        (!filterByFirstName() || firstName === filterByFirstName()) &&
+        (!filterByLastName() || lastName === filterByLastName())
+      );
+    });
+  });
 
   const fileNameFilter = () =>
     files().filter(file=>
@@ -92,7 +110,7 @@ export function FileBrowser() {
     setRecentFolders(folders);
   }
 
-
+ 
 
   const handleFileSelect = (file) => {
     const alreadySelected = selectedFiles().some(
@@ -102,6 +120,13 @@ export function FileBrowser() {
     console.log(file.fileHandler)
     setSelectedFiles((prev) => [...prev, file.fileHandler]);
   }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFilterByFirstName(firstNameInput().trim().toLowerCase());
+    setFilterByLastName(lastNameInput().trim().toLowerCase());
+  }
+
 
   return (
     <div>
@@ -132,16 +157,27 @@ export function FileBrowser() {
           )}
           </For>
         </ul>
-          <input
-            value={filterText()}
-            onInput={e => setFilterText(e.target.value)}
-          />
-        <button onClick={() => setSearchTriggered(true)}>search</button>
-        <button onClick={() => setSearchTriggered(false)}>clear</button>
+          <form onSubmit={handleSubmit}> 
+            <input
+              type="text"
+              placeholder="First name"
+              value={firstNameInput()}
+              onInput={(e) => setFirstNameInput(e.currentTarget.value)}
+            />
+            <input 
+              type="text"
+              placeholder="Last Name"
+              value={lastNameInput()}
+              onInput={(e) => setLastNameInput(e.currentTarget.value)}
+            />
+            <button type="submit">Search</button>
+            
+          </form>
     </div>
+
     <div> {/* show files after name search */}
-      <Show when={searchTriggered()}>
-        <For each={fileNameFilter()}>
+      <Show when={filesMemo()}>
+        <For each={filesMemo()}>
           {(file) => (
             <ul>
               <li
@@ -162,8 +198,8 @@ export function FileBrowser() {
           </ul>
         )}
         </For>
-        <button onClick={sendFilesToParse}>parse</button>
       </Show>
+      <button onClick={sendFilesToParse}>parse</button>
     </div>
   </div>
   );
