@@ -108,12 +108,19 @@ const createAverageSplitCollection = (splits) => {
 const getPointCollections = (markersByIndex, data) => {
   const angleCollection = createPointCollection(data.map(row => row[2]));
   const powerCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
+  const flexIndecis = markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]]));
+  const extIndecis = markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m]));
+  const averagePowerFlexCollection = createAveragePointCollection(flexIndecis, powerCollection.points);
+  const averagePowerExtCollection = createAveragePointCollection(extIndecis, powerCollection.points);
+
   return {
     power: powerCollection,
     speed: createPointCollection(data.map(row => row[1])),
     angle: angleCollection,
-    averagePowerFlex: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]])), powerCollection.points),
-    averagePowerExt: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m])), powerCollection.points),
+    averagePowerFlex: averagePowerFlexCollection,
+    averagePowerExt: averagePowerExtCollection,
+    averagePowerFlexError: createAverageErrorPointCollection(flexIndecis, powerCollection.points, averagePowerFlexCollection.points, 1),
+    averagePowerExtError: createAverageErrorPointCollection(extIndecis, powerCollection.points, averagePowerExtCollection.points, 1),
   }
 };
 
@@ -227,6 +234,42 @@ const createAveragePointCollection = (indecies, points) => {
       collection.minValue = average
     }
   }
+
+  return collection;
+}
+
+const createAverageErrorPointCollection = (indecies, points, averagePoints, errorPercentage) => {
+  const highs = Array(averagePoints.length).fill(0);
+  const lows = Array(averagePoints.length).fill(0);
+  let minValue, maxValue;
+  const collection = { points: [highs, lows] };
+
+  indecies.forEach(([start, end]) => {
+    for (let i = start; i < end; i++) {
+      const delta = numberUtils.delta(points[i], averagePoints[i - start]);
+      if (delta < 0) {
+        lows[i - start] = Math.min(lows[i - start], delta);
+      } else {
+        highs[i - start] = Math.max(highs[i - start], delta);
+      }
+    }
+  });
+
+  asserts.assertTruthy(highs.length === lows.length, "Lengths miss match");
+  asserts.assertTruthy(averagePoints.length === lows.length, "Lengths miss match");
+  asserts.assertTruthy(errorPercentage >= 0 && errorPercentage <= 1, "Invalid error rate");
+
+  for (let i = 0; i < averagePoints.length; i++) {
+    asserts.assertTruthy(highs[i] >= 0);
+    asserts.assertTruthy(lows[i] <= 0);
+    highs[i] = numberUtils.truncDecimals(averagePoints[i] + highs[i] * errorPercentage, 3);
+    lows[i] = numberUtils.truncDecimals(averagePoints[i] + lows[i] * errorPercentage, 3);
+    minValue = numberUtils.min(minValue, lows[i]);
+    maxValue = numberUtils.max(maxValue, highs[i]);
+  }
+
+  collection.minValue = minValue;
+  collection.maxValue = maxValue;
 
   return collection;
 }
