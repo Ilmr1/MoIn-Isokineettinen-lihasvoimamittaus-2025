@@ -46,7 +46,7 @@ const formatObjectValues = objectValue => {
 };
 
 
-const generateCollection = (markersByIndex, points, skipZeros) => {
+const createSplitCollection = (markersByIndex, points, skipZeros) => {
   const collection = {
     startIndex: markersByIndex.move1[0],
     endIndex: markersByIndex.move1.at(-1),
@@ -66,7 +66,7 @@ const generateCollection = (markersByIndex, points, skipZeros) => {
       }
 
       for (let i = end; i > start; i--) {
-        if (points[i - 2] === 0) {
+        if (points[i - 3] === 0) {
           end--;
         } else break;
       }
@@ -89,7 +89,7 @@ const createAverageSplitCollection = (splits) => {
   };
 
   splits.forEach(split => {
-    const delta = split.endIndex - split.startIndex;
+    const delta = (split.endIndex - split.startIndex) - 1;
     collection.endIndex ??= delta;
     if (collection.endIndex < delta) {
       collection.endIndex = delta;
@@ -105,9 +105,15 @@ const createAverageSplitCollection = (splits) => {
   return collection;
 }
 
-const getPointCollections = (markersByIndex, data) => {
+const createPointCollections = (markersByIndex, data, dataFiltering) => {
   const angleCollection = createPointCollection(data.map(row => row[2]));
-  const powerCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
+  let powerCollection;
+  if (dataFiltering) {
+    powerCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
+  } else {
+    powerCollection = createPointCollection(data.map(row => row[0]));
+  }
+
   const flexIndecis = markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]]));
   const extIndecis = markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m]));
   const averagePowerFlexCollection = createAveragePointCollection(flexIndecis, powerCollection.points);
@@ -260,8 +266,6 @@ const createAverageErrorPointCollection = (indecies, points, averagePoints, erro
   asserts.assertTruthy(errorPercentage >= 0 && errorPercentage <= 1, "Invalid error rate");
 
   for (let i = 0; i < averagePoints.length; i++) {
-    asserts.assertTruthy(highs[i] >= 0);
-    asserts.assertTruthy(lows[i] <= 0);
     highs[i] = numberUtils.truncDecimals(averagePoints[i] + highs[i] * errorPercentage, 3);
     lows[i] = numberUtils.truncDecimals(averagePoints[i] + lows[i] * errorPercentage, 3);
     minValue = numberUtils.min(minValue, lows[i]);
@@ -274,12 +278,12 @@ const createAverageErrorPointCollection = (indecies, points, averagePoints, erro
   return collection;
 }
 
-const createSplitCollections = (markersByIndex, pointCollections) => {
-  const powerCollection = generateCollection(markersByIndex, pointCollections.power.points, true);
+const createSplitCollections = (markersByIndex, pointCollections, dataFiltering) => {
+  const powerCollection = createSplitCollection(markersByIndex, pointCollections.power.points, dataFiltering);
   return {
     power: powerCollection,
-    speed: generateCollection(markersByIndex, pointCollections.speed.points, false),
-    angle: generateCollection(markersByIndex, pointCollections.angle.points, false),
+    speed: createSplitCollection(markersByIndex, pointCollections.speed.points, false),
+    angle: createSplitCollection(markersByIndex, pointCollections.angle.points, false),
     averagePowerFlex: createAverageSplitCollection(powerCollection.splits.filter(split => split.color === "blue")),
     averagePowerExt: createAverageSplitCollection(powerCollection.splits.filter(split => split.color === "red")),
   }
@@ -327,13 +331,13 @@ const fillZerosToPower = (markersByIndex, powerData, angleData) => {
   return powerData;
 }
 
-const formatRawCTMObject = rawObject => {
+const formatRawCTMObject = (rawObject, dataFiltering) => {
   const object = {};
 
   object.data = rawObject.data.map(arr => arr.map(parseFloat));
   object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
-  object.pointCollections = getPointCollections(object.markersByIndex, object.data);
-  object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections);
+  object.pointCollections = createPointCollections(object.markersByIndex, object.data, dataFiltering);
+  object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections, dataFiltering);
   object.setUp = formatRawObjectText(rawObject.SetUp);
 
   object.memo = cleanMemo(rawObject.memo.join("\n"));
@@ -343,15 +347,12 @@ const formatRawCTMObject = rawObject => {
   object.filter = formatRawObjectText(rawObject.filter);
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
 
-  console.log("main object", object.splitCollections.averagePowerExt);
-  console.log("main object", object.pointCollections.averagePowerExt);
-
   return object
 }
 
-export const parseTextToObject = text => {
+export const parseTextToObject = (text, dataFiltering) => {
   const object = ctmTextToRawObject(text);
-  const formatted = formatRawCTMObject(object);
+  const formatted = formatRawCTMObject(object, dataFiltering);
   return formatted;
 };
 

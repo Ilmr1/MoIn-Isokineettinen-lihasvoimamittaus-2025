@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
 import { SVGChartContext } from "../providers";
-import { chartUtils, CTMUtils, signalUtils } from "../utils/utils";
-import { asserts } from "../collections/collections";
+import { chartUtils, CTMUtils } from "../utils/utils";
+import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
 
 export function GenericSVGChart(props) {
@@ -13,7 +13,7 @@ export function GenericSVGChart(props) {
 }
 
 function Chart(props) {
-  const error = signalUtils.createAssertError(() => {
+  const error = signals.assertError(() => {
     asserts.assertTypeNumber(props.min, "min is not a number");
     asserts.assertTypeNumber(props.max, "max is not a number");
 
@@ -237,16 +237,18 @@ export function ChartErrorBands(props) {
     const xStep = props.width / totalDataWidth;
 
     return props.splits.map(split => {
-      const paths = [`M ${x + (split.startIndex - split.startIndex) * xStep} ${y + chartUtils.flipYAxes(points[0][split.startIndex], maxValue) * yStep}`];
-      for (let i = split.startIndex + 1; i < split.endIndex; i++) {
+      const paths = [`M ${x} ${y + chartUtils.flipYAxes(points[0][split.startIndex], maxValue) * yStep}`];
+      for (let i = split.startIndex + 1; i <= split.endIndex; i++) {
         const flippedY = chartUtils.flipYAxes(points[0][i], maxValue);
         paths.push(`L ${x + (i - split.startIndex) * xStep} ${y + flippedY * yStep}`);
       }
 
-      for (let i = split.endIndex; i > split.startIndex; i--) {
+      for (let i = split.endIndex; i >= split.startIndex; i--) {
         const flippedY = chartUtils.flipYAxes(points[1][i], maxValue);
         paths.push(`L ${x + (i - split.startIndex) * xStep} ${y + flippedY * yStep}`);
       }
+
+      paths.push("Z");
 
       return paths.join(" ");
     });

@@ -25,6 +25,7 @@ function App() {
 
   return (
     <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
+      <FileBrowser />
       <AverageChart listOfParsedCTM={parsedFileData} />
       <For each={parsedFileData()}>{parsedData => (
         <>
@@ -38,7 +39,6 @@ function App() {
           <br />
         </>
       )}</For>
-      <FileBrowser />
       <pre>
         <code>{ctmData()?.text}</code>
       </pre>
