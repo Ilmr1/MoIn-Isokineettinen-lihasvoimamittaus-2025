@@ -9,6 +9,7 @@ export const assertFalse = (condition, message = "Not false") => assertTruthy(!c
 export const unreachable = (message = "Unreachable code path reached") => assertTruthy(false, message);
 
 export const assertTypeArray = (array, message = "Value is not type array") => assertTruthy(Array.isArray(array), message);
+export const assertTypeFunction = (fn, message = "Value is not type function") => assertTruthy(typeof fn === "function", message);
 export const assertTypeNumber = (number, message = "Value is not type of number") => assertTruthy(typeof number === "number" && !Number.isNaN(number), message);
 export const assertTypeString = (string, message = "Value is not type of string") => assertTruthy(typeof string === "string", message);
 export const assert2DArray = (array, message = "Value is not 2D array") => {

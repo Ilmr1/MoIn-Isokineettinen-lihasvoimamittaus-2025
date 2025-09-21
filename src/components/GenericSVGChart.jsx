@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
 import { SVGChartContext } from "../providers";
-import { chartUtils, CTMUtils, signalUtils } from "../utils/utils";
-import { asserts } from "../collections/collections";
+import { chartUtils, CTMUtils } from "../utils/utils";
+import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
 
 export function GenericSVGChart(props) {
@@ -13,7 +13,7 @@ export function GenericSVGChart(props) {
 }
 
 function Chart(props) {
-  const error = signalUtils.createAssertError(() => {
+  const error = signals.assertError(() => {
     asserts.assertTypeNumber(props.min, "min is not a number");
     asserts.assertTypeNumber(props.max, "max is not a number");
 
@@ -84,25 +84,77 @@ export function ChartWrapperWithPadding(props) {
   const paddingBottom = 25;
   const paddingInline = 25;
 
+  return (
+    <>
+      <text dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y="0">{props.title}</text>
+      <rect x={props.x} y={props.y} width={props.width} height={props.height} fill="none" stroke="black" />
+      <ChartGrid {...props} />
+      <ChartContent {...props} x={props.x + paddingInline} width={props.width - paddingInline * 2} height={props.height - paddingBottom - paddingTop} y={props.y + paddingTop} parentHeight={props.height} parentY={props.y} />
+    </>
+  );
+}
+
+export function ChartGrid(props) {
   const grid = createMemo(() => {
     const string = [];
-    for (let i = 0; i < props.height / 50; i++) {
-      string.push(`M ${props.x} ${props.y + i * 50} l ${props.width} 0`);
+    const height = props.height, width = props.width, x = props.x, y = props.y;
+    for (let i = 0; i < height / 50; i++) {
+      string.push(`M ${x} ${y + i * 50} l ${width} 0`);
     }
-    for (let i = 0; i < props.width / 50; i++) {
-      string.push(`M ${props.x + i * 50} ${props.y} l 0 ${props.height}`);
+    for (let i = 0; i < width / 50; i++) {
+      string.push(`M ${x + i * 50} ${y} l 0 ${height}`);
     }
     return string.join(" ");
   });
 
   return (
-    <>
-      <text dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y="0">{props.title}</text>
-      <rect x={props.x} y={props.y} width={props.width} height={props.height} fill="none" stroke="black" />
-      <path d={grid()} stroke="black" stroke-width=".25" stroke-dasharray="2" fill="none" />
-      <ChartContent {...props} x={props.x + paddingInline} width={props.width - paddingInline * 2} height={props.height - paddingBottom - paddingTop} y={props.y + paddingTop} parentHeight={props.height} parentY={props.y} />
-    </>
+    <path d={grid()} stroke="black" stroke-width=".25" stroke-dasharray="2" fill="none" />
   );
+}
+
+export function ChartMouseHoverValue(props) {
+  asserts.assertTypeNumber(props.mouseX, "mouseX is not type of number");
+  asserts.assertTypeNumber(props.mouseY, "mouseY is not type of number");
+  asserts.assertTypeNumber(props.startIndex, "startIndex is not type of number");
+  asserts.assertTypeNumber(props.endIndex, "endIndex is not type of number");
+  asserts.assertTypeNumber(props.height, "height is not type of number");
+  asserts.assertTypeNumber(props.width, "width is not type of number");
+  asserts.assertTypeArray(props.points, "points is not type of array");
+  asserts.assertTypeFunction(props.children, "children is not type of function");
+
+  const minIndex = createMemo(() => props.startIndex);
+  const maxIndex = createMemo(() => props.endIndex);
+  const totalDataWidth = createMemo(() => maxIndex() - minIndex() + 1);
+  const totalDataHeight = createMemo(() => props.maxValue - props.minValue);
+
+  const yStep = createMemo(() => props.height / totalDataHeight());
+  const xStep = createMemo(() => props.width / totalDataWidth());
+
+  const hover = createMemo(() => {
+    const mouseX = props.mouseX;
+    const x = Math.round((mouseX - props.x) / xStep());
+    const y = props.points[x + props.startIndex];
+    if (y == null || x < 0 || mouseX > props.x + props.width) {
+      return { x: -1, y: -1, value: null };
+    }
+
+    return {
+      x: props.x + x * xStep(),
+      y: props.y + chartUtils.flipYAxes(y, props.maxValue) * yStep(),
+      value: y,
+      index: x + minIndex()
+    };
+  });
+
+  return (
+    <Dynamic
+      component={props.children}
+      mouseX={hover().x}
+      mouseY={hover().y}
+      mouseValue={hover().value}
+      mouseIndex={hover().index}
+    ></Dynamic>
+  )
 }
 
 export function ChartContent(props) {
@@ -166,5 +218,63 @@ export function ChartContent(props) {
       )}</For>
       <text dominant-baseline="middle" text-anchor="end" x={props.x - 2} y={hover().y}>{hover().value}</text>
     </>
+  );
+}
+
+export function ChartErrorBands(props) {
+  asserts.assertTypeNumber(props.minValue);
+  asserts.assertTypeNumber(props.maxValue);
+  asserts.assert2DArray(props.points);
+
+  console.log(props.points);
+
+  const paths = createMemo(() => {
+    const { maxValue, points, x, y } = props;
+    const totalDataWidth = props.endIndex - props.startIndex + 1;
+    const totalDataHeight = maxValue - props.minValue;
+
+    const yStep = props.height / totalDataHeight;
+    const xStep = props.width / totalDataWidth;
+
+    return props.splits.map(split => {
+      const paths = [`M ${x} ${y + chartUtils.flipYAxes(points[0][split.startIndex], maxValue) * yStep}`];
+      for (let i = split.startIndex + 1; i <= split.endIndex; i++) {
+        const flippedY = chartUtils.flipYAxes(points[0][i], maxValue);
+        paths.push(`L ${x + (i - split.startIndex) * xStep} ${y + flippedY * yStep}`);
+      }
+
+      for (let i = split.endIndex; i >= split.startIndex; i--) {
+        const flippedY = chartUtils.flipYAxes(points[1][i], maxValue);
+        paths.push(`L ${x + (i - split.startIndex) * xStep} ${y + flippedY * yStep}`);
+      }
+
+      paths.push("Z");
+
+      return paths.join(" ");
+    });
+  });
+
+  return (
+    <For each={paths()}>{path => (
+      <path d={path} fill="#ffa5003d" stroke="orange" />
+    )}</For>
+  );
+}
+
+export function ChartPadding(props) {
+  asserts.assertTypeNumber(props.x);
+  asserts.assertTypeNumber(props.y);
+  asserts.assertTypeNumber(props.width);
+  asserts.assertTypeNumber(props.height);
+  asserts.assertTypeFunction(props.children);
+
+  return (
+    <Dynamic
+      component={props.children} 
+      x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
+      y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
+      width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0) * 2)}
+      height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0) * 2)}
+    />
   );
 }

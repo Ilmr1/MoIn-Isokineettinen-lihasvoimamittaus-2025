@@ -3,6 +3,7 @@ import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import { useParsedFiles } from "../providers";
+import { signals } from "../collections/collections";
 
 
 export function FileBrowser() {
@@ -15,6 +16,8 @@ export function FileBrowser() {
   const [firstNameInput, setFirstNameInput] = createSignal("");
   const [lastNameInput, setLastNameInput] = createSignal("");
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
+  const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
+
   const { setParsedFileData } = useParsedFiles();
 
   const filteredFilesByName = createMemo(() => {
@@ -96,6 +99,7 @@ export function FileBrowser() {
 
       worker2.postMessage({
         filesToParse: selectedFiles(),
+        dataFiltering: dataFiltering(),
       });
 
       worker2.onmessage = async message => {
@@ -222,7 +226,10 @@ export function FileBrowser() {
         )}
         </For>
       </Show>
+      <button onClick={() => setSelectedFiles([])}>clear</button>
       <button onClick={sendFilesToParse}>parse</button>
+      <input type="checkbox" name="dataFiltering" id="dataFiltering" checked={dataFiltering()} onChange={() => setDataFiltering(s => !s)}/>
+      <label htmlFor="dataFiltering">Filter data</label>
     </div>
   </div>
   );

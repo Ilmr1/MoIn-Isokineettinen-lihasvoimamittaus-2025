@@ -46,7 +46,7 @@ const formatObjectValues = objectValue => {
 };
 
 
-const generateCollection = (markersByIndex, points, skipZeros) => {
+const createSplitCollection = (markersByIndex, points, skipZeros) => {
   const collection = {
     startIndex: markersByIndex.move1[0],
     endIndex: markersByIndex.move1.at(-1),
@@ -66,7 +66,7 @@ const generateCollection = (markersByIndex, points, skipZeros) => {
       }
 
       for (let i = end; i > start; i--) {
-        if (points[i - 2] === 0) {
+        if (points[i - 3] === 0) {
           end--;
         } else break;
       }
@@ -89,7 +89,7 @@ const createAverageSplitCollection = (splits) => {
   };
 
   splits.forEach(split => {
-    const delta = split.endIndex - split.startIndex;
+    const delta = (split.endIndex - split.startIndex) - 1;
     collection.endIndex ??= delta;
     if (collection.endIndex < delta) {
       collection.endIndex = delta;
@@ -105,16 +105,98 @@ const createAverageSplitCollection = (splits) => {
   return collection;
 }
 
-const getPointCollections = (markersByIndex, data) => {
-  const powerCollection = createPointCollection(fillZerosToPower(markersByIndex, data.map(row => row[0])));
+const createPointCollections = (markersByIndex, data, dataFiltering) => {
+  const angleCollection = createPointCollection(data.map(row => row[2]));
+  let powerCollection;
+  if (dataFiltering) {
+    powerCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
+  } else {
+    powerCollection = createPointCollection(data.map(row => row[0]));
+  }
+
+  const flexIndecis = markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]]));
+  const extIndecis = markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m]));
+  const averagePowerFlexCollection = createAveragePointCollection(flexIndecis, powerCollection.points);
+  const averagePowerExtCollection = createAveragePointCollection(extIndecis, powerCollection.points);
+
   return {
     power: powerCollection,
     speed: createPointCollection(data.map(row => row[1])),
-    angle: createPointCollection(data.map(row => row[2])),
-    averagePowerExt: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([m, markersByIndex.move1[i + 1]])), powerCollection.points),
-    averagePowerFlex: createAveragePointCollection(markersByIndex.move2.map((m, i) => ([markersByIndex.move1[i], m])), powerCollection.points),
+    angle: angleCollection,
+    averagePowerFlex: averagePowerFlexCollection,
+    averagePowerExt: averagePowerExtCollection,
+    averagePowerFlexError: createAverageErrorPointCollection(flexIndecis, powerCollection.points, averagePowerFlexCollection.points, 1),
+    averagePowerExtError: createAverageErrorPointCollection(extIndecis, powerCollection.points, averagePowerExtCollection.points, 1),
   }
 };
+
+// TODO: Change the chatGPT implementation :D
+function createLowpass11Hz(sampleRate) {
+  if (!sampleRate || sampleRate <= 0) throw new Error('sampleRate must be > 0');
+
+  const fc = 11.0; // cutoff in Hz
+  const omega = 2 * Math.PI * fc;
+  const alpha = omega / (sampleRate + omega); // alpha = 2πfc / (fs + 2πfc)
+
+  let y = 0.0; // filter state (previous output)
+  let initialized = false;
+
+  return {
+    // process one sample (x). Returns filtered sample (y).
+    process(x) {
+      if (!initialized) {
+        // initialize to first input to avoid startup transient
+        y = x;
+        initialized = true;
+      } else {
+        y = y + alpha * (x - y); // single-pole IIR
+      }
+      return y;
+    },
+
+    // optional: reset filter state (defaults to 0 or provided value)
+    reset(value = 0.0) {
+      y = value;
+      initialized = value !== 0.0;
+    },
+
+    // expose alpha for diagnostics
+    getAlpha() {
+      return alpha;
+    }
+  };
+}
+
+const filterByStartEndAndPoints = (start, end, points) => {
+  const filter = createLowpass11Hz(256);
+  let highestPoint = Math.floor(start + (end - start) / 2);
+  let max;
+  for (let i = start; i < end; i++) {
+    max ??= points[i];
+    if (Math.abs(points[i]) > max) {
+      max = Math.abs(points[i]);
+      highestPoint = i;
+    }
+  }
+  for (let i = start; i <= highestPoint; i++) {
+    points[i] = numberUtils.truncDecimals(filter.process(points[i]), 3);
+  }
+
+  filter.reset(0);
+
+  for (let i = end; i >= highestPoint; i--) {
+    points[i] = numberUtils.truncDecimals(filter.process(points[i]), 3);
+  }
+}
+
+const lowpass11Hz= (markersByIndex, points) => {
+  for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
+    filterByStartEndAndPoints(markersByIndex.move1[i], markersByIndex.move2[i], points);
+    filterByStartEndAndPoints(markersByIndex.move2[i], markersByIndex.move1[i + 1], points);
+  }
+
+  return points;
+}
 
 const createPointCollection = (points) => {
   const pointCollection = { points };
@@ -162,24 +244,58 @@ const createAveragePointCollection = (indecies, points) => {
   return collection;
 }
 
-const createSplitCollections = (markersByIndex, pointCollections) => {
-  const powerCollection = generateCollection(markersByIndex, pointCollections.power.points, true);
+const createAverageErrorPointCollection = (indecies, points, averagePoints, errorPercentage) => {
+  const highs = Array(averagePoints.length).fill(0);
+  const lows = Array(averagePoints.length).fill(0);
+  let minValue, maxValue;
+  const collection = { points: [highs, lows] };
+
+  indecies.forEach(([start, end]) => {
+    for (let i = start; i < end; i++) {
+      const delta = numberUtils.delta(points[i], averagePoints[i - start]);
+      if (delta < 0) {
+        lows[i - start] = Math.min(lows[i - start], delta);
+      } else {
+        highs[i - start] = Math.max(highs[i - start], delta);
+      }
+    }
+  });
+
+  asserts.assertTruthy(highs.length === lows.length, "Lengths miss match");
+  asserts.assertTruthy(averagePoints.length === lows.length, "Lengths miss match");
+  asserts.assertTruthy(errorPercentage >= 0 && errorPercentage <= 1, "Invalid error rate");
+
+  for (let i = 0; i < averagePoints.length; i++) {
+    highs[i] = numberUtils.truncDecimals(averagePoints[i] + highs[i] * errorPercentage, 3);
+    lows[i] = numberUtils.truncDecimals(averagePoints[i] + lows[i] * errorPercentage, 3);
+    minValue = numberUtils.min(minValue, lows[i]);
+    maxValue = numberUtils.max(maxValue, highs[i]);
+  }
+
+  collection.minValue = minValue;
+  collection.maxValue = maxValue;
+
+  return collection;
+}
+
+const createSplitCollections = (markersByIndex, pointCollections, dataFiltering) => {
+  const powerCollection = createSplitCollection(markersByIndex, pointCollections.power.points, dataFiltering);
   return {
     power: powerCollection,
-    speed: generateCollection(markersByIndex, pointCollections.speed.points, false),
-    angle: generateCollection(markersByIndex, pointCollections.angle.points, false),
+    speed: createSplitCollection(markersByIndex, pointCollections.speed.points, false),
+    angle: createSplitCollection(markersByIndex, pointCollections.angle.points, false),
     averagePowerFlex: createAverageSplitCollection(powerCollection.splits.filter(split => split.color === "blue")),
     averagePowerExt: createAverageSplitCollection(powerCollection.splits.filter(split => split.color === "red")),
   }
 };
 
-const fillZerosToPower = (markersByIndex, powerData) => {
-  const delta = (i) => Math.abs(powerData[i] - powerData[i - 1]);
+const fillZerosToPower = (markersByIndex, powerData, angleData) => {
+  const delta = (i) => Math.abs(angleData[i] - angleData[i - 1]);
 
   const fillZerosBlue = (start, end) => {
     const half = Math.floor(start + (end - start) / 2);
     const goodDelta = delta(half);
-    const diff = 0.208
+    const diff = 0.1
     for (let i = end; i > start; i--) {
       const d = delta(i);
       if (Math.abs(d - goodDelta) > diff) {
@@ -215,13 +331,13 @@ const fillZerosToPower = (markersByIndex, powerData) => {
   return powerData;
 }
 
-const formatRawCTMObject = rawObject => {
+const formatRawCTMObject = (rawObject, dataFiltering) => {
   const object = {};
 
   object.data = rawObject.data.map(arr => arr.map(parseFloat));
   object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
-  object.pointCollections = getPointCollections(object.markersByIndex, object.data);
-  object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections);
+  object.pointCollections = createPointCollections(object.markersByIndex, object.data, dataFiltering);
+  object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections, dataFiltering);
   object.setUp = formatRawObjectText(rawObject.SetUp);
 
   object.memo = cleanMemo(rawObject.memo.join("\n"));
@@ -231,15 +347,12 @@ const formatRawCTMObject = rawObject => {
   object.filter = formatRawObjectText(rawObject.filter);
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
 
-  console.log("main object", object.splitCollections.averagePowerExt);
-  console.log("main object", object.pointCollections.averagePowerExt);
-
   return object
 }
 
-export const parseTextToObject = text => {
+export const parseTextToObject = (text, dataFiltering) => {
   const object = ctmTextToRawObject(text);
-  const formatted = formatRawCTMObject(object);
+  const formatted = formatRawCTMObject(object, dataFiltering);
   return formatted;
 };
 

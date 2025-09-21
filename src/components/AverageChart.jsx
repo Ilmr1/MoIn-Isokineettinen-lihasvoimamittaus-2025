@@ -1,6 +1,6 @@
 import { batch, createSignal, ErrorBoundary, mergeProps } from "solid-js";
 import { SVGChartContext } from "../providers";
-import { ChartWrapper, ChartWrapperWithPadding } from "./GenericSVGChart.jsx";
+import { ChartErrorBands, ChartPadding, ChartWrapper, ChartWrapperWithPadding } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 export function AverageChart(props) {
 
@@ -45,32 +45,60 @@ function Chart(props) {
     <Show when={props.listOfParsedCTM()?.length}>
       <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <For each={props.listOfParsedCTM()}>{parsedData => (
-          <ChartWrapperWithPadding
-            title="Ext average"
-            points={parsedData.rawObject.pointCollections.averagePowerExt.points}
-            maxValue={parsedData.rawObject.pointCollections.averagePowerExt.maxValue}
-            minValue={parsedData.rawObject.pointCollections.averagePowerExt.minValue}
-            splits={parsedData.rawObject.splitCollections.averagePowerExt.splits}
-            startIndex={parsedData.rawObject.splitCollections.averagePowerExt.startIndex}
-            endIndex={parsedData.rawObject.splitCollections.averagePowerExt.endIndex}
-            {...sizes}
-            {...controls}
-          />
+          <>
+            <ChartWrapperWithPadding
+              title="Ext average"
+              points={parsedData.rawObject.pointCollections.averagePowerExt.points}
+              maxValue={parsedData.rawObject.pointCollections.averagePowerExtError.maxValue}
+              minValue={parsedData.rawObject.pointCollections.averagePowerExtError.minValue}
+              splits={parsedData.rawObject.splitCollections.averagePowerExt.splits}
+              startIndex={parsedData.rawObject.splitCollections.averagePowerExt.startIndex}
+              endIndex={parsedData.rawObject.splitCollections.averagePowerExt.endIndex}
+              {...sizes}
+              {...controls}
+            />
+            <ChartPadding {...sizes} paddingInline={25} paddingBlock={25}>{container => (
+              <ChartErrorBands
+                points={parsedData.rawObject.pointCollections.averagePowerExtError.points}
+                maxValue={parsedData.rawObject.pointCollections.averagePowerExtError.maxValue}
+                minValue={parsedData.rawObject.pointCollections.averagePowerExtError.minValue}
+                splits={parsedData.rawObject.splitCollections.averagePowerExt.splits}
+                startIndex={parsedData.rawObject.splitCollections.averagePowerExt.startIndex}
+                endIndex={parsedData.rawObject.splitCollections.averagePowerExt.endIndex}
+                {...container}
+                {...controls}
+              ></ChartErrorBands>
+            )}</ChartPadding>
+          </>
         )}</For>
       </svg>
       <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <For each={props.listOfParsedCTM()}>{parsedData => (
-          <ChartWrapperWithPadding
-            title="Flex average"
-            points={parsedData.rawObject.pointCollections.averagePowerFlex.points}
-            maxValue={parsedData.rawObject.pointCollections.averagePowerFlex.maxValue}
-            minValue={parsedData.rawObject.pointCollections.averagePowerFlex.minValue}
-            splits={parsedData.rawObject.splitCollections.averagePowerFlex.splits}
-            startIndex={parsedData.rawObject.splitCollections.averagePowerFlex.startIndex}
-            endIndex={parsedData.rawObject.splitCollections.averagePowerFlex.endIndex}
-            {...sizes}
-            {...controls}
-          />
+          <>
+            <ChartWrapperWithPadding
+              title="Flex average"
+              points={parsedData.rawObject.pointCollections.averagePowerFlex.points}
+              maxValue={parsedData.rawObject.pointCollections.averagePowerFlexError.maxValue}
+              minValue={parsedData.rawObject.pointCollections.averagePowerFlexError.minValue}
+              splits={parsedData.rawObject.splitCollections.averagePowerFlex.splits}
+              startIndex={parsedData.rawObject.splitCollections.averagePowerFlex.startIndex}
+              endIndex={parsedData.rawObject.splitCollections.averagePowerFlex.endIndex}
+              {...sizes}
+              {...controls}
+            />
+            <ChartPadding {...sizes} paddingInline={25} paddingBlock={25}>{container => (
+              <ChartErrorBands
+                points={parsedData.rawObject.pointCollections.averagePowerFlexError.points}
+                maxValue={parsedData.rawObject.pointCollections.averagePowerFlexError.maxValue}
+                minValue={parsedData.rawObject.pointCollections.averagePowerFlexError.minValue}
+                splits={parsedData.rawObject.splitCollections.averagePowerFlex.splits}
+                startIndex={parsedData.rawObject.splitCollections.averagePowerFlex.startIndex}
+                endIndex={parsedData.rawObject.splitCollections.averagePowerFlex.endIndex}
+                {...container}
+                {...controls}
+              ></ChartErrorBands>
+            )}</ChartPadding>
+          </>
         )}</For>
       </svg>
     </Show>
