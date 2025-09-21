@@ -3,7 +3,7 @@ import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import { useParsedFiles } from "../providers";
-import { addEventListener } from "solid-js/web";
+
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -14,14 +14,14 @@ export function FileBrowser() {
   const [filterByFirstName, setFilterByFirstName] = createSignal("");
   const [firstNameInput, setFirstNameInput] = createSignal("");
   const [lastNameInput, setLastNameInput] = createSignal("");
-  const [filterText, setFilterText] = createSignal("");
+  const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const { setParsedFileData } = useParsedFiles();
 
-  const filesMemo = createMemo(() => {
+  const filteredFilesByName = createMemo(() => {
     if (!filterByLastName() || !filterByFirstName()){
       return;
     }
-    return files().filter((file) => {
+    const filtered = files().filter((file) => {
       const firstName = file.subjectFirstName.toLowerCase() ?? "";
       const lastName = file.subjectLastName.toLowerCase() ?? "";
       return (
@@ -29,12 +29,28 @@ export function FileBrowser() {
         (!filterByLastName() || lastName === filterByLastName())
       );
     });
+
+    const sorted = [...filtered];
+    const { field, asc} = sortState();
+
+    sorted.sort((a, b) => {
+      let valA = a[field] ?? "";
+      let valB = b[field] ?? "";
+      if (valA === valB) {
+        return 0;
+      };
+      return asc ? (valA < valB ? -1 : 1) : valA > valB ? -1 : 1;
+    });
+    return sorted;
   });
 
-  const fileNameFilter = () =>
-    files().filter(file=>
-      file.name.toLowerCase().includes(filterText().toLowerCase())
-    )
+  const toggleSort = (field) => {
+    setSortState((prev) => ({
+      field,
+      asc: prev.field === field ? !prev.asc : true
+    }));
+  }
+
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
@@ -176,20 +192,27 @@ export function FileBrowser() {
     </div>
 
     <div> {/* show files after name search */}
-      <Show when={filesMemo()}>
-        <For each={filesMemo()}>
+      <Show when={filteredFilesByName()}>
+        <For each={filteredFilesByName()}>
           {(file) => (
             <ul>
               <li
                 style={{ cursor: "pointer" }}
                 onClick={() => handleFileSelect(file)}
               >
-                <p>{file.name} {file.date} {file.time} {file.subjectLastName}</p>
+                <p>{file.name} {file.date} {file.time} {file.subjectLastName} {file.measurementType}</p>
               </li>
             </ul>
           )}
         </For>
-      
+        <div>
+          <button onClick={() => toggleSort("time")}>
+           Time {sortState().field === "time" ? (sortState().asc ? "desc" : "asc") : ""}
+          </button>
+          <button onClick={() => toggleSort("date")}>
+           Date <span>{sortState().field === "date" ? (sortState().asc ? "desc" : "asc") : ""}</span>
+          </button>
+        </div>
         <For each={selectedFiles()}>{(fileHandler) =>(
           <ul>
             <li>
