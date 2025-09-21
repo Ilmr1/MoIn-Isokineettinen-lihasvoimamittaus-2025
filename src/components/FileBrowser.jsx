@@ -19,7 +19,7 @@ export function FileBrowser() {
 
   const filteredFilesByName = createMemo(() => {
     if (!filterByLastName() || !filterByFirstName()){
-      return;
+      return [];
     }
     const filtered = files().filter((file) => {
       const firstName = file.subjectFirstName.toLowerCase() ?? "";
@@ -192,7 +192,7 @@ export function FileBrowser() {
     </div>
 
     <div> {/* show files after name search */}
-      <Show when={filteredFilesByName()}>
+      <Show when={filteredFilesByName().length}>
         <For each={filteredFilesByName()}>
           {(file) => (
             <ul>
