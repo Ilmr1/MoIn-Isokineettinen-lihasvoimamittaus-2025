@@ -208,27 +208,28 @@ export function FileBrowser() {
               </ul>
             )}
           </For>
-          <div>
-            <button onClick={() => toggleSort("time")}>
+          <div class="grid gap-2 grid-cols-2 w-max mx-auto">
+            <button class="button_grey" onClick={() => toggleSort("time")}>
               Time {sortState().field === "time" ? (sortState().asc ? "desc" : "asc") : ""}
             </button>
-            <button onClick={() => toggleSort("date")}>
+            <button class="button_grey" onClick={() => toggleSort("date")}>
               Date <span>{sortState().field === "date" ? (sortState().asc ? "desc" : "asc") : ""}</span>
             </button>
           </div>
-          <For each={selectedFiles()}>{(fileHandler) =>(
+        </Show>
+        <Show when={selectedFiles().length}>
+          <For each={selectedFiles()}>{fileHandler => (
             <ul>
               <li>
                 {fileHandler.name}
               </li>
             </ul>
-          )}
-          </For>
+          )}</For>
+          <button class="button_grey mr-1" onClick={() => setSelectedFiles([])}>clear</button>
+          <button class="button_grey mr-1" onClick={sendFilesToParse}>parse</button>
+          <input type="checkbox" name="dataFiltering" id="dataFiltering" checked={dataFiltering()} onChange={() => setDataFiltering(s => !s)}/>
+          <label htmlFor="dataFiltering">Filter data</label>
         </Show>
-        <button class="button_grey mr-1" onClick={() => setSelectedFiles([])}>clear</button>
-        <button class="button_grey mr-1" onClick={sendFilesToParse}>parse</button>
-        <input type="checkbox" name="dataFiltering" id="dataFiltering" checked={dataFiltering()} onChange={() => setDataFiltering(s => !s)}/>
-        <label htmlFor="dataFiltering">Filter data</label>
       </div>
     </div>
   );
