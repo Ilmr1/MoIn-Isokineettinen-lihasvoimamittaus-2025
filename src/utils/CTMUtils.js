@@ -167,6 +167,80 @@ function createLowpass11Hz(sampleRate) {
   };
 }
 
+const createRepetitions = (points, splits) => {
+  const toRad = deg => deg * Math.PI / 180;
+
+  const resultsByColor = { red: [], blue: [] };
+
+  splits.forEach(({ startIndex, endIndex, color }) => {
+    let torqueExtreme = color === 'red' ? -Infinity : Infinity;
+    let speedExtreme = color === 'red' ? -Infinity : Infinity;
+    let work = 0;
+    let powerSum = 0;
+    let powerPeak = -Infinity;
+    let torquePeakAngle = 0;
+    let speedPeakAngle = 0;
+    let count = 0;
+
+    const isRed = color === 'red';
+
+    for (let i = startIndex; i < endIndex; i++) {
+      const torque = points.power.points[i];
+      const speed = points.speed.points[i];
+      const angle = points.angle.points[i];
+      const omega = toRad(speed);
+      const power = torque * omega;
+
+      powerSum += power;
+      count++;
+      if (power > powerPeak) powerPeak = power;
+
+      if (i < endIndex - 1) {
+        const tau0 = torque;
+        const tau1 = points.power.points[i + 1];
+        const theta0 = toRad(angle);
+        const theta1 = toRad(points.angle.points[i + 1]);
+        work += 0.5 * (tau0 + tau1) * (theta1 - theta0);
+      }
+
+      if (isRed ? torque > torqueExtreme : torque < torqueExtreme) {
+        torqueExtreme = torque;
+        torquePeakAngle = angle;
+      }
+      if (isRed ? speed > speedExtreme : speed < speedExtreme) {
+        speedExtreme = speed;
+        speedPeakAngle = angle;
+      }
+    }
+    resultsByColor[color].push({
+      color,
+      torqueExtreme,
+      speedExtreme,
+      work,
+      powerPeak,
+      powerAv: powerSum / count,
+      torquePeakAngle,
+      speedPeakAngle,
+    });
+  });
+  return {
+    torquePeak1: resultsByColor.red.map(r => r.torqueExtreme),
+    torquePeak2: resultsByColor.blue.map(r => r.torqueExtreme),
+    speedPeak1: resultsByColor.red.map(r => r.speedExtreme),
+    speedPeak2: resultsByColor.blue.map(r => r.speedExtreme),
+    work1: resultsByColor.red.map(r => r.work),
+    work2: resultsByColor.blue.map(r => r.work),
+    powerAvg1: resultsByColor.red.map(r => r.powerAv),
+    powerAvg2: resultsByColor.blue.map(r => r.powerAv),
+    powerPeak1: resultsByColor.red.map(r => r.powerPeak),
+    powerPeak2: resultsByColor.blue.map(r => r.powerPeak),
+    torquePeakPos1: resultsByColor.red.map(r => r.torquePeakAngle),
+    torquePeakPos2: resultsByColor.blue.map(r => r.torquePeakAngle),
+    speedPeakPos1: resultsByColor.red.map(r => r.speedPeakAngle),
+    speedPeakPos2: resultsByColor.blue.map(r => r.speedPeakAngle),
+  };
+};
+
 const filterByStartEndAndPoints = (start, end, points) => {
   const filter = createLowpass11Hz(256);
   let highestPoint = Math.floor(start + (end - start) / 2);
@@ -346,6 +420,7 @@ const formatRawCTMObject = (rawObject, dataFiltering) => {
   object.configuration = formatRawObjectText(rawObject.Configuration);
   object.filter = formatRawObjectText(rawObject.filter);
   object.systemStrings = formatRawObjectText(rawObject["system strings"]);
+  object.repetitions = createRepetitions(object.pointCollections, object.splitCollections.power.splits);
 
   return object
 }
