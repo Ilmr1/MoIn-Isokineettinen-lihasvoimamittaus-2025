@@ -1,6 +1,6 @@
 import { createResource, createSignal, For } from 'solid-js'
 import './App.css'
-import { CTMUtils, fileUtils, indexedDBUtils } from './utils/utils';
+import { CTMUtils, fileUtils, indexedDBUtils, numberUtils } from './utils/utils';
 import { GenericSVGChart } from './components/GenericSVGChart.jsx';
 import { ThreeCharts } from './components/ThreeCharts.jsx';
 import { FileBrowser } from './components/FileBrowser.jsx';
@@ -50,6 +50,22 @@ function App() {
                 class="button_blue"
                 onClick={() => console.log(ctmData().formatted.data.map(row => row.map(val => val.toFixed(3)).join("\t")).join("\n"))}>txt</button>
                 <br />
+                <ul>
+                  <For each={Object.entries(parsedData.rawObject.repetitions)}>{([key, values]) => (
+                    <li>{key}: 
+                      <For each={values}>{value => (
+                        <span class="mx-2">
+                          <Switch fallback={numberUtils.truncDecimals(value, 2)}>
+                            <Match when={key.startsWith("torquePeak")}>{numberUtils.truncDecimals(value, 2)}Nm </Match>
+                            <Match when={key.startsWith("power")}>{numberUtils.truncDecimals(value, 2)}W </Match>
+                            <Match when={key.startsWith("work")}>{numberUtils.truncDecimals(value, 2)}J </Match>
+                            <Match when={key.startsWith("speed")}>{numberUtils.truncDecimals(value, 2)} deg/s </Match>
+                          </Switch>
+                        </span>
+                      )}</For>
+                    </li>
+                  )}</For>
+                </ul>
               </>
             )}</For>
 
