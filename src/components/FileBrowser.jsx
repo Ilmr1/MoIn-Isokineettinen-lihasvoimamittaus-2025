@@ -158,10 +158,6 @@ export function FileBrowser() {
     setFilterByLastName(lastNameInput().trim().toLowerCase());
   }
 
-  const toggleSafeMode = () => {
-    setSafeMode(!safeMode());
-  }
-
 
   return (
     <div>
@@ -207,7 +203,7 @@ export function FileBrowser() {
             />
             <button type="submit">Search</button>
             <label htmlFor="safe-mode">Safe Search?</label>
-            <input type="checkbox" name="safe-mode" id="safe-mode" checked onClick={toggleSafeMode} />
+            <input type="checkbox" name="safe-mode" id="safe-mode" checked onClick={() => setSafeMode(mode => !mode)} />
           </form>
     </div>
 
