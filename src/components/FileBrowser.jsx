@@ -15,36 +15,47 @@ export function FileBrowser() {
   const [filterByFirstName, setFilterByFirstName] = createSignal("");
   const [firstNameInput, setFirstNameInput] = createSignal("");
   const [lastNameInput, setLastNameInput] = createSignal("");
+  const [safeMode, setSafeMode] = createSignal(true)
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
   const { setParsedFileData } = useParsedFiles();
 
-  const filteredFilesByName = createMemo(() => {
-    if (!filterByLastName() || !filterByFirstName()){
-      return [];
+  const filterAndSortNames = createMemo(() => {
+    const allFiles = files();
+    const { field, asc } = sortState();
+
+    let firstName = safeMode() ? filterByFirstName() : firstNameInput().trim().toLowerCase();
+    let lastName = safeMode() ? filterByLastName() : lastNameInput().trim().toLowerCase();
+
+    let filtered;
+
+    if (safeMode()) {
+      if (!firstName || !lastName) {
+        return [];
+      }
+      filtered = allFiles.filter((file) => {
+        const fn = file.subjectFirstName?.toLowerCase() ?? "";
+        const ln = file.subjectLastName?.toLowerCase() ?? "";
+        return fn === firstName && ln === lastName;
+      });
+    } else {
+      filtered = allFiles.filter((file) => {
+        const fn = file.subjectFirstName?.toLowerCase() ?? "";
+        const ln = file.subjectLastName?.toLowerCase() ?? "";
+        return (
+          (!firstName || fn.includes(firstName)) &&
+          (!lastName || ln.includes(lastName))
+        );
+      });
     }
-    const filtered = files().filter((file) => {
-      const firstName = file.subjectFirstName.toLowerCase() ?? "";
-      const lastName = file.subjectLastName.toLowerCase() ?? "";
-      return (
-        (!filterByFirstName() || firstName === filterByFirstName()) &&
-        (!filterByLastName() || lastName === filterByLastName())
-      );
-    });
 
-    const sorted = [...filtered];
-    const { field, asc} = sortState();
-
-    sorted.sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       let valA = a[field] ?? "";
       let valB = b[field] ?? "";
-      if (valA === valB) {
-        return 0;
-      };
+      if (valA === valB) return 0;
       return asc ? (valA < valB ? -1 : 1) : valA > valB ? -1 : 1;
     });
-    return sorted;
   });
 
   const toggleSort = (field) => {
@@ -182,28 +193,28 @@ export function FileBrowser() {
             type="text"
             placeholder="First name"
             value={firstNameInput()}
-            onChange={(e) => setFirstNameInput(e.currentTarget.value)}
+            onInput={(e) => setFirstNameInput(e.currentTarget.value)}
           />
           <input 
             type="text"
             placeholder="Last Name"
             value={lastNameInput()}
-            onChange={(e) => setLastNameInput(e.currentTarget.value)}
+            onInput={(e) => setLastNameInput(e.currentTarget.value)}
           />
           <button type="submit" class="bg-sky-200 px-2 py-1 rounded-md hover:bg-sky-100 shadow-2xs cursor-pointer transition-all .2s">Search</button>
         </form>
       </div>
 
       <div> {/* show files after name search */}
-        <Show when={filteredFilesByName().length}>
-          <For each={filteredFilesByName()}>
+        <Show when={filterAndSortNames().length}>
+          <For each={filterAndSortNames()}>
             {(file) => (
               <ul>
                 <li
                   style={{ cursor: "pointer" }}
                   onClick={() => handleFileSelect(file)}
                 >
-                  <p>{file.name} {file.date} {file.time} {file.subjectLastName} {file.measurementType}</p>
+                  <p>{file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}</p>
                 </li>
               </ul>
             )}
@@ -228,8 +239,10 @@ export function FileBrowser() {
           <button class="button_grey mr-1" onClick={() => setSelectedFiles([])}>clear</button>
           <button class="button_grey mr-1" onClick={sendFilesToParse}>parse</button>
           <input type="checkbox" name="dataFiltering" id="dataFiltering" checked={dataFiltering()} onChange={() => setDataFiltering(s => !s)}/>
-          <label htmlFor="dataFiltering">Filter data</label>
+          <label htmlFor="dataFiltering" class="mx-2">Filter data</label>
         </Show>
+        <label htmlFor="safe-mode">Safe Search?</label>
+        <input type="checkbox" name="safe-mode" id="safe-mode" checked onClick={() => setSafeMode(mode => !mode)} />
       </div>
     </div>
   );
