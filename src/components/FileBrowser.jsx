@@ -162,12 +162,12 @@ export function FileBrowser() {
   return (
     <div>
       <div> {/* folder management & pre-load files  */}
-        <button onClick={handleOpenDirectory}>Open Folder</button>
+        <button class="bg-green-300 px-2 py-1 rounded-md hover:bg-green-200 shadow-2xs cursor-pointer transition-all .2s" onClick={handleOpenDirectory}>Open Folder</button>
         <ul>
           <For each={recentFolders()}>{(directoryHandler, i) => (
             <li>
               <span>{directoryHandler.name} </span>
-              <button onClick={async () => {
+              <button class="button_grey mr-1" onClick={async () => {
                 const access = await fileUtils.checkOrGrantFileAccess(directoryHandler, "readwrite");
                 if (!access) {
                   return;
@@ -175,7 +175,7 @@ export function FileBrowser() {
 
                 setFoldersThatHaveAccess(folders => [...folders, directoryHandler]);
               }}>load</button>
-              <button onClick={async () => {
+              <button class="bg-red-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors duration-200 font-medium" onClick={async () => {
                 const files = await indexedDBUtils.mutateValue("file-handlers", "recent-files", result => {
                   const recentFiles = result || [];
                   recentFiles.splice(i(), 1);
@@ -188,61 +188,62 @@ export function FileBrowser() {
           )}
           </For>
         </ul>
-          <form onSubmit={handleSubmit}> 
-            <input
-              type="text"
-              placeholder="First name"
-              value={firstNameInput()}
-              onInput={(e) => setFirstNameInput(e.currentTarget.value)}
-            />
-            <input 
-              type="text"
-              placeholder="Last Name"
-              value={lastNameInput()}
-              onInput={(e) => setLastNameInput(e.currentTarget.value)}
-            />
-            <button type="submit">Search</button>
-            <label htmlFor="safe-mode">Safe Search?</label>
-            <input type="checkbox" name="safe-mode" id="safe-mode" checked onClick={() => setSafeMode(mode => !mode)} />
-          </form>
-    </div>
+        <form onSubmit={handleSubmit} class="grid grid-cols-3 gap-1"> 
+          <input
+            type="text"
+            placeholder="First name"
+            value={firstNameInput()}
+            onInput={(e) => setFirstNameInput(e.currentTarget.value)}
+          />
+          <input 
+            type="text"
+            placeholder="Last Name"
+            value={lastNameInput()}
+            onInput={(e) => setLastNameInput(e.currentTarget.value)}
+          />
+          <button type="submit" class="bg-sky-200 px-2 py-1 rounded-md hover:bg-sky-100 shadow-2xs cursor-pointer transition-all .2s">Search</button>
+        </form>
+      </div>
 
-    <div> {/* show files after name search */}
-      <Show when={filterAndSortNames().length}>
-        <For each={filterAndSortNames()}>
-          {(file) => (
+      <div> {/* show files after name search */}
+        <Show when={filterAndSortNames().length}>
+          <For each={filterAndSortNames()}>
+            {(file) => (
+              <ul>
+                <li
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleFileSelect(file)}
+                >
+                  <p>{file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}</p>
+                </li>
+              </ul>
+            )}
+          </For>
+          <div class="grid gap-2 grid-cols-2 w-max mx-auto">
+            <button class="button_grey" onClick={() => toggleSort("time")}>
+              Time {sortState().field === "time" ? (sortState().asc ? "desc" : "asc") : ""}
+            </button>
+            <button class="button_grey" onClick={() => toggleSort("date")}>
+              Date <span>{sortState().field === "date" ? (sortState().asc ? "desc" : "asc") : ""}</span>
+            </button>
+          </div>
+        </Show>
+        <Show when={selectedFiles().length}>
+          <For each={selectedFiles()}>{fileHandler => (
             <ul>
-              <li
-                style={{ cursor: "pointer" }}
-                onClick={() => handleFileSelect(file)}
-              >
-                <p>{file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}</p>
+              <li>
+                {fileHandler.name}
               </li>
             </ul>
-          )}
-        </For>
-        <div>
-          <button onClick={() => toggleSort("time")}>
-           Time {sortState().field === "time" ? (sortState().asc ? "desc" : "asc") : ""}
-          </button>
-          <button onClick={() => toggleSort("date")}>
-           Date <span>{sortState().field === "date" ? (sortState().asc ? "desc" : "asc") : ""}</span>
-          </button>
-        </div>
-        <For each={selectedFiles()}>{(fileHandler) =>(
-          <ul>
-            <li>
-              {fileHandler.name}
-            </li>
-          </ul>
-        )}
-        </For>
-      </Show>
-      <button onClick={() => setSelectedFiles([])}>clear</button>
-      <button onClick={sendFilesToParse}>parse</button>
-      <input type="checkbox" name="dataFiltering" id="dataFiltering" checked={dataFiltering()} onChange={() => setDataFiltering(s => !s)}/>
-      <label htmlFor="dataFiltering">Filter data</label>
+          )}</For>
+          <button class="button_grey mr-1" onClick={() => setSelectedFiles([])}>clear</button>
+          <button class="button_grey mr-1" onClick={sendFilesToParse}>parse</button>
+          <input type="checkbox" name="dataFiltering" id="dataFiltering" checked={dataFiltering()} onChange={() => setDataFiltering(s => !s)}/>
+          <label htmlFor="dataFiltering" class="mx-2">Filter data</label>
+        </Show>
+        <label htmlFor="safe-mode">Safe Search?</label>
+        <input type="checkbox" name="safe-mode" id="safe-mode" checked onClick={() => setSafeMode(mode => !mode)} />
+      </div>
     </div>
-  </div>
   );
 }

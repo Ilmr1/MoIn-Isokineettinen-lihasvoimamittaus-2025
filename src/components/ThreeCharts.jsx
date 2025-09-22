@@ -59,7 +59,7 @@ function Chart(props) {
       <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, splitData: () => props.parsedCTM.powerSplit, min: () => props.parsedCTM.minmax.minPower, max: () => props.parsedCTM.minmax.maxPower, dataIndex: () => 0, mouseX, mouseY }}>
         <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
           <ChartWrapper
-            title="Power"
+            title="Torque"
             points={props.parsedCTM.pointCollections.power.points}
             maxValue={props.parsedCTM.pointCollections.power.maxValue}
             minValue={props.parsedCTM.pointCollections.power.minValue}
