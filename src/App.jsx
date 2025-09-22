@@ -51,14 +51,18 @@ function App() {
                 onClick={() => console.log(ctmData().formatted.data.map(row => row.map(val => val.toFixed(3)).join("\t")).join("\n"))}>txt</button>
                 <br />
                 <ul>
-                  <For each={Object.entries(parsedData.rawObject.repetitions)}>{([key, values]) => (
+                  <For each={Object.entries(parsedData.rawObject.repetitions).sort(([a], [b]) => a.localeCompare(b))}>{([key, values]) => (
                     <li>{key}: 
                       <For each={values}>{value => (
                         <span class="mx-2">
                           <Switch fallback={numberUtils.truncDecimals(value, 2)}>
+                            <Match when={key.startsWith("torquePeakPos")}>{numberUtils.truncDecimals(value, 2)}° </Match>
                             <Match when={key.startsWith("torquePeak")}>{numberUtils.truncDecimals(value, 2)}Nm </Match>
-                            <Match when={key.startsWith("power")}>{numberUtils.truncDecimals(value, 2)}W </Match>
+                            <Match when={key.startsWith("powerAvg")}>{numberUtils.truncDecimals(value, 2)}W </Match>
+                            <Match when={key.startsWith("powerPeak")}>{numberUtils.truncDecimals(value, 2)}W </Match>
+                            <Match when={key.startsWith("power")}>{numberUtils.truncDecimals(value, 2)} rad/s </Match>
                             <Match when={key.startsWith("work")}>{numberUtils.truncDecimals(value, 2)}J </Match>
+                            <Match when={key.startsWith("speedPeakPos")}>{numberUtils.truncDecimals(value, 2)}° </Match>
                             <Match when={key.startsWith("speed")}>{numberUtils.truncDecimals(value, 2)} deg/s </Match>
                           </Switch>
                         </span>
