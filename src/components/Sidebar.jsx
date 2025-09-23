@@ -14,12 +14,12 @@ export function Sidebar() {
   const otherTools = [
 
     { icon: OcCopy3, label: "Copy" },
-    { icon: FiPrinter, label: "Print"},
+    { icon: FiPrinter, label: "Print", onClick: () => window.print() },
     { icon: BiRegularExport, label: "Export" },
   ];
 
   return (
-    <div class="w-30 bg-gray-50 border-r border-gray-200 flex flex-col items-center py-6 space-y-6 pt-20">
+    <div class=" fixed top-0 left-0 h-screen w-32 bg-gray-50 border-r border-gray-200 flex flex-col items-center py-6 space-y-6 pt-20" >
       {/* Zoom controls */}
 
         <div class="flex flex-col space-y-1">
@@ -45,7 +45,7 @@ export function Sidebar() {
       <For each={otherTools}>
         {(tool) => (
           <div class="flex flex-col items-center space-y-1">
-            <button class="p-3 hover:bg-gray-200 rounded-lg transition-colors">
+            <button class="p-3 hover:bg-gray-200 rounded-lg transition-colors" onClick={tool.onClick}>
               <tool.icon class="w-10 h-10 text-gray-600" />
             </button>
             <div class="text-center">

@@ -161,9 +161,10 @@ export function FileBrowser() {
 
   return (
     <div>
-      <div> {/* folder management & pre-load files  */}
-        <button class="bg-green-300 px-2 py-1 rounded-md hover:bg-green-200 shadow-2xs cursor-pointer transition-all .2s" onClick={handleOpenDirectory}>Open Folder</button>
-        <ul>
+        {/* folder management & pre-load files  */}
+      <div class=" w-full max-w-2xl mx-auto shadow rounded-lg mt-6 p-4 bg-gray-50 w-full">
+        <button class="bg-green-300 px-2 py-1 rounded-md hover:bg-green-200 shadow-2xs cursor-pointer transition-all .2s mb-3" onClick={handleOpenDirectory}>Open Folder</button>
+        <ul class={"space-y-2"}>
           <For each={recentFolders()}>{(directoryHandler, i) => (
             <li>
               <span>{directoryHandler.name} </span>
@@ -188,18 +189,20 @@ export function FileBrowser() {
           )}
           </For>
         </ul>
-        <form onSubmit={handleSubmit} class="grid grid-cols-3 gap-1"> 
+        <form onSubmit={handleSubmit} class="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
           <input
             type="text"
             placeholder="First name"
             value={firstNameInput()}
             onInput={(e) => setFirstNameInput(e.currentTarget.value)}
+            class="p-2 rounded border border-gray-300 w-full"
           />
           <input 
             type="text"
             placeholder="Last Name"
             value={lastNameInput()}
             onInput={(e) => setLastNameInput(e.currentTarget.value)}
+            class="p-2 rounded border border-gray-300 w-full"
           />
           <button type="submit" class="bg-sky-200 px-2 py-1 rounded-md hover:bg-sky-100 shadow-2xs cursor-pointer transition-all .2s">Search</button>
         </form>
