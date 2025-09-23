@@ -27,13 +27,13 @@ function App() {
 
   return (
     <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
-      <div class="min-h-screen flex flex-col bg-gray-100">
+      <div class="min-h-screen rounded-lg flex flex-col bg-gray-100 max-w-4xl mx-auto">
         {/* <Header /> */}
         <div class="flex flex-1">
           <Sidebar />
           {/*<FilesPage />*/}
 
-          <main class="flex-1 p-6 overflow-auto">
+          <main class="flex-1 p-2 md:p-2 overflow-auto">
             <FileBrowser />
             <AverageChart listOfParsedCTM={parsedFileData} />
             <For each={parsedFileData()}>{parsedData => (
