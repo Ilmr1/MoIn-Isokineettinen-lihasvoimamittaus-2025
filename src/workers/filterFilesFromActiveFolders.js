@@ -1,4 +1,4 @@
-import { indexedDBUtils } from "../utils/utils";
+import { indexedDBUtils } from "../utils/utils"
 
 onmessage = async (message) => {
   const { activeFolders } = message.data;
@@ -7,7 +7,10 @@ onmessage = async (message) => {
   }
 
   console.log("worker", message);
-  const filteredFiles = []
+  const filteredFiles = [];
+  const sessionMap = {};
+  let sessionCounter = 0;
+
   for (const folderHandler of activeFolders) {
     for await (const fileHandler of getFilesRecursively(folderHandler)) {
       if (fileHandler.name.endsWith(".CTM")) {
@@ -16,16 +19,28 @@ onmessage = async (message) => {
         const parsedFile = parseCTMForFiltering(text);
         const measurement = parsedFile.Measurement;
         const session = parsedFile.session;
+        const date = measurement["date (dd/mm/yyyy)"];
+        const subjectFirstName = session["subject name first"];
+        const subjectLastName = session["subject name"];
+        const sessionKey = date + subjectFirstName + subjectLastName;
+        if (!sessionMap[sessionKey]) {
+          sessionCounter += 1;
+          sessionMap[sessionKey] = sessionCounter;
+        }
+
+        const sessionNumber = sessionMap[sessionKey];
+        const sessionId = `Session ${sessionNumber}`
         filteredFiles.push({
           fileHandler,
           name: fileHandler.name.replace(/\.CTM$/i, ""),
           measurementType: measurement.name,
-          date: measurement["date (dd/mm/yyyy)"],
+          date,
           time: measurement["time (hh/mm/ss)"],
-          subjectFirstName: session["subject name first"],
-          subjectLastName: session["subject name"]
+          subjectFirstName,
+          subjectLastName,
+          sessionId,
+          legSide: parsedFile.legSide
         });
-        // console.log("From worker", fileHandler);
       }
     }
   }
@@ -70,8 +85,14 @@ function parseCTMForFiltering(text) {
 
   for (let i = 1; i < sections.length; i += 2) {
     const header = sections[i];
+    const data = sections[i + 1];
+    if (header === "Configuration"){
+      const sideIndex = data.indexOf("side");
+      const newLineIndex = data.indexOf("\n", sideIndex);
+      let side = data.substring(sideIndex, newLineIndex).split("\t").at(-1);
+      filteredObject.legSide = side
+    }
     if (header === "Measurement" || header === "session"){
-      const data = sections[i + 1];
       const rows = data.replaceAll("\r", "").trim().split("\n").map(row => row.trim().split("\t"));
       filteredObject[header] = Object.fromEntries(rows.filter(row => row.length > 1))
     }

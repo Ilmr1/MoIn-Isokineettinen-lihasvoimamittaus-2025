@@ -1,4 +1,4 @@
-import { createMemo, createRenderEffect, createSignal, on, Show } from "solid-js";
+import { createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
@@ -8,6 +8,8 @@ import { signals } from "../collections/collections";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
+  const [sessions, setSessions] = createSignal([]);
+  const [selectedSession, setSelectedSession] = createSignal("");
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
@@ -20,6 +22,22 @@ export function FileBrowser() {
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
   const { setParsedFileData } = useParsedFiles();
+
+  const groupFilesBySession = (files) => {
+    const sessionMap = {};
+    for (const file of files) {
+      if (!sessionMap[file.sessionId]) {
+        sessionMap[file.sessionId] = [];
+      }
+      sessionMap[file.sessionId].push(file);
+    }
+    return Object.entries(sessionMap).map(([sessionId, sessionFiles]) => ({
+      sessionId,
+      files: sessionFiles
+    }))
+  }
+  
+  
 
   const filterAndSortNames = createMemo(() => {
     const allFiles = files();
@@ -97,7 +115,9 @@ export function FileBrowser() {
       worker.onmessage = async message => {
         if(message.data === "success") {
           const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
+          const sessions = groupFilesBySession(files);
           setFiles(files);
+          setSessions(sessions);
           console.log("response", files);
         }
       }
@@ -148,7 +168,6 @@ export function FileBrowser() {
       (f) => f.name === file.fileHandler.name
     );
     if (alreadySelected) return;
-    console.log(file.fileHandler)
     setSelectedFiles((prev) => [...prev, file.fileHandler]);
   }
 
@@ -243,9 +262,26 @@ export function FileBrowser() {
           Safe Search?
         </label>
       </div>
-
       {/* Show files */}
       <div class="space-y-4">
+        <div>{/* browse by session */}
+          <For each={sessions()}>
+            {(session) => (
+              <div>
+                <p onClick={() => setSelectedSession(session)}>{session.sessionId} {session.files[0]?.date}</p>
+                <Show when={selectedSession().sessionId === session.sessionId}>
+                  <For each={selectedSession().files}>
+                    {(file) => (
+                      <li>
+                        <p>{file.name} {file.legSide}</p>
+                      </li>
+                    )}
+                  </For>
+                </Show>
+              </div>
+            )}
+          </For>
+        </div>
         <Show when={filterAndSortNames().length}>
           <ul class="divide-y divide-gray-200 rounded-lg border">
             <For each={filterAndSortNames()}>{(file) => (
@@ -269,7 +305,6 @@ export function FileBrowser() {
             </button>
           </div>
         </Show>
-
         <Show when={selectedFiles().length}>
           <div class="bg-gray-50 p-3 rounded-lg space-y-2">
             <ul class="list-disc list-inside">
