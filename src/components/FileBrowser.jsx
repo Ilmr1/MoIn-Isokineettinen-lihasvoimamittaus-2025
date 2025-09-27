@@ -1,4 +1,4 @@
-import { createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
+import { batch, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
@@ -36,8 +36,6 @@ export function FileBrowser() {
       files: sessionFiles
     }))
   }
-  
-  
 
   const filterAndSortNames = createMemo(() => {
     const allFiles = files();
@@ -173,8 +171,10 @@ export function FileBrowser() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setFilterByFirstName(firstNameInput().trim().toLowerCase());
-    setFilterByLastName(lastNameInput().trim().toLowerCase());
+    batch(() => {
+      setFilterByFirstName(firstNameInput().trim().toLowerCase());
+      setFilterByLastName(lastNameInput().trim().toLowerCase());
+    });
   }
 
 
@@ -188,59 +188,80 @@ export function FileBrowser() {
         Open Folder
       </button>
 
+      <ListOfRecentFolders />
+      <FileSearchForm />
+      <SafeSearchCheckbox />
+      <div class="space-y-4">
+        <ListOfFileSessions />
+        <ListOfFilesAndSortingControls />
+        <ListOfSelectedFiles />
+      </div>
+    </div>
+  );
+
+  function ListOfRecentFolders() {
+    return (
       <ul class="space-y-2">
         <For each={recentFolders()}>{(directoryHandler, i) => (
-          <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow-sm">
-            <span class="font-medium">{directoryHandler.name}</span>
-            <div class="space-x-2">
-              <button
-                class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300"
-                onClick={async () => {
-                  const access = await fileUtils.checkOrGrantFileAccess(directoryHandler, "readwrite");
-                  if (!access) return;
-                  setFoldersThatHaveAccess((folders) => [...folders, directoryHandler]);
-                }}
-              >
-                load
-              </button>
-              <button
-                class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
-                onClick={async () => {
-                  const files = await indexedDBUtils.mutateValue(
-                    "file-handlers",
-                    "recent-files",
-                    (result) => {
-                      const recentFiles = result || [];
-                      recentFiles.splice(i(), 1);
-                      return recentFiles;
-                    }
-                  );
-                  setRecentFolders(files);
-                }}
-              >
-                delete
-              </button>
-            </div>
-          </li>
+          <RecentFolderItem directoryHandler={directoryHandler} i={i} />
         )}</For>
       </ul>
+    )
+  }
 
-      {/* Search form */}
+  function RecentFolderItem(props) {
+    const askForFolderAccess = async () => {
+      const access = await fileUtils.checkOrGrantFileAccess(props.directoryHandler, "readwrite");
+      if (!access) return;
+      setFoldersThatHaveAccess((folders) => [...folders, props.directoryHandler]);
+    };
+
+    const removeRecentFolderByIndex = async () => {
+      const files = await indexedDBUtils.mutateValue("file-handlers", "recent-files", (result) => {
+        const recentFiles = result || [];
+        recentFiles.splice(props.i(), 1);
+        return recentFiles;
+      });
+
+      setRecentFolders(files);
+    };
+
+    return (
+      <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow-sm">
+        <span class="font-medium">{props.directoryHandler.name}</span>
+        <div class="space-x-2">
+          <button
+            class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300"
+            onClick={askForFolderAccess}
+          >
+            load
+          </button>
+          <button
+            class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
+            onClick={removeRecentFolderByIndex}
+          >
+            delete
+          </button>
+        </div>
+      </li>
+    )
+  }
+
+  function FileSearchForm() {
+    return (
       <form onSubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <input
           type="text"
           placeholder="First name"
           value={firstNameInput()}
           onInput={(e) => setFirstNameInput(e.currentTarget.value)}
-          class="p-2 border rounded-lg"
-        />
+          class="p-2 border rounded-lg" />
         <input
           type="text"
           placeholder="Last name"
           value={lastNameInput()}
           onInput={(e) => setLastNameInput(e.currentTarget.value)}
-          class="p-2 border rounded-lg"
-        />
+          class="p-2 border rounded-lg" />
         <button
           type="submit"
           class="bg-sky-500 hover:bg-sky-400 text-white px-4 py-2 rounded-lg shadow"
@@ -248,92 +269,108 @@ export function FileBrowser() {
           Search
         </button>
       </form>
+    )
+  }
 
-      {/* Safe Search */}
+  function SafeSearchCheckbox() {
+    return (
       <div class="flex items-center space-x-2 mt-2">
         <input
           id="safe-mode"
           type="checkbox"
           checked={safeMode()}
           onClick={() => setSafeMode((m) => !m)}
-          class="w-4 h-4"
-        />
+          class="w-4 h-4" />
         <label for="safe-mode" class="text-sm text-gray-700">
           Safe Search?
         </label>
       </div>
-      {/* Show files */}
-      <div class="space-y-4">
-        <div>{/* browse by session */}
-          <For each={sessions()}>
-            {(session) => (
-              <div>
-                <p onClick={() => setSelectedSession(session)}>{session.sessionId} {session.files[0]?.date}</p>
-                <Show when={selectedSession().sessionId === session.sessionId}>
-                  <For each={selectedSession().files}>
-                    {(file) => (
-                      <li>
-                        <p>{file.name} {file.legSide}</p>
-                      </li>
-                    )}
-                  </For>
-                </Show>
-              </div>
-            )}
-          </For>
+    )
+  }
+
+  function ListOfFileSessions() {
+    return (
+      <div>
+        <For each={sessions()}>
+          {(session) => (
+            <div>
+              <p onClick={() => setSelectedSession(session)}>{session.sessionId} {session.files[0]?.date}</p>
+              <Show when={selectedSession().sessionId === session.sessionId}>
+                <For each={selectedSession().files}>
+                  {(file) => (
+                    <li>
+                      <p>{file.name} {file.legSide}</p>
+                    </li>
+                  )}
+                </For>
+              </Show>
+            </div>
+          )}
+        </For>
+      </div>
+    )
+  }
+
+  function ListOfFilesAndSortingControls() {
+    return (
+      <Show when={filterAndSortNames().length}>
+        <ul class="divide-y divide-gray-200 rounded-lg border">
+          <For each={filterAndSortNames()}>{(file) => (
+            <li
+              class="p-2 cursor-pointer hover:bg-gray-50"
+              onClick={() => handleFileSelect(file)}
+            >
+              <p class="text-sm text-gray-700">
+                {file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}
+              </p>
+            </li>
+          )}</For>
+        </ul>
+
+        <div class="flex justify-center space-x-3 mt-2">
+          <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("time")}>
+            Time {sortState().field === "time" ? (sortState().asc ? "↓" : "↑") : ""}
+          </button>
+          <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("date")}>
+            Date {sortState().field === "date" ? (sortState().asc ? "↓" : "↑") : ""}
+          </button>
         </div>
-        <Show when={filterAndSortNames().length}>
-          <ul class="divide-y divide-gray-200 rounded-lg border">
-            <For each={filterAndSortNames()}>{(file) => (
-              <li
-                class="p-2 cursor-pointer hover:bg-gray-50"
-                onClick={() => handleFileSelect(file)}
-              >
-                <p class="text-sm text-gray-700">
-                  {file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}
-                </p>
-              </li>
+      </Show>
+    )
+  }
+
+  function ListOfSelectedFiles() {
+    const toggleDataFiltering = () => setDataFiltering((s) => !s);
+    const clearSelectedFiles = () => setSelectedFiles([]);
+
+    return (
+      <Show when={selectedFiles().length}>
+        <div class="bg-gray-50 p-3 rounded-lg space-y-2">
+          <ul class="list-disc list-inside">
+            <For each={selectedFiles()}>{(fileHandler) => (
+              <li class="text-sm">{fileHandler.name}</li>
             )}</For>
           </ul>
-
-          <div class="flex justify-center space-x-3 mt-2">
-            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("time")}>
-              Time {sortState().field === "time" ? (sortState().asc ? "↓" : "↑") : ""}
+          <div class="flex space-x-2">
+            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={clearSelectedFiles}>
+              clear
             </button>
-            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("date")}>
-              Date {sortState().field === "date" ? (sortState().asc ? "↓" : "↑") : ""}
+            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={sendFilesToParse}>
+              parse
             </button>
-          </div>
-        </Show>
-        <Show when={selectedFiles().length}>
-          <div class="bg-gray-50 p-3 rounded-lg space-y-2">
-            <ul class="list-disc list-inside">
-              <For each={selectedFiles()}>{(fileHandler) => (
-                <li class="text-sm">{fileHandler.name}</li>
-              )}</For>
-            </ul>
-            <div class="flex space-x-2">
-              <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => setSelectedFiles([])}>
-                clear
-              </button>
-              <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={sendFilesToParse}>
-                parse
-              </button>
-              <div class="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="dataFiltering"
-                  checked={dataFiltering()}
-                  onChange={() => setDataFiltering((s) => !s)}
-                />
-                <label for="dataFiltering" class="text-sm">
-                  Filter data
-                </label>
-              </div>
+            <div class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="dataFiltering"
+                checked={dataFiltering()}
+                onChange={toggleDataFiltering} />
+              <label for="dataFiltering" class="text-sm">
+                Filter data
+              </label>
             </div>
           </div>
-        </Show>
-      </div>
-    </div>
-  );
+        </div>
+      </Show>
+    )
+  }
 }
