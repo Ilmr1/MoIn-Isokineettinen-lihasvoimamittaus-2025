@@ -16,7 +16,6 @@ const ctmTextToRawObject = text => {
 
 const cleanMemo = memoText => {
   return memoText
-    .replace(/\r/g, '')
     .split("\n")
     .map(line => line.trim())
     .filter(line => line.length > 0)
@@ -24,41 +23,34 @@ const cleanMemo = memoText => {
 };
 
 
-const formatRawObjectText = rawObject => {
+const createParsedSectionFromRawObjectSection = rawObjectSection => {
   let formattedObject = {};
 
-  for (const [key, ...values] of rawObject) {
+  for (const [key, ...values] of rawObjectSection) {
     if (values.length === 1) {
-       formattedObject[stringUtils.toCebabCase(key)] = formatObjectValues(values[0]);
+       formattedObject[stringUtils.toCebabCase(key)] = numberUtils.parseIfNumber(values[0]);
     } else {
-      formattedObject[stringUtils.toCebabCase(key)] = values.map(formatObjectValues);
+      formattedObject[stringUtils.toCebabCase(key)] = values.map(numberUtils.parseIfNumber);
     }
   }
   return formattedObject;
 };
 
-const formatObjectValues = objectValue => {
-  objectValue = objectValue.replace(',', '.');
-  if (!isNaN(objectValue) && objectValue.trim() !== "") {
-    return Number(objectValue);
-  }
-  return objectValue;
-};
 
-
-const createSplitCollection = (markersByIndex, points, skipZeros) => {
+const createSplitCollection = (markersByIndex, points, moveMarkerToNearestNonZeroValue) => {
   const collection = {
     startIndex: markersByIndex.move1[0],
     endIndex: markersByIndex.move1.at(-1),
     splits: [],
   };
+
   for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
     filterAndPush(markersByIndex.move1[i], markersByIndex.move2[i], "red");
     filterAndPush(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
   }
 
   function filterAndPush(start, end, color) {
-    if (skipZeros) {
+    if (moveMarkerToNearestNonZeroValue) {
       for (let i = start; i < end; i++) {
         if (points[i + 2] === 0) {
           start++;
@@ -82,7 +74,7 @@ const createSplitCollection = (markersByIndex, points, skipZeros) => {
   return collection;
 }
 
-const createAverageSplitCollection = (splits) => {
+const createAverageSplitCollection = splits => {
   const collection = {
     startIndex: 0,
     splits: [],
@@ -130,9 +122,8 @@ const createPointCollections = (markersByIndex, data, dataFiltering) => {
   }
 };
 
-// TODO: Change the chatGPT implementation :D
 function createLowpass11Hz(sampleRate) {
-  if (!sampleRate || sampleRate <= 0) throw new Error('sampleRate must be > 0');
+  asserts.assertFalsy(!sampleRate || sampleRate <= 0, "sampleRate must be > 0");
 
   const fc = 11.0; // cutoff in Hz
   const omega = 2 * Math.PI * fc;
@@ -167,9 +158,7 @@ function createLowpass11Hz(sampleRate) {
   };
 }
 
-const createRepetitions = (points, splits) => {
-  const toRad = deg => deg * Math.PI / 180;
-
+const createRepetitionsSection = (points, splits) => {
   const resultsByColor = { red: [], blue: [] };
 
   splits.forEach(({ startIndex, endIndex, color }) => {
@@ -188,7 +177,7 @@ const createRepetitions = (points, splits) => {
       const torque = points.power.points[i];
       const speed = points.speed.points[i];
       const angle = points.angle.points[i];
-      const omega = toRad(speed);
+      const omega = numberUtils.toRad(speed);
       const power = torque * omega;
 
       powerSum += power;
@@ -198,8 +187,8 @@ const createRepetitions = (points, splits) => {
       if (i < endIndex - 1) {
         const tau0 = torque;
         const tau1 = points.power.points[i + 1];
-        const theta0 = toRad(angle);
-        const theta1 = toRad(points.angle.points[i + 1]);
+        const theta0 = numberUtils.toRad(angle);
+        const theta1 = numberUtils.toRad(points.angle.points[i + 1]);
         work += 0.5 * (tau0 + tau1) * (theta1 - theta0);
       }
 
@@ -409,18 +398,18 @@ const formatRawCTMObject = (rawObject, dataFiltering) => {
   const object = {};
 
   object.data = rawObject.data.map(arr => arr.map(parseFloat));
-  object.markersByIndex = formatRawObjectText(rawObject["markers by index"]);
+  object.markersByIndex = createParsedSectionFromRawObjectSection(rawObject["markers by index"]);
   object.pointCollections = createPointCollections(object.markersByIndex, object.data, dataFiltering);
   object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections, dataFiltering);
-  object.setUp = formatRawObjectText(rawObject.SetUp);
+  object.setUp = createParsedSectionFromRawObjectSection(rawObject.SetUp);
 
   object.memo = cleanMemo(rawObject.memo.join("\n"));
-  object.session = formatRawObjectText(rawObject.session);
-  object.measurement = formatRawObjectText(rawObject.Measurement);
-  object.configuration = formatRawObjectText(rawObject.Configuration);
-  object.filter = formatRawObjectText(rawObject.filter);
-  object.systemStrings = formatRawObjectText(rawObject["system strings"]);
-  object.repetitions = createRepetitions(object.pointCollections, object.splitCollections.power.splits);
+  object.session = createParsedSectionFromRawObjectSection(rawObject.session);
+  object.measurement = createParsedSectionFromRawObjectSection(rawObject.Measurement);
+  object.configuration = createParsedSectionFromRawObjectSection(rawObject.Configuration);
+  object.filter = createParsedSectionFromRawObjectSection(rawObject.filter);
+  object.systemStrings = createParsedSectionFromRawObjectSection(rawObject["system strings"]);
+  object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits);
 
   return object
 }

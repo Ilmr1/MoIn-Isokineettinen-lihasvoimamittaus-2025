@@ -23,8 +23,7 @@ function App() {
   return (
     <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
       <div class="min-h-screen flex">
-          <Sidebar />
-
+        <Sidebar />
         <div class="flex-1 bg-white">
           <main class="flex-1 p-4 md:p-6 overflow-auto space-y-6 max-w-5xl mx-auto ml-28">
             <FileBrowser />
