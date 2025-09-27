@@ -28,9 +28,8 @@ function App() {
   return (
     <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
       <div class="min-h-screen flex">
-          <Sidebar />
-
-        <div class="flex-1 bg-white">
+          <Sidebar className="bg-gray-600 shadow-md"/>
+        <div class="flex-1">
           <main class="flex-1 p-4 md:p-6 overflow-auto space-y-6 max-w-5xl mx-auto ml-28">
             <FileBrowser />
             <AverageChart listOfParsedCTM={parsedFileData} />
@@ -70,7 +69,6 @@ function App() {
                 </ul>
               </>
             )}</For>
-
             {/* <pre> */}
             {/*   <code>{ctmData()?.text}</code> */}
             {/* </pre> */}
