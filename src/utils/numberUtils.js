@@ -7,3 +7,17 @@ export const delta = (start, end) => Math.abs(end) - Math.abs(start);
 export const min = (a, b) => Math.min(a ?? b, b ?? a);
 export const max = (a, b) => Math.max(a ?? b, b ?? a);
 
+export const parseIfNumber = value => {
+  if (value?.trim() === "") {
+    return value;
+  }
+
+  const number = Number(value.replace(",", "."));
+  if (isNaN(number)) {
+    return value;
+  }
+
+  return number;
+};
+
+export const toRad = deg => deg * Math.PI / 180;

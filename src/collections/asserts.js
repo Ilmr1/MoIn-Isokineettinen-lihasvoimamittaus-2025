@@ -4,7 +4,7 @@ export const assertTruthy = (condition, message = "Not true") => {
   }
 }
 
-export const assertFalse = (condition, message = "Not false") => assertTruthy(!condition, message);
+export const assertFalsy = (condition, message = "Not false") => assertTruthy(!condition, message);
 
 export const unreachable = (message = "Unreachable code path reached") => assertTruthy(false, message);
 
