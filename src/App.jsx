@@ -27,13 +27,11 @@ function App() {
 
   return (
     <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
-      <div class="min-h-screen rounded-lg flex flex-col bg-gray-100 max-w-4xl mx-auto">
-        {/* <Header /> */}
-        <div class="flex flex-1">
+      <div class="min-h-screen flex">
           <Sidebar />
-          {/*<FilesPage />*/}
 
-          <main class="flex-1 p-2 md:p-2 overflow-auto">
+        <div class="flex-1 bg-white">
+          <main class="flex-1 p-4 md:p-6 overflow-auto space-y-6 max-w-5xl mx-auto ml-28">
             <FileBrowser />
             <AverageChart listOfParsedCTM={parsedFileData} />
             <For each={parsedFileData()}>{parsedData => (
@@ -52,7 +50,7 @@ function App() {
                 <br />
                 <ul>
                   <For each={Object.entries(parsedData.rawObject.repetitions).sort(([a], [b]) => a.localeCompare(b))}>{([key, values]) => (
-                    <li>{key}: 
+                    <li>{key}:
                       <For each={values}>{value => (
                         <span class="mx-2">
                           <Switch fallback={numberUtils.truncDecimals(value, 2)}>
