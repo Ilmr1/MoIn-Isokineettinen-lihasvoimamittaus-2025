@@ -63,7 +63,7 @@ export function FileBrowser() {
         const ln = file.subjectLastName?.toLowerCase() ?? "";
         return (
           (!firstName || fn.includes(firstName)) &&
-            (!lastName || ln.includes(lastName))
+          (!lastName || ln.includes(lastName))
         );
       });
     }
