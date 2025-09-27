@@ -19,42 +19,40 @@ export function Sidebar() {
   ];
 
   return (
-    <div class=" fixed top-0 left-0 h-screen w-32 bg-gray-50 border-r border-gray-200 flex flex-col items-center py-6 space-y-6 pt-20" >
-      {/* Zoom controls */}
+      <aside class="fixed top-0 left-0 h-screen w-28 bg-white shadow-md border-r border-gray-200 flex flex-col items-center py-8 space-y-8">
+          {/* Zoom controls */}
+          <div class="flex flex-col items-center bg-gray-50 p-3 rounded-xl shadow-sm space-y-2">
+              <button onClick={handleZoomIn} class="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                  <AiOutlinePlusCircle class="w-7 h-7 text-gray-600" />
+              </button>
 
-        <div class="flex flex-col space-y-1">
-          <button onClick={handleZoomIn} class="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-            <AiOutlinePlusCircle class="w-8 h-8 text-gray-600" />
-          </button>
 
-          <div class="flex flex-col items-center space-y-1">
-        <div class="text-center">
-          <div class="text-s text-gray-800">{zoomLevel()}%</div>
-        </div>
+              <div class="text-sm font-medium text-gray-800">{zoomLevel()}%</div>
 
-          <button
-            onClick={handleZoomOut}
-            class="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <AiTwotoneMinusCircle class="w-8 h-8 text-gray-600" />
-          </button>
-        </div>
-      </div>
 
-      {/* Other tools */}
-      <For each={otherTools}>
-        {(tool) => (
-          <div class="flex flex-col items-center space-y-1">
-            <button class="p-3 hover:bg-gray-200 rounded-lg transition-colors" onClick={tool.onClick}>
-              <tool.icon class="w-10 h-10 text-gray-600" />
-            </button>
-            <div class="text-center">
-              <div class="text-xl text-gray-500">{tool.label}</div>
-
-            </div>
+              <button
+                  onClick={handleZoomOut}
+                  class="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                  <AiTwotoneMinusCircle class="w-7 h-7 text-gray-600" />
+              </button>
           </div>
-        )}
-      </For>
-    </div>
+
+
+          {/* Other tools */}
+          <For each={otherTools}>
+              {(tool) => (
+                  <div class="flex flex-col items-center space-y-1">
+                      <button
+                          class="p-3 bg-gray-50 hover:bg-gray-200 rounded-xl shadow-sm transition-colors"
+                          onClick={tool.onClick}
+                      >
+                          <tool.icon class="w-8 h-8 text-gray-600" />
+                      </button>
+                      <span class="text-xs text-gray-500 font-medium">{tool.label}</span>
+                  </div>
+              )}
+          </For>
+      </aside>
   );
 }
