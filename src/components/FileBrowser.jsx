@@ -13,6 +13,7 @@ export function FileBrowser() {
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
+  const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
   const [filterByLastName, setFilterByLastName] = createSignal("");
   const [filterByFirstName, setFilterByFirstName] = createSignal("");
   const [firstNameInput, setFirstNameInput] = createSignal("");
@@ -21,7 +22,7 @@ export function FileBrowser() {
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
-  const { setParsedFileData } = useParsedFiles();
+  const { parsedFileData, setParsedFileData } = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -129,6 +130,7 @@ export function FileBrowser() {
       worker2.postMessage({
         filesToParse: selectedFiles(),
         dataFiltering: dataFiltering(),
+        disabledRepetitions: disabledRepetitions(),
       });
 
       worker2.onmessage = async message => {
@@ -347,6 +349,15 @@ export function FileBrowser() {
       return [...files];
     });
 
+    const toggleRepetitionDisable = (index, repetition) => {
+      setDisabledRepetitions(reps => {
+        reps[index] ??= {}
+        reps[index][repetition] = !reps[index][repetition];
+        reps[index][repetition + 1] = !reps[index][repetition + 1];
+        return {...reps};
+      });
+    }
+
     return (
       <Show when={selectedFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
@@ -360,6 +371,20 @@ export function FileBrowser() {
                   remove
                 </button>
                 <span class="font-medium">{fileHandler.name}</span>
+                <Show when={i() < parsedFileData().length}>
+                  <ol>
+                    <For each={parsedFileData()?.[i()]?.rawObject.splitCollections.angle.splits}>{(data, j) => (
+                      <Show when={j() % 2 === 0}>
+                        <li>
+                          <label>
+                            <input type="checkbox" name="disableRepetition" checked={!data.disabled} onChange={() => toggleRepetitionDisable(i(), j())} />{" "}
+                            Repetition {j() / 2 + 1}
+                          </label>
+                        </li>
+                      </Show>
+                    )}</For>
+                  </ol>
+                </Show>
               </li>
             )}</For>
           </ul>

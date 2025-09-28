@@ -19,7 +19,9 @@ export const assert2DArray = (array, variableName = "Value", message = variableN
 
 export const assert1DArrayOfNumbers = (array, variableName = "Value", message = variableName + " is not type of 1D number array") => {
   assertTypeArray(array, null, message);
-  assertTypeNumber(array[0], null, message);
+  if (array.length) {
+    assertTypeNumber(array[0], null, message);
+  }
 }
 
 export const arrayNotEmpty = (array, message = "Assertion failed because array is empty") => assertTruthy(array?.length, message);
