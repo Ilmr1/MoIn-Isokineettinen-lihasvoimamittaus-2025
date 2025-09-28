@@ -499,7 +499,6 @@ const formatRawCTMObject = (rawObject, dataFiltering) => {
   object.configuration = createParsedSectionFromRawObjectSection(rawObject.Configuration);
   object.filter = createParsedSectionFromRawObjectSection(rawObject.filter);
   object.systemStrings = createParsedSectionFromRawObjectSection(rawObject["system strings"]);
-  console.log(object);
   object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits, object.measurement.samplingrate);
   object.analysis = createAnalysis(object.repetitions, object.session.subjectWeight);
 
