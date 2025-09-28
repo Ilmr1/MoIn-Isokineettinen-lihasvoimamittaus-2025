@@ -1,5 +1,5 @@
 import { asserts } from "../collections/collections";
-import { numberUtils, stringUtils } from "./utils";
+import { arrayUtils, numberUtils, stringUtils } from "./utils";
 
 const ctmTextToRawObject = text => {
   const sections = text.split(/\[(.*)\]/g);
@@ -159,6 +159,7 @@ function createLowpass11Hz(sampleRate) {
 }
 
 const createRepetitionsSection = (points, splits, sampleRate) => {
+  
   const samplerate = sampleRate[0];
   const dt = 1 / samplerate;
   const resultsByColor = { red: [], blue: [] };
@@ -253,91 +254,69 @@ const createRepetitionsSection = (points, splits, sampleRate) => {
     speedPeakPos2: resultsByColor.blue.map(r => r.speedPeakAngle),
   };
 };
-const linearSlope = (x, y) => {
-  const n = x.length;
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
-  const sumX2 = x.reduce((a, b) => a + b * b, 0);
-
-  return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-};
-
-const stdDev = arr => {
-  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-  return Math.sqrt(arr.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / arr.length);
-
-};
-const coeffVar = arr => {
-  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-  const variance = arr.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / arr.length;
-  const sd = Math.sqrt(variance);
-  return Math.abs((sd / mean) * 100);
-};
 const createAnalysis = (repetitions, weight) => {
-  
   return{
-    110: Math.max(...repetitions.torquePeak1),
-    111: Math.min(...repetitions.torquePeak2),
-    112: repetitions.torquePeak1.reduce((a, b) => a + b, 0) / repetitions.torquePeak1.length,
-    113: repetitions.torquePeak2.reduce((a, b) => a + b, 0) / repetitions.torquePeak2.length,
-    114: repetitions.torquePeakPos1.reduce((a, b) => a + b, 0) / repetitions.torquePeakPos1.length,
-    115: repetitions.torquePeakPos2.reduce((a, b) => a + b, 0) / repetitions.torquePeakPos2.length,
-    116: repetitions.timeToPeak1.reduce((a, b) => a + b, 0) / repetitions.timeToPeak1.length,
-    117: repetitions.timeToPeak2.reduce((a, b) => a + b, 0) / repetitions.timeToPeak2.length,
-    122: repetitions.work1.reduce((a, b) => a + b, 0) / repetitions.work1.length,
-    123: repetitions.work2.reduce((a, b) => a + b, 0) / repetitions.work2.length,
-    124: repetitions.powerAvg1.reduce((a, b) => a + b, 0) / repetitions.powerAvg1.length,
-    125: repetitions.powerAvg2.reduce((a, b) => a + b, 0) / repetitions.powerAvg2.length,
-    130: linearSlope(repetitions.startTime1, repetitions.work1),
-    131: linearSlope(repetitions.startTime2, repetitions.work2),
-    132: "TODO Expected Deviation Ext	%", 
+    110: arrayUtils.maxValue(repetitions.torquePeak1),
+    111: arrayUtils.minValue(repetitions.torquePeak2),
+    112: arrayUtils.average(repetitions.torquePeak1),
+    113: arrayUtils.average(repetitions.torquePeak2),
+    114: arrayUtils.average(repetitions.torquePeakPos1),
+    115: arrayUtils.average(repetitions.torquePeakPos2),
+    116: arrayUtils.average(repetitions.timeToPeak1),
+    117: arrayUtils.average(repetitions.timeToPeak2),
+    122: arrayUtils.average(repetitions.work1),
+    123: arrayUtils.average(repetitions.work2),
+    124: arrayUtils.average(repetitions.powerAvg1),
+    125: arrayUtils.average(repetitions.powerAvg2),
+    130: arrayUtils.linearSlope(repetitions.startTime1, repetitions.work1),
+    131: arrayUtils.linearSlope(repetitions.startTime2, repetitions.work2),
+    132: "TODO Expected Deviation Ext	%",
     133: "TODO Expected Deviation Flex	%",
-    136: Math.max(...repetitions.speedPeak1),
-    137: Math.max(...repetitions.speedPeak2),
-    138: repetitions.speedPeak1.reduce((a, b) => a + b, 0) / repetitions.speedPeak1.length,
-    139: repetitions.speedPeak2.reduce((a, b) => a + b, 0) / repetitions.speedPeak2.length,
-    140: repetitions.speedPeakPos1.reduce((a, b) => a + b, 0) / repetitions.speedPeakPos1.length,
-    141: repetitions.speedPeakPos2.reduce((a, b) => a + b, 0) / repetitions.speedPeakPos2.length,
-    142: repetitions.speedToPeak1.reduce((a, b) => a + b, 0) / repetitions.speedToPeak1.length,
-    143: repetitions.speedToPeak2.reduce((a, b) => a + b, 0) / repetitions.speedToPeak2.length,
-    144: repetitions.speedAv1.reduce((a, b) => a + b, 0) / repetitions.speedAv1.length,
-    145: repetitions.speedAv2.reduce((a, b) => a + b, 0) / repetitions.speedAv2.length,
-    146: Math.max(...repetitions.powerPeak1),
-    147: Math.max(...repetitions.powerPeak2),
-    148: repetitions.powerPeak1.reduce((a, b) => a + b, 0) / repetitions.powerPeak1.length,
-    149: repetitions.powerPeak2.reduce((a, b) => a + b, 0) / repetitions.powerPeak2.length,
-    150: repetitions.powerPeak1.reduce((a, b) => a + b, 0) / repetitions.powerPeak1.length / weight,
-    151: repetitions.powerPeak2.reduce((a, b) => a + b, 0) / repetitions.powerPeak2.length / weight,
-    200: Math.abs((repetitions.torquePeak2.reduce((a, b) => a + b, 0) / repetitions.torquePeak2.length) / (repetitions.torquePeak1.reduce((a, b) => a + b, 0) / repetitions.torquePeak1.length) * 100),
-    201: (repetitions.work2.reduce((a, b) => a + b, 0) / repetitions.work2.length) / (repetitions.work1.reduce((a, b) => a + b, 0) / repetitions.work1.length) * 100,
-    202: (repetitions.powerAvg2.reduce((a, b) => a + b, 0) / repetitions.powerAvg2.length) / (repetitions.powerAvg1.reduce((a, b) => a + b, 0) / repetitions.powerAvg1.length) * 100  ,
-    203: repetitions.torquePeak1.reduce((a, b) => a + b, 0)/ repetitions.torquePeak1.length / weight,
-    204: repetitions.torquePeak2.reduce((a, b) => a + b, 0) / repetitions.torquePeak2.length / weight,
-    205: repetitions.work1.reduce((a, b) => a + b, 0) / repetitions.work1.length / weight,
-    206: repetitions.work2.reduce((a, b) => a + b, 0) / repetitions.work2.length / weight,
-    207: repetitions.powerAvg1.reduce((a, b) => a + b, 0) / repetitions.powerAvg1.length / weight,
-    208: repetitions.powerAvg2.reduce((a, b) => a + b, 0) / repetitions.powerAvg2.length / weight,
-    212: repetitions.work1.reduce((a, b) => a + b, 0),
-    213: repetitions.work2.reduce((a, b) => a + b, 0),
-    225: repetitions.work1.reduce((a, b) => a + b, 0) + repetitions.work2.reduce((a, b) => a + b, 0),
-    226: (repetitions.powerPeak2.reduce((a, b) => a + b, 0) /repetitions.powerPeak2.length) / (repetitions.powerPeak1.reduce((a, b) => a + b, 0) / repetitions.powerPeak1.length) * 100,
-    250: stdDev(repetitions.torquePeak1),
-    251: stdDev(repetitions.torquePeak2),
-    254: stdDev(repetitions.work1),
-    255: stdDev(repetitions.work2),
-    256: stdDev(repetitions.powerAvg1),
-    257: stdDev(repetitions.powerAvg2),
-    258: stdDev(repetitions.powerPeak1),
-    259: stdDev(repetitions.powerPeak2),
-    260: coeffVar(repetitions.torquePeak1),
-    261: coeffVar(repetitions.torquePeak2),
-    264: coeffVar(repetitions.work1),
-    265: coeffVar(repetitions.work2),
-    266: coeffVar(repetitions.powerAvg1),
-    267: coeffVar(repetitions.powerAvg2),
-    268: coeffVar(repetitions.powerPeak1),
-    269: coeffVar(repetitions.powerPeak2),
+    136: arrayUtils.maxValue(repetitions.speedPeak1),
+    137: arrayUtils.maxValue(repetitions.speedPeak2),
+    138: arrayUtils.average(repetitions.speedPeak1),
+    139: arrayUtils.average(repetitions.speedPeak2),
+    140: arrayUtils.average(repetitions.speedPeakPos1),
+    141: arrayUtils.average(repetitions.speedPeakPos2),
+    142: arrayUtils.average(repetitions.speedToPeak1),
+    143: arrayUtils.average(repetitions.speedToPeak2),
+    144: arrayUtils.average(repetitions.speedAv1),
+    145: arrayUtils.average(repetitions.speedAv2),
+    146: arrayUtils.maxValue(repetitions.powerPeak1),
+    147: arrayUtils.maxValue(repetitions.powerPeak2),
+    148: arrayUtils.average(repetitions.powerPeak1),
+    149: arrayUtils.average(repetitions.powerPeak2),
+    150: arrayUtils.average(repetitions.powerPeak1) / weight,
+    151: arrayUtils.average(repetitions.powerPeak2) / weight,
+    200: Math.abs((arrayUtils.average(repetitions.torquePeak2) / arrayUtils.average(repetitions.torquePeak1)) * 100),
+    201: (arrayUtils.average(repetitions.work2) / arrayUtils.average(repetitions.work1)) * 100,
+    202: (arrayUtils.average(repetitions.powerAvg2) / arrayUtils.average(repetitions.powerAvg1)) * 100,
+    203: arrayUtils.average(repetitions.torquePeak1) / weight,
+    204: arrayUtils.average(repetitions.torquePeak2) / weight,
+    205: arrayUtils.average(repetitions.work1) / weight,
+    206: arrayUtils.average(repetitions.work2) / weight,
+    207: arrayUtils.average(repetitions.powerAvg1) / weight,
+    208: arrayUtils.average(repetitions.powerAvg2) / weight,
+    212: arrayUtils.sum(repetitions.work1),
+    213: arrayUtils.sum(repetitions.work2),
+    225: arrayUtils.sum(repetitions.work1) + arrayUtils.sum(repetitions.work2),
+    226: (arrayUtils.average(repetitions.powerPeak2) / arrayUtils.average(repetitions.powerPeak1)) * 100,
+    250: arrayUtils.stdDev(repetitions.torquePeak1),
+    251: arrayUtils.stdDev(repetitions.torquePeak2),
+    254: arrayUtils.stdDev(repetitions.work1),
+    255: arrayUtils.stdDev(repetitions.work2),
+    256: arrayUtils.stdDev(repetitions.powerAvg1),
+    257: arrayUtils.stdDev(repetitions.powerAvg2),
+    258: arrayUtils.stdDev(repetitions.powerPeak1),
+    259: arrayUtils.stdDev(repetitions.powerPeak2),
+    260: arrayUtils.coeffVar(repetitions.torquePeak1),
+    261: arrayUtils.coeffVar(repetitions.torquePeak2),
+    264: arrayUtils.coeffVar(repetitions.work1),
+    265: arrayUtils.coeffVar(repetitions.work2),
+    266: arrayUtils.coeffVar(repetitions.powerAvg1),
+    267: arrayUtils.coeffVar(repetitions.powerAvg2),
+    268: arrayUtils.coeffVar(repetitions.powerPeak1),
+    269: arrayUtils.coeffVar(repetitions.powerPeak2),
   }
 }
 
@@ -520,7 +499,8 @@ const formatRawCTMObject = (rawObject, dataFiltering) => {
   object.configuration = createParsedSectionFromRawObjectSection(rawObject.Configuration);
   object.filter = createParsedSectionFromRawObjectSection(rawObject.filter);
   object.systemStrings = createParsedSectionFromRawObjectSection(rawObject["system strings"]);
-  object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits);
+  console.log(object);
+  object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits, object.measurement.samplingrate);
   object.analysis = createAnalysis(object.repetitions, object.session.subjectWeight);
 
 
