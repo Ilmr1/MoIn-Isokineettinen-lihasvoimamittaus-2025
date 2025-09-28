@@ -1,4 +1,4 @@
-import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
+import { batch, createMemo, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
 import { SVGChartContext } from "../providers";
 import { chartUtils, CTMUtils } from "../utils/utils";
 import { asserts, signals } from "../collections/collections";
@@ -94,7 +94,107 @@ export function ChartWrapperWithPadding(props) {
   );
 }
 
+export function ChartHeader(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  return (
+    <text dominant-baseline="ideographic" text-anchor="middle" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+  );
+}
+
+export function ChartPercentageVerticalLine(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
+  const [local, _] = splitProps(props, ["stroke", "stroke-width"]);
+
+  return (
+    <line
+      x1={props.x + props.mouseXPercentage * props.width}
+      x2={props.x + props.mouseXPercentage * props.width}
+      y1={props.y}
+      y2={props.y + props.height}
+      {...local}
+    />
+  );
+}
+
+export function ChartHorizontalPointLineWithLabel(props) {
+  asserts.assert1DArrayOfNumbers(props.points, "points");
+  asserts.assertTypeNumber(props.endIndex, "endIndex");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.maxValue, "maxValue");
+  asserts.assertTypeNumber(props.minValue, "minValue");
+  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(props.startIndex, "startIndex");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
+  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
+
+  const hover = createMemo(() => {
+    const {points, mouseXPercentage, startIndex, endIndex, height, maxValue, minValue} = props;
+    if (mouseXPercentage === -1) {
+      return { y: -1, value: null }
+    }
+
+    const delta = maxValue - minValue;
+    const length = endIndex - startIndex;
+    const value = points[Math.floor(mouseXPercentage * length)];
+    const y = chartUtils.flipYAxes((value - minValue) / delta * height, height);
+
+    return { y: y + props.y, value }
+  });
+
+  return (
+    <>
+      <line
+        x1={props.x}
+        x2={props.x + props.width}
+        y1={hover().y}
+        y2={hover().y}
+        {...styles}
+      />
+      <text dominant-baseline="middle" text-anchor="end" x={props.x - 5} y={hover().y}>{hover().value}</text>
+    </>
+  );
+}
+
+export function ChartBorder(props) {
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ fill: "none", stroke: "black", "stroke-width": 1 }, props);
+  const [local, _] = splitProps(props, ["fill", "stroke", "width", "height", "x", "y", "stroke-width"]);
+
+  return (
+    <rect {...local} />
+  );
+}
+
 export function ChartGrid(props) {
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({
+    stroke: "black",
+    "stroke-width": ".25",
+    "stroke-dasharray": "2",
+    fill: "none",
+  }, props);
+  const [local, _] = splitProps(props, ["fill", "stroke-width", "stroke-dasharray", "stroke"]);
+
   const grid = createMemo(() => {
     const string = [];
     const height = props.height, width = props.width, x = props.x, y = props.y;
@@ -108,19 +208,19 @@ export function ChartGrid(props) {
   });
 
   return (
-    <path d={grid()} stroke="black" stroke-width=".25" stroke-dasharray="2" fill="none" />
+    <path d={grid()} {...local} />
   );
 }
 
 export function ChartMouseHoverValue(props) {
-  asserts.assertTypeNumber(props.mouseX, "mouseX is not type of number");
-  asserts.assertTypeNumber(props.mouseY, "mouseY is not type of number");
-  asserts.assertTypeNumber(props.startIndex, "startIndex is not type of number");
-  asserts.assertTypeNumber(props.endIndex, "endIndex is not type of number");
-  asserts.assertTypeNumber(props.height, "height is not type of number");
-  asserts.assertTypeNumber(props.width, "width is not type of number");
-  asserts.assertTypeArray(props.points, "points is not type of array");
-  asserts.assertTypeFunction(props.children, "children is not type of function");
+  asserts.assertTypeNumber(props.mouseX, "mouseX");
+  asserts.assertTypeNumber(props.mouseY, "mouseY");
+  asserts.assertTypeNumber(props.startIndex, "startIndex");
+  asserts.assertTypeNumber(props.endIndex, "endIndex");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeArray(props.points, "points");
+  asserts.assertTypeFunction(props.children, "children");
 
   const minIndex = createMemo(() => props.startIndex);
   const maxIndex = createMemo(() => props.endIndex);
@@ -153,6 +253,41 @@ export function ChartMouseHoverValue(props) {
       mouseY={hover().y}
       mouseValue={hover().value}
       mouseIndex={hover().index}
+    ></Dynamic>
+  )
+}
+
+export function ChartMousePositionInPercentage(props) {
+  asserts.assertTypeFunction(props.mouseX, "mouseX");
+  asserts.assertTypeFunction(props.mouseY, "mouseY");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+  asserts.assertTypeFunction(props.children, "children");
+
+
+  const percentage = createMemo(() => {
+    const {width, height, x, y} = props;
+    const mouseX = props.mouseX() - x;
+    const mouseY = props.mouseY() - y;
+
+    if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
+      return {x: -1, y: -1};
+    }
+
+    return {
+      x: mouseX / width,
+      y: mouseY / height,
+    };
+  });
+
+  return (
+    <Dynamic
+      component={props.children}
+      mouseXPercentage={percentage().x}
+      mouseYPercentage={percentage().y}
+      {...props}
     ></Dynamic>
   )
 }
@@ -221,12 +356,61 @@ export function ChartContent(props) {
   );
 }
 
-export function ChartErrorBands(props) {
-  asserts.assertTypeNumber(props.minValue);
-  asserts.assertTypeNumber(props.maxValue);
-  asserts.assert2DArray(props.points);
+export function ChartPath(props) {
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+  asserts.assertTypeNumber(props.startIndex, "startIndex");
+  asserts.assertTypeNumber(props.endIndex, "endIndex");
+  asserts.assertTypeNumber(props.maxValue, "maxValue");
+  asserts.assertTypeNumber(props.minValue, "minValue");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeArray(props.splits, "splits");
+  asserts.assert1DArrayOfNumbers(props.points, "points");
 
-  console.log(props.points);
+  const paths = createMemo(() => {
+    const { x, y, startIndex, endIndex, maxValue, minValue, width, height, splits, points } = props;
+    const totalDataWidth = (endIndex - startIndex) + 1;
+    const totalDataHeight = maxValue - minValue;
+
+    const yStep = height / totalDataHeight;
+    const xStep = width / totalDataWidth;
+
+    return splits.map(split => {
+      if (Number.isNaN(y + chartUtils.flipYAxes(points[split.startIndex], maxValue) * yStep)) {
+        console.log(y , chartUtils.flipYAxes(points[split.startIndex], maxValue), points[split.startIndex] , yStep, points[split.startIndex], split.startIndex, maxValue);
+      }
+      const paths = [`M ${x + (split.startIndex - startIndex) * xStep} ${y + chartUtils.flipYAxes(points[split.startIndex], maxValue) * yStep}`]
+      for (let x2 = split.startIndex + 1; x2 < split.endIndex; x2++) {
+        const y2 = points[x2];
+        const flippedY = chartUtils.flipYAxes(y2, maxValue);
+        paths.push(`L ${x + (x2 - startIndex) * xStep} ${y + flippedY * yStep}`);
+      }
+      return paths.join(" ");
+    });
+  });
+
+  return (
+    <For each={paths()}>{(path, i) => (
+      <path d={path} fill="none" stroke-width="2" stroke={props.stroke || props.splits[i()].color} />
+    )}</For>
+  );
+}
+
+export function ChartErrorBands(props) {
+  asserts.assert2DArray(props.points, "points");
+  asserts.assertTypeArray(props.splits, "splits");
+  asserts.assertTypeNumber(props.maxValue, "maxValue");
+  asserts.assertTypeNumber(props.minValue, "minValue");
+  asserts.assertTypeNumber(props.endIndex, "endIndex");
+  asserts.assertTypeNumber(props.startIndex, "startIndex");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ fill: "#00000082", stroke: "black" }, props);
+  const [local, _] = splitProps(props, ["fill", "stroke"]);
 
   const paths = createMemo(() => {
     const { maxValue, points, x, y } = props;
@@ -256,7 +440,7 @@ export function ChartErrorBands(props) {
 
   return (
     <For each={paths()}>{path => (
-      <path d={path} fill="#ffa5003d" stroke="orange" />
+      <path d={path} {...local} />
     )}</For>
   );
 }
@@ -270,11 +454,11 @@ export function ChartPadding(props) {
 
   return (
     <Dynamic
-      component={props.children} 
+      component={props.children}
       x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
       y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
-      width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0) * 2)}
-      height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0) * 2)}
+      width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0)) - (props.paddingLeft ?? (props.paddingInline ?? 0))}
+      height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
     />
   );
 }
