@@ -352,17 +352,15 @@ export function FileBrowser() {
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
           <ul class="space-y-1">
             <For each={selectedFiles()}>{(fileHandler, i) => (
-              <>
-                <li class="text-sm space-x-1">
-                  <button 
-                    class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
-                    onClick={() => removeFileSelection(i())}
-                  >
-                    remove
-                  </button>
-                  <span class="font-medium">{fileHandler.name}</span>
-                </li>
-              </>
+              <li class="text-sm space-x-1">
+                <button 
+                  class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
+                  onClick={() => removeFileSelection(i())}
+                >
+                  remove
+                </button>
+                <span class="font-medium">{fileHandler.name}</span>
+              </li>
             )}</For>
           </ul>
           <div class="flex space-x-2">
