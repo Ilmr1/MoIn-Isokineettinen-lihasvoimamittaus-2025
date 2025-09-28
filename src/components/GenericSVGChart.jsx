@@ -125,7 +125,7 @@ export function ChartPercentageVerticalLine(props) {
 }
 
 export function ChartHorizontalPointLineWithLabel(props) {
-  asserts.assert1DArrayOfNumbers(props.points, "points");
+  asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
   asserts.assertTypeNumber(props.endIndex, "endIndex");
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.maxValue, "maxValue");
@@ -366,7 +366,7 @@ export function ChartPath(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeArray(props.splits, "splits");
-  asserts.assert1DArrayOfNumbers(props.points, "points");
+  asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
 
   const paths = createMemo(() => {
     const { x, y, startIndex, endIndex, maxValue, minValue, width, height, splits, points } = props;
