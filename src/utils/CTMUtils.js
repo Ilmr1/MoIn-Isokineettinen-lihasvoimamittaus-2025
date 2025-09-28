@@ -158,7 +158,9 @@ function createLowpass11Hz(sampleRate) {
   };
 }
 
-const createRepetitionsSection = (points, splits) => {
+const createRepetitionsSection = (points, splits, sampleRate) => {
+  const samplerate = sampleRate[0];
+  const dt = 1 / samplerate;
   const resultsByColor = { red: [], blue: [] };
 
   splits.forEach(({ startIndex, endIndex, color }) => {
@@ -166,9 +168,12 @@ const createRepetitionsSection = (points, splits) => {
     let speedExtreme = color === 'red' ? -Infinity : Infinity;
     let work = 0;
     let powerSum = 0;
+    let speedSum = 0;
     let powerPeak = -Infinity;
     let torquePeakAngle = 0;
     let speedPeakAngle = 0;
+    let torquePeakIndex = startIndex;
+    let speedPeakIndex = startIndex;
     let count = 0;
 
     const isRed = color === 'red';
@@ -181,6 +186,7 @@ const createRepetitionsSection = (points, splits) => {
       const power = torque * omega;
 
       powerSum += power;
+      speedSum += speed;
       count++;
       if (power > powerPeak) powerPeak = power;
 
@@ -195,12 +201,18 @@ const createRepetitionsSection = (points, splits) => {
       if (isRed ? torque > torqueExtreme : torque < torqueExtreme) {
         torqueExtreme = torque;
         torquePeakAngle = angle;
+        torquePeakIndex = i;
       }
       if (isRed ? speed > speedExtreme : speed < speedExtreme) {
         speedExtreme = speed;
         speedPeakAngle = angle;
+        speedPeakIndex = i;
       }
     }
+    const timeToPeak = (torquePeakIndex - startIndex) * dt;
+    const speedToPeak = (speedPeakIndex - startIndex) * dt;
+    const startTime = startIndex * dt;
+
     resultsByColor[color].push({
       color,
       torqueExtreme,
@@ -208,7 +220,11 @@ const createRepetitionsSection = (points, splits) => {
       work,
       powerPeak,
       powerAv: powerSum / count,
+      speedAv: speedSum / count,
       torquePeakAngle,
+      timeToPeak,
+      speedToPeak,
+      startTime,
       speedPeakAngle,
     });
   });
@@ -221,14 +237,109 @@ const createRepetitionsSection = (points, splits) => {
     work2: resultsByColor.blue.map(r => r.work),
     powerAvg1: resultsByColor.red.map(r => r.powerAv),
     powerAvg2: resultsByColor.blue.map(r => r.powerAv),
+    speedAv1: resultsByColor.red.map(r => r.speedAv),
+    speedAv2: resultsByColor.blue.map(r => r.speedAv),
     powerPeak1: resultsByColor.red.map(r => r.powerPeak),
     powerPeak2: resultsByColor.blue.map(r => r.powerPeak),
     torquePeakPos1: resultsByColor.red.map(r => r.torquePeakAngle),
     torquePeakPos2: resultsByColor.blue.map(r => r.torquePeakAngle),
+    timeToPeak1: resultsByColor.red.map(r => r.timeToPeak),
+    timeToPeak2: resultsByColor.blue.map(r => r.timeToPeak),
+    speedToPeak1: resultsByColor.red.map(r => r.speedToPeak),
+    speedToPeak2: resultsByColor.blue.map(r => r.speedToPeak),
+    startTime1: resultsByColor.red.map(r => r.startTime),
+    startTime2: resultsByColor.blue.map(r => r.startTime),
     speedPeakPos1: resultsByColor.red.map(r => r.speedPeakAngle),
     speedPeakPos2: resultsByColor.blue.map(r => r.speedPeakAngle),
   };
 };
+const linearSlope = (x, y) => {
+  const n = x.length;
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
+  const sumX2 = x.reduce((a, b) => a + b * b, 0);
+
+  return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+};
+
+const stdDev = arr => {
+  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+  return Math.sqrt(arr.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / arr.length);
+
+};
+const coeffVar = arr => {
+  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+  const variance = arr.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / arr.length;
+  const sd = Math.sqrt(variance);
+  return Math.abs((sd / mean) * 100);
+};
+const createAnalysis = (repetitions, weight) => {
+  
+  return{
+    110: Math.max(...repetitions.torquePeak1),
+    111: Math.min(...repetitions.torquePeak2),
+    112: repetitions.torquePeak1.reduce((a, b) => a + b, 0) / repetitions.torquePeak1.length,
+    113: repetitions.torquePeak2.reduce((a, b) => a + b, 0) / repetitions.torquePeak2.length,
+    114: repetitions.torquePeakPos1.reduce((a, b) => a + b, 0) / repetitions.torquePeakPos1.length,
+    115: repetitions.torquePeakPos2.reduce((a, b) => a + b, 0) / repetitions.torquePeakPos2.length,
+    116: repetitions.timeToPeak1.reduce((a, b) => a + b, 0) / repetitions.timeToPeak1.length,
+    117: repetitions.timeToPeak2.reduce((a, b) => a + b, 0) / repetitions.timeToPeak2.length,
+    122: repetitions.work1.reduce((a, b) => a + b, 0) / repetitions.work1.length,
+    123: repetitions.work2.reduce((a, b) => a + b, 0) / repetitions.work2.length,
+    124: repetitions.powerAvg1.reduce((a, b) => a + b, 0) / repetitions.powerAvg1.length,
+    125: repetitions.powerAvg2.reduce((a, b) => a + b, 0) / repetitions.powerAvg2.length,
+    130: linearSlope(repetitions.startTime1, repetitions.work1),
+    131: linearSlope(repetitions.startTime2, repetitions.work2),
+    132: "TODO Expected Deviation Ext	%", 
+    133: "TODO Expected Deviation Flex	%",
+    136: Math.max(...repetitions.speedPeak1),
+    137: Math.max(...repetitions.speedPeak2),
+    138: repetitions.speedPeak1.reduce((a, b) => a + b, 0) / repetitions.speedPeak1.length,
+    139: repetitions.speedPeak2.reduce((a, b) => a + b, 0) / repetitions.speedPeak2.length,
+    140: repetitions.speedPeakPos1.reduce((a, b) => a + b, 0) / repetitions.speedPeakPos1.length,
+    141: repetitions.speedPeakPos2.reduce((a, b) => a + b, 0) / repetitions.speedPeakPos2.length,
+    142: repetitions.speedToPeak1.reduce((a, b) => a + b, 0) / repetitions.speedToPeak1.length,
+    143: repetitions.speedToPeak2.reduce((a, b) => a + b, 0) / repetitions.speedToPeak2.length,
+    144: repetitions.speedAv1.reduce((a, b) => a + b, 0) / repetitions.speedAv1.length,
+    145: repetitions.speedAv2.reduce((a, b) => a + b, 0) / repetitions.speedAv2.length,
+    146: Math.max(...repetitions.powerPeak1),
+    147: Math.max(...repetitions.powerPeak2),
+    148: repetitions.powerPeak1.reduce((a, b) => a + b, 0) / repetitions.powerPeak1.length,
+    149: repetitions.powerPeak2.reduce((a, b) => a + b, 0) / repetitions.powerPeak2.length,
+    150: repetitions.powerPeak1.reduce((a, b) => a + b, 0) / repetitions.powerPeak1.length / weight,
+    151: repetitions.powerPeak2.reduce((a, b) => a + b, 0) / repetitions.powerPeak2.length / weight,
+    200: Math.abs((repetitions.torquePeak2.reduce((a, b) => a + b, 0) / repetitions.torquePeak2.length) / (repetitions.torquePeak1.reduce((a, b) => a + b, 0) / repetitions.torquePeak1.length) * 100),
+    201: (repetitions.work2.reduce((a, b) => a + b, 0) / repetitions.work2.length) / (repetitions.work1.reduce((a, b) => a + b, 0) / repetitions.work1.length) * 100,
+    202: (repetitions.powerAvg2.reduce((a, b) => a + b, 0) / repetitions.powerAvg2.length) / (repetitions.powerAvg1.reduce((a, b) => a + b, 0) / repetitions.powerAvg1.length) * 100  ,
+    203: repetitions.torquePeak1.reduce((a, b) => a + b, 0)/ repetitions.torquePeak1.length / weight,
+    204: repetitions.torquePeak2.reduce((a, b) => a + b, 0) / repetitions.torquePeak2.length / weight,
+    205: repetitions.work1.reduce((a, b) => a + b, 0) / repetitions.work1.length / weight,
+    206: repetitions.work2.reduce((a, b) => a + b, 0) / repetitions.work2.length / weight,
+    207: repetitions.powerAvg1.reduce((a, b) => a + b, 0) / repetitions.powerAvg1.length / weight,
+    208: repetitions.powerAvg2.reduce((a, b) => a + b, 0) / repetitions.powerAvg2.length / weight,
+    212: repetitions.work1.reduce((a, b) => a + b, 0),
+    213: repetitions.work2.reduce((a, b) => a + b, 0),
+    225: repetitions.work1.reduce((a, b) => a + b, 0) + repetitions.work2.reduce((a, b) => a + b, 0),
+    226: (repetitions.powerPeak2.reduce((a, b) => a + b, 0) /repetitions.powerPeak2.length) / (repetitions.powerPeak1.reduce((a, b) => a + b, 0) / repetitions.powerPeak1.length) * 100,
+    250: stdDev(repetitions.torquePeak1),
+    251: stdDev(repetitions.torquePeak2),
+    254: stdDev(repetitions.work1),
+    255: stdDev(repetitions.work2),
+    256: stdDev(repetitions.powerAvg1),
+    257: stdDev(repetitions.powerAvg2),
+    258: stdDev(repetitions.powerPeak1),
+    259: stdDev(repetitions.powerPeak2),
+    260: coeffVar(repetitions.torquePeak1),
+    261: coeffVar(repetitions.torquePeak2),
+    264: coeffVar(repetitions.work1),
+    265: coeffVar(repetitions.work2),
+    266: coeffVar(repetitions.powerAvg1),
+    267: coeffVar(repetitions.powerAvg2),
+    268: coeffVar(repetitions.powerPeak1),
+    269: coeffVar(repetitions.powerPeak2),
+  }
+}
 
 const filterByStartEndAndPoints = (start, end, points) => {
   const filter = createLowpass11Hz(256);
@@ -410,6 +521,8 @@ const formatRawCTMObject = (rawObject, dataFiltering) => {
   object.filter = createParsedSectionFromRawObjectSection(rawObject.filter);
   object.systemStrings = createParsedSectionFromRawObjectSection(rawObject["system strings"]);
   object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits);
+  object.analysis = createAnalysis(object.repetitions, object.session.subjectWeight);
+
 
   return object
 }
