@@ -1,4 +1,4 @@
-import { batch, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
+import { batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
@@ -122,7 +122,7 @@ export function FileBrowser() {
     }
   }
   let worker2;
-  const sendFilesToParse = () => {
+  createEffect(() => {
     if (window.Worker) {
       worker2 = worker2 instanceof Worker ? worker2 : new parseSelectedFiles();
 
@@ -138,7 +138,7 @@ export function FileBrowser() {
         }
       }
     }
-  }
+  });
 
   createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
 
@@ -342,21 +342,32 @@ export function FileBrowser() {
   function ListOfSelectedFiles() {
     const toggleDataFiltering = () => setDataFiltering((s) => !s);
     const clearSelectedFiles = () => setSelectedFiles([]);
+    const removeFileSelection = (i) => setSelectedFiles(files => {
+      files.splice(i, 1);
+      return [...files];
+    });
 
     return (
       <Show when={selectedFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
-          <ul class="list-disc list-inside">
-            <For each={selectedFiles()}>{(fileHandler) => (
-              <li class="text-sm">{fileHandler.name}</li>
+          <ul class="space-y-1">
+            <For each={selectedFiles()}>{(fileHandler, i) => (
+              <>
+                <li class="text-sm space-x-1">
+                  <button 
+                    class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
+                    onClick={() => removeFileSelection(i())}
+                  >
+                    remove
+                  </button>
+                  <span class="font-medium">{fileHandler.name}</span>
+                </li>
+              </>
             )}</For>
           </ul>
           <div class="flex space-x-2">
             <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={clearSelectedFiles}>
-              clear
-            </button>
-            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={sendFilesToParse}>
-              parse
+              Clear all
             </button>
             <div class="flex items-center space-x-2">
               <input
