@@ -20,10 +20,10 @@ export function FileManager() {
   }
 
   return (
-    <div class="fmin-w-0 min-h-screen bg-gray-100 p-6 overflow-x-hidden">
-      <Tabs.Root defaultValue="files" class="w-full">
+    <div class="w-full h-full bg-gray-100 p-4 overflow-auto">
+      <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
-        <Tabs.List class=" bg-gray-200 p-6 flex items-center h-20">
+        <Tabs.List class="bg-gray-200 p-4 flex flex-wrap min-h-10 gap-2 w-full">
           <Tabs.
           Trigger value="files" class="tab-trigger">
             Files
@@ -36,26 +36,21 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="files" class="bg-white rounded-lg p-6 shadow-sm">
+        <Tabs.Content value="files" class="bg-white rounded-lg p-4 shadow-sm flex-1 overflow-auto">
           <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
-            <div class="min-h-screen p-4 md:p-6 overflow-y-auto overflow-x-hidden space-y-6 mx-auto max-w-full">
-
-               <div class="flex-1">
-                 <main class="flex-1 p-4 md:p-6 overflow-auto space-y-6 max-w-5xl mx-auto ml-28">
-                   <FileBrowser />
-                    <AverageChart listOfParsedCTM={parsedFileData} />
-                    <For each={parsedFileData()}>{parsedData => (
-                      <>
-                        <ThreeCharts parsedCTM={parsedData.rawObject} />
-                        <div>
-                          <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
-                          <button class="button_blue" onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt</button>
-                        </div>
-                        <Repetitions repetitions={parsedData.rawObject.repetitions} />
-                      </>
-                    )}</For>
-                  </main>
-                </div>
+            <div class="w-full h-full space-y-6">
+              <FileBrowser />
+              <AverageChart listOfParsedCTM={parsedFileData} />
+              <For each={parsedFileData()}>{parsedData => (
+                <>
+                  <ThreeCharts parsedCTM={parsedData.rawObject} />
+                  <div>
+                    <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
+                    <button class="button_blue" onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt</button>
+                  </div>
+                  <Repetitions repetitions={parsedData.rawObject.repetitions} />
+                </>
+              )}</For>
             </div>
           </parsedFileContext.Provider>
         </Tabs.Content>

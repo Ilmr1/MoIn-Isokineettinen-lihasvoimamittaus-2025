@@ -4,13 +4,20 @@ import { FileManager } from "./components/FileManager.jsx";
 
 function App() {
   return (
-    <div class="min-h-screen flex flex-col bg-gray-100 bg-gradient-to-b from-gray-100 to-gray-200">
-      <div class="flex-1bg-gray-600 shadow-md">
-        <Sidebar className="bg-gray-600 shadow-md"/>
+    <div className="flex flex-col md:flex-row h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+
+      {/* Sidebar wrapper: varaa tilan ja tekee stickyksi */}
+      <div className="w-full h-20 md:h-screen md:w-20 flex-shrink-0 relative">
+        <aside className="w-full h-20 md:h-screen md:w-20
+                         sticky top-0 z-10 bg-gray-100 shadow-md">
+          <Sidebar />
+        </aside>
       </div>
-      <div class="flex-1 p-4 md-2 space-y-6 overflow-auto max-w-full ml-28">
-        <FileManager/>
-      </div>
+
+      {/* FileManager, jolla on padding-top vain mobiilissa */}
+      <main className="flex-1 flex overflow-auto max-w-full md:pt-0">
+        <FileManager />
+      </main>
     </div>
   );
 }
