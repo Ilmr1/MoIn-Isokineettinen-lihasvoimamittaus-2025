@@ -1,14 +1,20 @@
 @import "tailwindcss";
 
-input{
+input {
   @apply border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
 }
 
-.button_grey {
-  @apply bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium;
+.tab-trigger {
+  @apply flex-1 h-15 min-w-[8rem] rounded-full py-3 px-6 text-center font-medium text-gray-800 transition
+         hover:bg-white/50 text-2xl
+         data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-gray-900
+         aria-selected:bg-white aria-selected:shadow aria-selected:text-gray-800
+         data-[selected=true]:bg-white data-[selected=true]:shadow data-[selected=true]:text-gray-900;
+}
+.btn {
+  @apply border px-3 py-1 rounded text-gray-700 hover:bg-gray-50;
 }
 
-.button_blue {
-  @apply bg-blue-200 text-white px-4 py-2 rounded-lg hover:bg-blue-300 transition-colors duration-200 font-medium;
+.btn-primary {
+  @apply px-3 py-1 rounded border text-sm bg-blue-600 text-white hover:bg-blue-500;
 }
-
