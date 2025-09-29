@@ -1,4 +1,4 @@
-import { batch, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
+import { batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
@@ -13,6 +13,7 @@ export function FileBrowser() {
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
+  const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
   const [filterByLastName, setFilterByLastName] = createSignal("");
   const [filterByFirstName, setFilterByFirstName] = createSignal("");
   const [firstNameInput, setFirstNameInput] = createSignal("");
@@ -21,7 +22,7 @@ export function FileBrowser() {
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
-  const { setParsedFileData } = useParsedFiles();
+  const { parsedFileData, setParsedFileData } = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -81,7 +82,6 @@ export function FileBrowser() {
     }));
   }
 
-
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
 
@@ -122,13 +122,14 @@ export function FileBrowser() {
     }
   }
   let worker2;
-  const sendFilesToParse = () => {
+  createEffect(() => {
     if (window.Worker) {
       worker2 = worker2 instanceof Worker ? worker2 : new parseSelectedFiles();
 
       worker2.postMessage({
         filesToParse: selectedFiles(),
         dataFiltering: dataFiltering(),
+        disabledRepetitions: disabledRepetitions(),
       });
 
       worker2.onmessage = async message => {
@@ -138,7 +139,7 @@ export function FileBrowser() {
         }
       }
     }
-  }
+  });
 
   createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
 
@@ -342,21 +343,53 @@ export function FileBrowser() {
   function ListOfSelectedFiles() {
     const toggleDataFiltering = () => setDataFiltering((s) => !s);
     const clearSelectedFiles = () => setSelectedFiles([]);
+    const removeFileSelection = (i) => setSelectedFiles(files => {
+      files.splice(i, 1);
+      return [...files];
+    });
+
+    const toggleRepetitionDisable = (index, repetition) => {
+      setDisabledRepetitions(reps => {
+        reps[index] ??= {}
+        reps[index][repetition] = !reps[index][repetition];
+        reps[index][repetition + 1] = !reps[index][repetition + 1];
+        return {...reps};
+      });
+    }
 
     return (
       <Show when={selectedFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
-          <ul class="list-disc list-inside">
-            <For each={selectedFiles()}>{(fileHandler) => (
-              <li class="text-sm">{fileHandler.name}</li>
+          <ul class="space-y-1">
+            <For each={selectedFiles()}>{(fileHandler, i) => (
+              <li class="text-sm space-x-1">
+                <button 
+                  class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
+                  onClick={() => removeFileSelection(i())}
+                >
+                  remove
+                </button>
+                <span class="font-medium">{fileHandler.name}</span>
+                <Show when={i() < parsedFileData().length}>
+                  <ol>
+                    <For each={parsedFileData()?.[i()]?.rawObject.splitCollections.angle.splits}>{(data, j) => (
+                      <Show when={j() % 2 === 0}>
+                        <li>
+                          <label>
+                            <input type="checkbox" name="disableRepetition" checked={!data.disabled} onChange={() => toggleRepetitionDisable(i(), j())} />{" "}
+                            Repetition {j() / 2 + 1}
+                          </label>
+                        </li>
+                      </Show>
+                    )}</For>
+                  </ol>
+                </Show>
+              </li>
             )}</For>
           </ul>
           <div class="flex space-x-2">
             <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={clearSelectedFiles}>
-              clear
-            </button>
-            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={sendFilesToParse}>
-              parse
+              Clear all
             </button>
             <div class="flex items-center space-x-2">
               <input

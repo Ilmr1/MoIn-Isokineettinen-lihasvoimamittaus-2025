@@ -13,7 +13,7 @@ onmessage = async (message) => {
 
   for (const folderHandler of activeFolders) {
     for await (const fileHandler of getFilesRecursively(folderHandler)) {
-      if (fileHandler.name.endsWith(".CTM")) {
+      if (fileHandler.name.endsWith(".CTM") || fileHandler.name.endsWith(".cxp")) {
         const file = await fileHandler.getFile();
         const text = await file.text();
         const parsedFile = parseCTMForFiltering(text);

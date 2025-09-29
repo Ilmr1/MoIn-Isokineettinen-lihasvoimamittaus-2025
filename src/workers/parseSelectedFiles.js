@@ -1,18 +1,20 @@
 import { CTMUtils } from "../utils/utils";
 
 onmessage = async (message) => {
-  const { filesToParse, dataFiltering } = message.data;
+  const { filesToParse, dataFiltering, disabledRepetitions } = message.data;
   if (!filesToParse) {
     return;
   }
   console.log("worker", message)
   let files = [];
 
-  for await (const handle of filesToParse) {
+  for (let i = 0; i < filesToParse.length; i++) {
+    const handle = filesToParse[i];
+    const disabledList = disabledRepetitions[i] || {};
     if (handle.kind === "file") {
       const file = await handle.getFile();
       const text = await file.text();
-      const rawObject = CTMUtils.parseTextToObject(text, dataFiltering);
+      const rawObject = CTMUtils.parseTextToObject(text, dataFiltering, disabledList);
       files.push({
         name: file.name,
         rawObject
