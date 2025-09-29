@@ -58,17 +58,6 @@ export function FileManager() {
                 </div>
             </div>
           </parsedFileContext.Provider>
-          <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-            <button class="px-4 py-2 border border-gray-600 rounded-xl text-gray-900 hover:bg-gray-100">
-              Select All
-            </button>
-            <button class="px-4 py-2 border border-gray-600 rounded-xl text-gray-900 hover:bg-gray-100">
-              Clear Selection
-            </button>
-            <button class="px-4 py-2 border border-gray-600 rounded-xl text-gray-900 hover:bg-gray-100">
-              Remove Selected
-            </button>
-          </div>
         </Tabs.Content>
 
         <Tabs.Content value="analysis" class="bg-white rounded-lg p-6 shadow-sm">

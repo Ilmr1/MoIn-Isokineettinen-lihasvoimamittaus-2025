@@ -1,7 +1,7 @@
 import { asserts } from "../collections/collections";
 import { arrayUtils, numberUtils, stringUtils } from "./utils";
 
-export const ctmTextToRawObject = text => {
+const ctmTextToRawObject = text => {
   const sections = text.split(/\[(.*)\]/g);
   const rawObject = {}
 
