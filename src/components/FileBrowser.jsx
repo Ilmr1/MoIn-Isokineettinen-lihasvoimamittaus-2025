@@ -300,7 +300,8 @@ export function FileBrowser() {
                 <For each={selectedSession().files}>
                   {(file) => (
                     <li>
-                      <p>{file.name} {file.legSide}</p>
+                      {console.log("asd",file)}
+                      <p>{file.legSide} {file.time} {file.program} {file.measurementSpeed}</p>
                     </li>
                   )}
                 </For>

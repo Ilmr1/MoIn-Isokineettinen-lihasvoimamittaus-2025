@@ -39,7 +39,9 @@ onmessage = async (message) => {
           subjectFirstName,
           subjectLastName,
           sessionId,
-          legSide: parsedFile.legSide
+          legSide: parsedFile.legSide,
+          program: parsedFile.program,
+          measurementSpeed: parsedFile.measurementSpeed
         });
       }
     }
@@ -87,16 +89,41 @@ function parseCTMForFiltering(text) {
     const header = sections[i];
     const data = sections[i + 1];
     if (header === "Configuration"){
-      const sideIndex = data.indexOf("side");
+      /* const sideIndex = data.indexOf("side");
       const newLineIndex = data.indexOf("\n", sideIndex);
-      let side = data.substring(sideIndex, newLineIndex).split("\t").at(-1);
-      filteredObject.legSide = side
+      let side = data.substring(sideIndex, newLineIndex).split("\t").at(-1); */
+      let side = extractDataFromString(data, "side");
+      let speed = extractDataFromString(data, "speed");
+      let program = extractDataFromString(data, "program");
+      filteredObject.program = program;
+      filteredObject.legSide = side;
+      filteredObject.measurementSpeed = speed;
+      
     }
     if (header === "Measurement" || header === "session"){
       const rows = data.replaceAll("\r", "").trim().split("\n").map(row => row.trim().split("\t"));
       filteredObject[header] = Object.fromEntries(rows.filter(row => row.length > 1))
     }
   }
+  console.log("asdad",filteredObject)
   return filteredObject;
+}
+
+const extractDataFromString = (data, key) => {
+  const keyIndex = data.indexOf(key);
+  const newLineIndex = data.indexOf("\n", keyIndex);
+  const line = data.substring(keyIndex, newLineIndex);
+  const parts = line.split("\t");
+
+  switch (key) {
+    case "side":
+      return parts.at(-1);
+    case "speed":
+      let values = parts.slice(1).map(v => v.trim());
+      return values.join("/");
+    case "program":
+      let lastval = parts[2].split(" ")
+      return lastval[2];
+  }
 }
 
