@@ -51,7 +51,6 @@ const createSplitCollection = (markersByIndex, points, moveMarkerToNearestNonZer
 
   function filterAndPush(start, end, color) {
     const disabled = disabledList[collection.splits.length];
-
     if (moveMarkerToNearestNonZeroValue) {
       for (let i = start; i < end; i++) {
         if (points[i + 2] === 0) {

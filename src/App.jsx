@@ -1,48 +1,21 @@
-import { createSignal, For } from 'solid-js'
-import './App.css'
-import { fileUtils } from './utils/utils';
-import { ThreeCharts } from './components/ThreeCharts.jsx';
-import { FileBrowser } from './components/FileBrowser.jsx';
-import { parsedFileContext } from './providers.js';
-import { AverageChart } from './components/AverageChart.jsx';
-import { Sidebar } from './components/Sidebar.jsx';
-import { Repetitions } from './components/Repetitions.jsx';
+import "./App.css";
+import { Sidebar } from "./components/Sidebar.jsx";
+import { FileManager } from "./components/FileManager.jsx";
 
 function App() {
-  const [parsedFileData, setParsedFileData] = createSignal([]);
-
-  const saveDataAsCSV = (data) => {
-    const columns = ["Kammen voima", "Kammen nopeus", "Kammen kulma"];
-    fileUtils.generateFileAndDownload(fileUtils.formatToCSV(data, columns), "data.csv", "csv");
-  }
-
-  const printDataAsTextToConsole = (data) => {
-    console.log(data.map(row => row.map(val => val.toFixed(3)).join("\t")).join("\n"));
-  }
-
   return (
-    <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
-      <div class="min-h-screen flex">
-        <Sidebar className="bg-gray-600 shadow-md"/>
-        <div class="flex-1">
-          <main class="flex-1 p-4 md:p-6 overflow-auto space-y-6 max-w-5xl mx-auto ml-28">
-            <FileBrowser />
-            <AverageChart listOfParsedCTM={parsedFileData} />
-            <For each={parsedFileData()}>{parsedData => (
-              <>
-                <ThreeCharts parsedCTM={parsedData.rawObject} />
-                <div>
-                  <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
-                  <button class="button_blue" onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt</button>
-                </div>
-                <Repetitions repetitions={parsedData.rawObject.repetitions} />
-              </>
-            )}</For>
-          </main>
-        </div>
+    <div className="flex flex-col md:flex-row h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+      <div className="w-full h-20 md:h-screen md:w-20 flex-shrink-0 relative">
+        <aside className="w-full h-20 md:h-screen md:w-20
+                         sticky top-0 z-10 bg-gray-100 shadow-md">
+          <Sidebar />
+        </aside>
       </div>
-    </parsedFileContext.Provider>
-  )
+      <main className="flex-1 flex overflow-auto max-w-full md:pt-0">
+        <FileManager />
+      </main>
+    </div>
+  );
 }
 
 export default App;

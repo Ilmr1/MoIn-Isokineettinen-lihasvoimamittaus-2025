@@ -82,7 +82,6 @@ export function FileBrowser() {
     }));
   }
 
-
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
 
