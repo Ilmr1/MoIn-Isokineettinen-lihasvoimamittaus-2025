@@ -301,7 +301,7 @@ export function FileBrowser() {
                   {(file) => (
                     <li>
                       {console.log("asd",file)}
-                      <p>{file.legSide} {file.time} {file.program} {file.measurementSpeed}</p>
+                      <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
                     </li>
                   )}
                 </For>
