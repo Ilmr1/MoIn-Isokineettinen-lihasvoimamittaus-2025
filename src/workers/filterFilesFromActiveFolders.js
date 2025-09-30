@@ -100,7 +100,7 @@ function parseCTMForFiltering(text, fileHandler) {
     sessionId,
     legSide: parsedFile.legSide,
     program: parsedFile.program,
-    measurementSpeed: parsedFile.measurementSpeed
+    speed: parsedFile.speed
   };
 }
 
