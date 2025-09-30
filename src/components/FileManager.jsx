@@ -24,8 +24,7 @@ export function FileManager() {
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
         <Tabs.List class="bg-gray-200 p-4 flex flex-wrap min-h-10 gap-2 w-full">
-          <Tabs.
-          Trigger value="files" class="tab-trigger">
+          <Tabs.Trigger value="files" class="tab-trigger">
             Files
           </Tabs.Trigger>
           <Tabs.Trigger value="analysis" class="tab-trigger">
@@ -38,7 +37,7 @@ export function FileManager() {
 
         <Tabs.Content value="files" class="bg-white rounded-lg p-4 shadow-sm flex-1 overflow-auto">
           <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
-            <div class="w-full h-full space-y-6">
+            <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />
               <AverageChart listOfParsedCTM={parsedFileData} />
               <For each={parsedFileData()}>{parsedData => (
