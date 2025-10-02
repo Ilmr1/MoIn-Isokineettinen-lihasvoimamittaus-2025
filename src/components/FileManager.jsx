@@ -6,6 +6,7 @@ import { AverageChart } from "./AverageChart.jsx";
 import { ThreeCharts } from "./ThreeCharts.jsx"; // keep eager if light; otherwise lazy
 import { Repetitions } from "./Repetitions.jsx";
 import { parsedFileContext } from "../providers.js";
+import { BarChart } from "./BarChart.jsx";
 
 export function FileManager() {
   const [parsedFileData, setParsedFileData] = createSignal([]);
@@ -40,6 +41,7 @@ export function FileManager() {
             <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />
               <AverageChart listOfParsedCTM={parsedFileData} />
+              <BarChart listOfParsedCTM={parsedFileData} points={[[123, 234], [34, 543]]} maxValue={543}/>
               <For each={parsedFileData()}>{parsedData => (
                 <>
                   <ThreeCharts parsedCTM={parsedData.rawObject} />

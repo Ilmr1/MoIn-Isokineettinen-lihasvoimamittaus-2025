@@ -104,6 +104,16 @@ export function ChartHeader(props) {
   );
 }
 
+export function ChartFooter(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  return (
+    <text dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y={props.y + props.height}>{props.title}</text>
+  );
+}
+
 export function ChartPercentageVerticalLine(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.height, "height");
