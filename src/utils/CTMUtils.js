@@ -284,6 +284,8 @@ const createAnalysis = (repetitions, weight) => {
     115: arrayUtils.average(repetitions.torquePeakPos2),
     116: arrayUtils.average(repetitions.timeToPeak1),
     117: arrayUtils.average(repetitions.timeToPeak2),
+    120: "TODO Torque aver. @ 0.20 sec Ext	Nm",
+    121: "TODO Torque aver. @ 0.20 sec Flex	Nm",
     122: arrayUtils.average(repetitions.work1),
     123: arrayUtils.average(repetitions.work2),
     124: arrayUtils.average(repetitions.powerAvg1),

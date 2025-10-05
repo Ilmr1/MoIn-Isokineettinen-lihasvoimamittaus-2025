@@ -41,7 +41,13 @@ export function FileManager() {
             <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />
               <AverageChart listOfParsedCTM={parsedFileData} />
-              <BarChart listOfParsedCTM={parsedFileData} points={[[123, 234], [34, 543]]} maxValue={543}/>
+              <div class="grid grid-cols-3 gap-2">
+                <BarChart listOfParsedCTM={parsedFileData} title="Torque max" analysisExtKey="110" analysisFlexKey="111" />
+                <BarChart listOfParsedCTM={parsedFileData} title="Torque max avearge" analysisExtKey="112" analysisFlexKey="113" />
+                <BarChart listOfParsedCTM={parsedFileData} title="Torque max aver." analysisExtKey="203" analysisFlexKey="204" />
+                <BarChart listOfParsedCTM={parsedFileData} title="Time aver. to peak Torque Ext" analysisExtKey="116" analysisFlexKey="117" />
+                <BarChart listOfParsedCTM={parsedFileData} title="Position aver. @ peak Speed" analysisExtKey="140" analysisFlexKey="141" />
+              </div>
               <For each={parsedFileData()}>{parsedData => (
                 <>
                   <ThreeCharts parsedCTM={parsedData.rawObject} />

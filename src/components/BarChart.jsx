@@ -1,7 +1,7 @@
 import { createMemo, ErrorBoundary } from "solid-js";
 import { ChartBorder, ChartFooter, ChartGrid, ChartHeader, ChartPadding } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
-import { arrayUtils } from "../utils/utils.js";
+import { arrayUtils, numberUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
 export function BarChart(props) {
 
@@ -13,7 +13,9 @@ export function BarChart(props) {
 }
 
 function Chart(props) {
-  const svgArea = { width: 800, height: 600, x: 0, y: 0 };
+  asserts.assertTypeString(props.title, "title");
+
+  const svgArea = { width: 500, height: 300, x: 0, y: 0 };
 
   const colors = ["oklch(70.4% 0.191 22.216)", "oklch(79.2% 0.209 151.711)", "oklch(62.3% 0.214 259.815)", "oklch(85.2% 0.199 91.936)"];
 
@@ -24,14 +26,13 @@ function Chart(props) {
   );
 
   function AverageErrorChartForTorque(props) {
-
     return (
       <svg width={svgArea.width} height={svgArea.height}>
         <ChartPadding {...svgArea} paddingLeft={100} paddingTop={18} paddingRight={1} paddingBottom={1}>{chartArea => (
           <>
             <ChartGrid {...chartArea} />
             <ChartBorder {...chartArea} />
-            <ChartHeader {...chartArea} title="Torque max" />
+            <ChartHeader {...chartArea} title={props.title} />
             <ChartPadding {...chartArea} paddingInline={25} paddingBlock={25}>{linesArea => (
               <BarGroups {...linesArea} {...props}></BarGroups>
             )}</ChartPadding>
@@ -42,19 +43,21 @@ function Chart(props) {
   }
 
   function BarGroups(props) {
-    asserts.assertTypeNumber(props.maxValue, "maxValue");
+    asserts.assertIsIntegerLike(props.analysisExtKey, "analysisExtKey");
+    asserts.assertIsIntegerLike(props.analysisFlexKey, "analysisFlexKey");
 
-    const gap = 100;
+    const gap = 50;
     const groups = createMemo(() => {
       const ext = [];
       const flex = [];
       for (const { rawObject: { analysis } } of props.listOfParsedCTM()) {
-        ext.push(Math.abs(analysis[110]));
-        flex.push(Math.abs(analysis[111]));
+        ext.push(Math.abs(analysis[props.analysisExtKey]));
+        flex.push(Math.abs(analysis[props.analysisFlexKey]));
       }
 
       return [ext, flex];
     });
+
     const section = createMemo(() => props.width / groups().length);
     const barsSectionWidth = createMemo(() => section() - gap / Math.max(groups().length, 1));
     const gapStep = createMemo(() => gap / Math.max(groups().length - 1, 1));
@@ -80,7 +83,7 @@ function Chart(props) {
                   y={props.y + props.height - (value / maxValue()) * props.height}
                 >{bounds => (
                     <>
-                      <ChartHeader {...bounds} title={value} />
+                      <ChartHeader {...bounds} title={numberUtils.truncDecimals(value, 3)} />
                       <rect {...bounds} fill={arrayUtils.atWithWrapping(colors, j())}></rect>
                     </>
                   )}
@@ -94,4 +97,3 @@ function Chart(props) {
     );
   }
 }
-

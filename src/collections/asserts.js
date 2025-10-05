@@ -24,4 +24,10 @@ export const assert1DArrayOfNumbersOrEmptyArray = (array, variableName = "Value"
   }
 }
 
+export const assertIsIntegerLike = (value, varName = "Value", message = "") => {
+  const localMessage = varName + " is not integer. " + message;
+  assertTruthy(typeof value === "string" || Number.isInteger(value), localMessage);
+  assertTruthy(value && Number.isInteger(+value), localMessage);
+}
+
 export const arrayNotEmpty = (array, message = "Assertion failed because array is empty") => assertTruthy(array?.length, message);

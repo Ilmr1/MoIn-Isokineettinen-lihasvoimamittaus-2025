@@ -1,3 +1,5 @@
+import { numberUtils } from "./utils";
+
 const isArray = value => Array.isArray(value);
 
 export const atWithWrapping = (array, index) => {
@@ -7,11 +9,16 @@ export const atWithWrapping = (array, index) => {
 
   return array.at(index % array.length);
 }
-export const average = array => {
+export const average = (array, precision) => {
   if (!isArray(array) || array.length === 0) {
     return undefined
   }
-  return array.reduce((acc, val) => acc + val, 0) / array.length;
+  const avg = array.reduce((acc, val) => acc + val, 0) / array.length;
+  if (precision) {
+    return numberUtils.truncDecimals(avg, precision);
+  }
+
+  return avg;
 }
 export const coeffVar = array => {
   if (!isArray(array) || array.length === 0) {
@@ -29,9 +36,9 @@ export const stdDev = array => {
   const mean = array.reduce((a, b) => a + b, 0) / array.length;
   return Math.sqrt(array.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / array.length);
 }
-export const maxValue = array => {
+export const maxValue = (array, defaultValue) => {
   if (!isArray(array) || array.length === 0) {
-    return undefined
+    return defaultValue;
   }
   return Math.max(...array);
 }
