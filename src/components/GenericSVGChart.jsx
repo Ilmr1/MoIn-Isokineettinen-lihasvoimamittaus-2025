@@ -157,7 +157,12 @@ export function ChartHorizontalPointLineWithLabel(props) {
 
     const delta = maxValue - minValue;
     const length = endIndex - startIndex;
-    const value = points[Math.floor(mouseXPercentage * length)];
+    const index = startIndex + Math.round(mouseXPercentage * length);
+    const value = points[index];
+    if (value == null || index < startIndex || index > endIndex) {
+      return { y: -1, value: null }
+    }
+
     const y = chartUtils.flipYAxes((value - minValue) / delta * height, height);
 
     return { y: y + props.y, value }
@@ -174,6 +179,104 @@ export function ChartHorizontalPointLineWithLabel(props) {
       />
       <text dominant-baseline="middle" text-anchor="end" x={props.x - 5} y={hover().y}>{hover().value}</text>
     </>
+  );
+}
+
+export function ChartHorizontalSplitLineWithLabel(props) {
+  asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
+  asserts.assertTruthy(props.split, "split");
+  asserts.assertTypeNumber(props.endIndex, "endIndex");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.maxValue, "maxValue");
+  asserts.assertTypeNumber(props.minValue, "minValue");
+  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(props.startIndex, "startIndex");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
+  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
+
+  const hover = createMemo(() => {
+    const { points, mouseXPercentage, startIndex, endIndex, height, maxValue, minValue, split } = props;
+    if (mouseXPercentage === -1) {
+      return { y: -1, value: null }
+    }
+
+    const delta = maxValue - minValue;
+    const length = endIndex - startIndex;
+    const index = startIndex + Math.round(mouseXPercentage * length);
+    const value = points[index];
+    if (value == null || index < split.startIndex || index > split.endIndex) {
+      return { y: -1, value: null }
+    }
+
+    const y = chartUtils.flipYAxes((value - minValue) / delta * height, height);
+
+    return { y: y + props.y, value }
+  });
+
+  return (
+    <>
+      <line
+        x1={props.x}
+        x2={props.x + props.width}
+        y1={hover().y}
+        y2={hover().y}
+        {...styles}
+      />
+      <text dominant-baseline="middle" text-anchor="end" x={props.x - 5} y={hover().y}>{hover().value}</text>
+    </>
+  );
+}
+
+export function ChartVecticalLinePercentageToRelativeIndex(props) {
+  asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
+  asserts.assertTruthy(props.split, "split");
+  asserts.assertTypeNumber(props.startIndex, "startIndex");
+  asserts.assertTypeNumber(props.endIndex, "endIndex");
+  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
+  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
+
+  const posX = createMemo(() => {
+    const { mouseXPercentage, startIndex, endIndex, width, split } = props;
+    if (mouseXPercentage === -1) {
+      return -1;
+    }
+
+    const length = (endIndex - startIndex);
+    const index = startIndex + Math.round(mouseXPercentage * length);
+    if (index < split.startIndex || index > split.endIndex) {
+      return -1
+    }
+
+    const splitLength = split.endIndex - split.startIndex;
+    const percentage = ((index - split.startIndex) / splitLength);
+
+    if (props.flipped) {
+      return (1 - percentage) * width
+    }
+
+    return percentage * width;
+  });
+
+  return (
+    <Show when={posX() !== -1}>
+      <line
+        y1={props.y}
+        y2={props.y + props.height}
+        x1={props.x + posX()}
+        x2={props.x + posX()}
+        {...styles}
+      />
+    </Show>
   );
 }
 
@@ -387,16 +490,24 @@ export function ChartPath(props) {
     const xStep = width / totalDataWidth;
 
     return splits.map(split => {
-      if (Number.isNaN(y + chartUtils.flipYAxes(points[split.startIndex], maxValue) * yStep)) {
-        console.log(y , chartUtils.flipYAxes(points[split.startIndex], maxValue), points[split.startIndex] , yStep, points[split.startIndex], split.startIndex, maxValue);
+      if (props.flipped) {
+        const paths = [`M ${x + (split.startIndex - startIndex) * xStep} ${y + chartUtils.flipYAxes(points[split.endIndex], maxValue) * yStep}`]
+        for (let x2 = split.startIndex + 1; x2 <= split.endIndex; x2++) {
+          const y2 = points[split.endIndex - (x2 - split.startIndex)];
+          const flippedY = chartUtils.flipYAxes(y2, maxValue);
+          paths.push(`L ${x + (x2 - startIndex) * xStep} ${y + flippedY * yStep}`);
+        }
+        return paths.join(" ");
+      } else {
+        const paths = [`M ${x + (split.startIndex - startIndex) * xStep} ${y + chartUtils.flipYAxes(points[split.startIndex], maxValue) * yStep}`]
+        for (let x2 = split.startIndex + 1; x2 < split.endIndex; x2++) {
+          const y2 = points[x2];
+          const flippedY = chartUtils.flipYAxes(y2, maxValue);
+          paths.push(`L ${x + (x2 - startIndex) * xStep} ${y + flippedY * yStep}`);
+        }
+        return paths.join(" ");
       }
-      const paths = [`M ${x + (split.startIndex - startIndex) * xStep} ${y + chartUtils.flipYAxes(points[split.startIndex], maxValue) * yStep}`]
-      for (let x2 = split.startIndex + 1; x2 < split.endIndex; x2++) {
-        const y2 = points[x2];
-        const flippedY = chartUtils.flipYAxes(y2, maxValue);
-        paths.push(`L ${x + (x2 - startIndex) * xStep} ${y + flippedY * yStep}`);
-      }
-      return paths.join(" ");
+
     });
   });
 
