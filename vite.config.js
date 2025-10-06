@@ -3,7 +3,7 @@ import solid from 'vite-plugin-solid'
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  base: "/",
+  base: "/isokineettinen-lihasvoimamittaus-2025",
    plugins: [
     tailwindcss(),
     solid(),
