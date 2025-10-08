@@ -1,5 +1,5 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { ChartBorder, ChartErrorBands, ChartGrid, ChartHeader, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartErrorBands, ChartGrid, ChartHeader, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartXAxis } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { arrayUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
@@ -60,13 +60,21 @@ function Chart(props) {
 
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-        <ChartPadding {...svgArea} paddingLeft={100} paddingTop={18} paddingRight={1} paddingBottom={1}>{chartArea => (
+        <ChartPadding {...svgArea} paddingLeft={100} paddingTop={18} paddingRight={1} paddingBottom={21}>{chartArea => (
           <>
             <ChartGrid {...chartArea} />
             <ChartBorder {...chartArea} />
             <ChartHeader {...chartArea} title={props.type + " average"} />
             <ChartPadding {...chartArea} paddingInline={25} paddingBlock={25}>{linesArea => (
               <>
+                <ChartXAxis
+                  startValue={-8}
+                  endValue={-86}
+                  {...linesArea}
+                  y={chartArea.y + 3}
+                  height={chartArea.height}
+                >
+                </ChartXAxis>
                 <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
                   <ChartErrorBands
                     points={parsedData.rawObject.pointCollections[errorAverageKey()].points}

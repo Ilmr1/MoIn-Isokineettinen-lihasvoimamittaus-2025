@@ -1,6 +1,6 @@
 import { batch, createMemo, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
 import { SVGChartContext } from "../providers";
-import { chartUtils, CTMUtils } from "../utils/utils";
+import { arrayUtils, chartUtils, CTMUtils, numberUtils } from "../utils/utils";
 import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
 
@@ -562,6 +562,57 @@ export function ChartErrorBands(props) {
   return (
     <For each={paths()}>{path => (
       <path d={path} {...local} />
+    )}</For>
+  );
+}
+
+export function ChartXAxis(props) {
+  asserts.assertTypeNumber(props.startValue, "startValue");
+  asserts.assertTypeNumber(props.endValue, "endValue");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  asserts.assertFalsy(props.width < 80, "Width is too small for nice axis numbers");
+
+  props = mergeProps({ fill: "black" }, props);
+  const [local, _] = splitProps(props, ["fill", "stroke"]);
+
+  const gapSizes = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+
+  const labels = createMemo(() => {
+    const { width, startValue, endValue } = props;
+    const delta = endValue - startValue;
+    const idealSegmentSize = 80;
+    const idealGegment = Math.round(width / idealSegmentSize);
+    const axisGap = delta / idealGegment;
+    const gap = arrayUtils.findByMinDelta(gapSizes, axisGap);
+
+    const direction = startValue < endValue;
+    const roundedStartValue = (direction ? Math.floor(startValue / gap) : Math.ceil(startValue / gap)) * gap;
+    const roundedEndValue = (direction ? Math.ceil(endValue / gap) : Math.floor(endValue / gap)) * gap;
+    const segments = Math.abs((roundedEndValue - roundedStartValue) / gap);
+
+    const listOfLabels = [];
+    for (let i = roundedStartValue; i <= roundedEndValue; i += gap) {
+      listOfLabels.push(i);
+    }
+    for (let i = roundedStartValue; i >= roundedEndValue; i -= gap) {
+      listOfLabels.push(i);
+    }
+
+    console.log(roundedStartValue, roundedEndValue, gap);
+
+    return {
+      values: listOfLabels,
+      gap: width / Math.abs(segments)
+    }
+  });
+
+  return (
+    <For each={labels().values}>{(value, i) => (
+      <text dominant-baseline="hanging" text-anchor="middle" x={props.x + labels().gap * i()} y={props.y + props.height} {...local}>{numberUtils.truncDecimals(value, 1)}</text>
     )}</For>
   );
 }
