@@ -37,6 +37,24 @@ export const findByMinDelta = (array, value) => {
 
   return array[index];
 }
+
+export const findByMaxDelta = (array, value) => {
+  if (!isArray(array) || array.length === 0) {
+    return undefined
+  }
+
+  let max, index = 0;
+  for (let i = 0; i < array.length; i++) {
+    const delta = numberUtils.absDelta(value, array[i]);
+    max ??= delta;
+    if (max < delta) {
+      max = delta;
+      index = i;
+    }
+  }
+
+  return array[index];
+}
 export const coeffVar = array => {
   if (!isArray(array) || array.length === 0) {
     return undefined

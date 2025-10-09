@@ -51,18 +51,42 @@ function Chart(props) {
     const errorAverageKey = createMemo(() => `averagePower${props.type}Error`);
     const averageKey = createMemo(() => `averagePower${props.type}`);
 
-    const combinedValues = createMemo(() => ({
-      minValue: Math.min(...props.listOfParsedCTM().map(parsedData => parsedData.rawObject.pointCollections[errorAverageKey()].minValue)),
-      maxValue: Math.max(...props.listOfParsedCTM().map(parsedData => parsedData.rawObject.pointCollections[errorAverageKey()].maxValue)),
-      // startIndex: Math.min(...props.listOfParsedCTM().map(parsedData => parsedData.rawObject.splitCollections[averageKey()].startIndex)),
-      // endIndex: Math.max(...props.listOfParsedCTM().map(parsedData => parsedData.rawObject.splitCollections[averageKey()].endIndex)),
-    }));
+    const combinedValues = createMemo(() => {
+      const avgKey = averageKey();
+      const files = props.listOfParsedCTM();
+      const type = props.type;
+      const startAngles = [];
+      const endAngles = [];
+      for (const { rawObject } of files) {
+        for (const split of rawObject.splitCollections.power.splits) {
+          if (split.disabled) {
+            continue;
+          }
+          if ((type === "Flex" && split.color === "red") || (type === "Ext" && split.color === "blue")) {
+            startAngles.push(rawObject.pointCollections.angle.points[split.startIndex]);
+            endAngles.push(rawObject.pointCollections.angle.points[split.endIndex]);
+          }
+        }
+      }
+
+      const xStartValue = arrayUtils.findByMaxDelta(startAngles, 0);
+      const xEndValue = arrayUtils.findByMaxDelta(endAngles, 0);
+
+      return {
+        minValue: Math.min(...files.map(parsedData => parsedData.rawObject.pointCollections[errorAverageKey()].minValue)),
+        maxValue: Math.max(...files.map(parsedData => parsedData.rawObject.pointCollections[errorAverageKey()].maxValue)),
+        xStartValue,
+        xEndValue,
+        // startIndex: Math.min(...files.map(parsedData => parsedData.rawObject.splitCollections[avgKey].startIndex)),
+        // endIndex: Math.max(...files.map(parsedData => parsedData.rawObject.splitCollections[avgKey].endIndex)),
+      }
+    });
 
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <ChartPadding {...svgArea} paddingLeft={80} paddingRight={25}>{chartArea => (
           <ChartHeaderPadding {...chartArea} title={props.type + " average"}>{chartArea => (
-            <ChartXAxis paddingInline={15} startValue={4} endValue={86} gap={4} {...chartArea} >{linesArea => (
+            <ChartXAxis paddingInline={15} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} gap={4} {...chartArea} >{linesArea => (
               <ChartPadding {...linesArea} paddingBlock={15}>{linesArea2 => (
                 <>
                   <ChartBorder {...chartArea} height={linesArea.height} />
