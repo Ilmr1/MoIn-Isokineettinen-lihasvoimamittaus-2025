@@ -4,6 +4,7 @@ export const truncDecimals = (number, decimals) => {
 }
 
 export const delta = (start, end) => Math.abs(end) - Math.abs(start);
+export const absDelta = (start, end) => Math.abs(Math.abs(end) - Math.abs(start));
 export const min = (a, b) => Math.min(a ?? b, b ?? a);
 export const max = (a, b) => Math.max(a ?? b, b ?? a);
 

@@ -4,6 +4,8 @@ import { arrayUtils, chartUtils, CTMUtils, numberUtils } from "../utils/utils";
 import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
 
+const debug = false;
+
 export function GenericSVGChart(props) {
   return (
     <ErrorBoundary fallback="Chart rendering failed">
@@ -101,6 +103,21 @@ export function ChartHeader(props) {
 
   return (
     <text dominant-baseline="ideographic" text-anchor="middle" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+  );
+}
+
+export function ChartHeaderPadding(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ "font-size": 16 }, props);
+
+  return (
+    <>
+      <text font-size={props["font-size"]} dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+      <ChartPadding {...props} paddingTop={props["font-size"] * (64/48)} />
+    </>
   );
 }
 
@@ -294,6 +311,25 @@ export function ChartBorder(props) {
   );
 }
 
+export function ChartBorderPadding(props) {
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ "stroke-width": 1 }, props);
+
+  return (
+    <>
+      <path
+        d={`M${props.x} ${props.y} l${props.width} 0 l0 ${props.height} l${-props.width} 0 Z
+        M${props.x + props["stroke-width"]} ${props.y + props["stroke-width"]} l${props.width - props["stroke-width"] * 2} 0 l0 ${props.height - props["stroke-width"] * 2} l${-props.width + props["stroke-width"] * 2} 0 Z`}
+        fill="black" fill-rule="evenodd" stroke="none" />
+      <ChartPadding {...props} paddingInline={props["stroke-width"]} paddingBlock={props["stroke-width"]} />
+    </>
+  );
+}
+
 export function ChartGrid(props) {
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.width, "width");
@@ -438,7 +474,7 @@ export function ChartContent(props) {
     return props.splits.map(split => {
       const xS = xStep(), yS = yStep(), m = props.maxValue;
       const paths = [`M ${props.x + (split.startIndex - props.startIndex) * xS} ${props.y + chartUtils.flipYAxes(props.points[split.startIndex], m) * yS}`]
-      for (let x = split.startIndex + 1; x < split.endIndex; x++) {
+      for (let x = split.startIndex + 1; x <= split.endIndex; x++) {
         const y = props.points[x];
         const flippedY = chartUtils.flipYAxes(y, m);
         paths.push(`L ${props.x + (x - props.startIndex) * xS} ${props.y + flippedY * yS}`);
@@ -483,7 +519,7 @@ export function ChartPath(props) {
 
   const paths = createMemo(() => {
     const { x, y, startIndex, endIndex, maxValue, minValue, width, height, splits, points } = props;
-    const totalDataWidth = (endIndex - startIndex) + 1;
+    const totalDataWidth = (endIndex - startIndex);
     const totalDataHeight = maxValue - minValue;
 
     const yStep = height / totalDataHeight;
@@ -500,7 +536,7 @@ export function ChartPath(props) {
         return paths.join(" ");
       } else {
         const paths = [`M ${x + (split.startIndex - startIndex) * xStep} ${y + chartUtils.flipYAxes(points[split.startIndex], maxValue) * yStep}`]
-        for (let x2 = split.startIndex + 1; x2 < split.endIndex; x2++) {
+        for (let x2 = split.startIndex + 1; x2 <= split.endIndex; x2++) {
           const y2 = points[x2];
           const flippedY = chartUtils.flipYAxes(y2, maxValue);
           paths.push(`L ${x + (x2 - startIndex) * xStep} ${y + flippedY * yStep}`);
@@ -535,7 +571,7 @@ export function ChartErrorBands(props) {
 
   const paths = createMemo(() => {
     const { maxValue, points, x, y } = props;
-    const totalDataWidth = props.endIndex - props.startIndex + 1;
+    const totalDataWidth = props.endIndex - props.startIndex;
     const totalDataHeight = maxValue - props.minValue;
 
     const yStep = props.height / totalDataHeight;
@@ -567,54 +603,93 @@ export function ChartErrorBands(props) {
 }
 
 export function ChartXAxis(props) {
-  asserts.assertTypeNumber(props.startValue, "startValue");
-  asserts.assertTypeNumber(props.endValue, "endValue");
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  asserts.assertFalsy(props.width < 80, "Width is too small for nice axis numbers");
-
-  props = mergeProps({ fill: "black" }, props);
-  const [local, _] = splitProps(props, ["fill", "stroke"]);
-
-  const gapSizes = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
-
-  const labels = createMemo(() => {
-    const { width, startValue, endValue } = props;
-    const delta = endValue - startValue;
-    const idealSegmentSize = 80;
-    const idealGegment = Math.round(width / idealSegmentSize);
-    const axisGap = delta / idealGegment;
-    const gap = arrayUtils.findByMinDelta(gapSizes, axisGap);
-
-    const direction = startValue < endValue;
-    const roundedStartValue = (direction ? Math.floor(startValue / gap) : Math.ceil(startValue / gap)) * gap;
-    const roundedEndValue = (direction ? Math.ceil(endValue / gap) : Math.floor(endValue / gap)) * gap;
-    const segments = Math.abs((roundedEndValue - roundedStartValue) / gap);
-
-    const listOfLabels = [];
-    for (let i = roundedStartValue; i <= roundedEndValue; i += gap) {
-      listOfLabels.push(i);
-    }
-    for (let i = roundedStartValue; i >= roundedEndValue; i -= gap) {
-      listOfLabels.push(i);
-    }
-
-    console.log(roundedStartValue, roundedEndValue, gap);
-
-    return {
-      values: listOfLabels,
-      gap: width / Math.abs(segments)
-    }
-  });
-
   return (
-    <For each={labels().values}>{(value, i) => (
-      <text dominant-baseline="hanging" text-anchor="middle" x={props.x + labels().gap * i()} y={props.y + props.height} {...local}>{numberUtils.truncDecimals(value, 1)}</text>
-    )}</For>
+    <ChartPadding {...props}>{area => (
+      <Component {...props} {...area} />
+    )}</ChartPadding>
   );
+
+  function Component(props) {
+    asserts.assertTypeNumber(props.startValue, "startValue");
+    asserts.assertTypeNumber(props.endValue, "endValue");
+    asserts.assertTypeNumber(props.width, "width");
+    asserts.assertTypeNumber(props.height, "height");
+    asserts.assertTypeNumber(props.x, "x");
+    asserts.assertTypeNumber(props.y, "y");
+
+    props = mergeProps({
+      fill: "black",
+      gap: 3,
+      "font-size": 16
+    }, props);
+
+    const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
+
+    const gapSizes = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+
+    const labels = createMemo(() => {
+      const { x, width, startValue, endValue } = props;
+      const delta = endValue - startValue;
+      const idealSegmentSize = 40;
+      const idealSegment = Math.round(width / idealSegmentSize);
+      const axisGap = delta / idealSegment;
+      const gap = arrayUtils.findByMinDelta(gapSizes, axisGap);
+
+      const direction = startValue < endValue;
+      const roundedStartValue = (direction ? Math.floor(startValue / gap) : Math.ceil(startValue / gap)) * gap;
+      const roundedEndValue = (direction ? Math.ceil(endValue / gap) : Math.floor(endValue / gap)) * gap;
+      const segments = Math.abs((roundedEndValue - roundedStartValue) / gap);
+
+      const listOfLabels = [];
+      for (let i = roundedStartValue; i <= roundedEndValue; i += gap) {
+        listOfLabels.push(i);
+      }
+      for (let i = roundedStartValue; i >= roundedEndValue; i -= gap) {
+        listOfLabels.push(i);
+      }
+
+      const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
+
+      return {
+        values: listOfLabels,
+        gap: width / Math.abs(segments),
+        paddingLeft: (width / roundedDelta) * numberUtils.absDelta(roundedStartValue, startValue),
+        paddingRight: (width / roundedDelta) * numberUtils.absDelta(roundedEndValue, endValue),
+        paddingBottom: local["font-size"] * (64 / 48) + props.gap,
+      }
+    });
+
+    return (
+      <>
+        <g data-x-axis>
+          <For each={labels().values}>{(value, i) => (
+            <>
+              <line
+                x1={props.x + labels().gap * i()}
+                x2={props.x + labels().gap * i()}
+                y1={props.y + props.height - labels().paddingBottom - 2}
+                y2={props.y + props.height - labels().paddingBottom + 2}
+                stroke="black"
+              ></line>
+              <text
+                dominant-baseline="hanging"
+                text-anchor="middle"
+                x={props.x + labels().gap * i()}
+                y={props.y + props.height - labels().paddingBottom + props.gap}
+                {...local}
+              >
+                {numberUtils.truncDecimals(value, 1)}
+              </text>
+            </>
+          )}</For>
+        </g>
+        <ChartPadding
+          {...props}
+          {...labels()}
+        />
+      </>
+    );
+  }
 }
 
 export function ChartPadding(props) {
@@ -624,13 +699,67 @@ export function ChartPadding(props) {
   asserts.assertTypeNumber(props.height);
   asserts.assertTypeFunction(props.children);
 
+  const hasValues = createMemo(() => props.paddingBlock || props.paddingInline || props.paddingRight || props.paddingLeft || props.paddingBottom || props.paddingTop);
+
   return (
-    <Dynamic
-      component={props.children}
-      x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
-      y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
-      width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0)) - (props.paddingLeft ?? (props.paddingInline ?? 0))}
-      height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
-    />
+    <>
+      <Show when={debug && hasValues()}>
+        <g data-debug-padding>
+          <rect
+            data-debug-padding-top
+            x={props.x}
+            y={props.y}
+            width={props.width}
+            height={props.paddingTop ?? props.paddingBlock ?? 0}
+            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+            outline="none"
+          ></rect>
+          <rect
+            data-debug-padding-bottom
+            x={props.x}
+            y={props.y + props.height - (props.paddingBottom ?? props.paddingBlock ?? 0)}
+            width={props.width}
+            height={props.paddingBottom ?? props.paddingBlock ?? 0}
+            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+            outline="none"
+          ></rect>
+          <rect
+            data-debug-padding-left
+            x={props.x}
+            y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
+            width={props.paddingLeft ?? props.paddingInline ?? 0}
+            height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
+            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+            outline="none"
+          ></rect>
+          <rect
+            data-debug-padding-right
+            x={props.x + props.width - (props.paddingRight ?? (props.paddingInline ?? 0))}
+            y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
+            width={props.paddingRight ?? props.paddingInline ?? 0}
+            height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
+            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+            outline="none"
+          ></rect>
+          <rect
+            data-debug-padding-inner-outline
+            x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
+            y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
+            width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0)) - (props.paddingLeft ?? (props.paddingInline ?? 0))}
+            height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
+            fill="none"
+            stroke="color-mix(in oklab, oklch(71.2% 0.194 13.428) 50%, transparent)"
+            stroke-width="1"
+          ></rect>
+        </g>
+      </Show>
+      <Dynamic
+        component={props.children}
+        x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
+        y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
+        width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0)) - (props.paddingLeft ?? (props.paddingInline ?? 0))}
+        height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
+      />
+    </>
   );
 }

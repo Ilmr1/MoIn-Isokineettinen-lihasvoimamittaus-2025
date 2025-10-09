@@ -29,7 +29,6 @@ export const findByMinDelta = (array, value) => {
   for (let i = 0; i < array.length; i++) {
     const delta = Math.abs(numberUtils.delta(value, array[i]));
     min ??= delta;
-    console.log("delta", delta, value, array[i]);
     if (min > delta) {
       min = delta;
       index = i;
