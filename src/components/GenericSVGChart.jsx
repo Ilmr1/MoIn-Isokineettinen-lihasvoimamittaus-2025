@@ -577,7 +577,11 @@ export function ChartErrorBands(props) {
     const yStep = props.height / totalDataHeight;
     const xStep = props.width / totalDataWidth;
 
+    asserts.assertTruthy(points[0]?.length === points[1]?.length);
+
     return props.splits.map(split => {
+      asserts.assertTruthy(split.endIndex < points[0].length, "endIndex is out of bounds");
+
       const paths = [`M ${x} ${y + chartUtils.flipYAxes(points[0][split.startIndex], maxValue) * yStep}`];
       for (let i = split.startIndex + 1; i <= split.endIndex; i++) {
         const flippedY = chartUtils.flipYAxes(points[0][i], maxValue);

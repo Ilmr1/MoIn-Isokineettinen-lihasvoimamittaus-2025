@@ -79,7 +79,7 @@ const createSplitCollection = (markersByIndex, points, moveMarkerToLastZeroValue
 const createAverageSplitCollection = (splits, color, disabledList) => {
   const collection = {
     startIndex: 0,
-    endIndex: 0,
+    endIndex: null,
     splits: [],
   };
 
@@ -88,18 +88,22 @@ const createAverageSplitCollection = (splits, color, disabledList) => {
       return;
     }
 
-    const delta = (split.endIndex - split.startIndex) - 1;
+    const delta = split.endIndex - split.startIndex;
     collection.endIndex ??= delta;
-    if (collection.endIndex < delta) {
+    if (collection.endIndex > delta) {
       collection.endIndex = delta;
     }
   });
 
-  collection.splits.push({
-    color,
-    startIndex: collection.startIndex,
-    endIndex: collection.endIndex,
-  });
+  if (collection.endIndex) {
+    collection.splits.push({
+      color,
+      startIndex: 0,
+      endIndex: collection.endIndex,
+    });
+  }
+
+  collection.endIndex ??= 0;
 
   return collection;
 }
@@ -401,7 +405,7 @@ const createAveragePointCollection = (indecies, color, points) => {
     }
 
     count++;
-    for (let i = split.startIndex; i < split.endIndex; i++) {
+    for (let i = split.startIndex; i <= split.endIndex; i++) {
       averages[i - split.startIndex] ??= 0;
       averages[i - split.startIndex] += points[i];
     }
