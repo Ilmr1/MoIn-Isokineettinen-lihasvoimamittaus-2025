@@ -108,13 +108,101 @@ const createAverageSplitCollection = (splits, color, disabledList) => {
   return collection;
 }
 
-const createPointCollections = (markersByIndex, data, dataFiltering, disabledList) => {
+const createGoodAnglesSplitCollection = (markersByIndex, anglePoints, disabledList) => {
+  const splitCollection = {
+    endIndex: 0,
+    starIndex: 0,
+    splits: [],
+  }
+
+  for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
+    pushIndecies(markersByIndex.move1[i], markersByIndex.move2[i], "red");
+    pushIndecies(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
+  }
+
+  function pushIndecies(startIndex, endIndex, color) {
+    const middleIndex = Math.floor(numberUtils.middle(startIndex, endIndex));
+    const middleDelta = numberUtils.absDelta(anglePoints[middleIndex - 5], anglePoints[middleIndex + 5]) / 10;
+
+    let start, end;
+    for (let i = middleIndex; i <= endIndex; i++) {
+      end = i;
+      const delta = numberUtils.absDelta(anglePoints[i], anglePoints[i + 1]);
+      if (!numberUtils.equals(delta, middleDelta, 0.05)) {
+        break;
+      }
+    }
+
+
+    for (let i = middleIndex; i >= startIndex; i--) {
+      start = i;
+      const delta = numberUtils.absDelta(anglePoints[i], anglePoints[i - 1]);
+      if (!numberUtils.equals(delta, middleDelta, 0.05)) {
+        break;
+      }
+    }
+
+    asserts.assertFalsy(start < startIndex, "start index is out of bounds");
+    asserts.assertFalsy(end > endIndex, "end index is out of bounds");
+
+    splitCollection.splits.push({
+      disabled: disabledList[splitCollection.splits.length] ?? false,
+      startIndex: start,
+      endIndex: end,
+      color,
+    });
+  }
+
+  return splitCollection;
+}
+
+const createFilteredTorquePointCollection = (goodAngleSplits, torquePoints) => {
+  const points = Array(torquePoints.length).fill(0);
+
+  const filter = createLowpass11Hz(256);
+  const filter2 = createLowpass11Hz(256);
+  goodAngleSplits.forEach(split => {
+    let highestValueIndex = 0;
+    let max;
+    for (let i = split.startIndex; i <= split.endIndex; i++) {
+      let absValue = Math.abs(torquePoints[i]);
+      max ??= absValue
+      if (absValue > max) {
+        max = absValue;
+        highestValueIndex = i;
+      }
+    }
+
+    filter.reset(0);
+    for (let i = split.startIndex; i <= highestValueIndex; i++) {
+      points[i] = numberUtils.truncDecimals(filter.process(torquePoints[i]), 3);
+    }
+
+    filter.reset(0);
+
+    for (let i = split.endIndex; i >= highestValueIndex; i--) {
+      points[i] = numberUtils.truncDecimals(filter.process(torquePoints[i]), 3);
+    }
+  });
+
+  return {
+    points,
+    maxValue: arrayUtils.maxValue(points, 0),
+    minValue: arrayUtils.minValue(points, 0),
+  }
+}
+
+const createCollections = (markersByIndex, data, dataFiltering, disabledList) => {
+  // ========================= POINTS =============================
   const angleCollection = createPointCollection(data.map(row => row[2]));
-  let powerCollection;
+  const torquePoints = data.map(row => row[0]);
+  const goodAnglesSplitCollection = createGoodAnglesSplitCollection(markersByIndex, angleCollection.points, disabledList);
+  let torqueCollection;
   if (dataFiltering) {
-    powerCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
+    torqueCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, torquePoints, angleCollection.points)));
+    // torqueCollection = createFilteredTorquePointCollection(goodAnglesSplitCollection.splits, torquePoints);
   } else {
-    powerCollection = createPointCollection(data.map(row => row[0]));
+    torqueCollection = createPointCollection(torquePoints);
   }
 
   const indecies = [];
@@ -132,53 +220,91 @@ const createPointCollections = (markersByIndex, data, dataFiltering, disabledLis
     });
   }
 
-  const averagePowerFlexCollection = createAveragePointCollection(indecies, "blue", powerCollection.points);
-  const averagePowerExtCollection = createAveragePointCollection(indecies, "red", powerCollection.points);
+  const averagePowerFlexCollection = createAveragePointCollection("blue", torqueCollection.points, goodAnglesSplitCollection.splits);
+  const averagePowerExtCollection = createAveragePointCollection("red", torqueCollection.points, goodAnglesSplitCollection.splits);
 
-  return {
-    power: powerCollection,
+  const pointCollections = {
+    power: torqueCollection,
     speed: createPointCollection(data.map(row => row[1])),
     angle: angleCollection,
     averagePowerFlex: averagePowerFlexCollection,
     averagePowerExt: averagePowerExtCollection,
-    averagePowerFlexError: createAverageErrorPointCollection(indecies, "blue", powerCollection.points, averagePowerFlexCollection.points, 1),
-    averagePowerExtError: createAverageErrorPointCollection(indecies, "red", powerCollection.points, averagePowerExtCollection.points, 1),
+    averagePowerFlexError: createAverageErrorPointCollection(goodAnglesSplitCollection.splits, "blue", torqueCollection.points, averagePowerFlexCollection.points, 1),
+    averagePowerExtError: createAverageErrorPointCollection(goodAnglesSplitCollection.splits, "red", torqueCollection.points, averagePowerExtCollection.points, 1),
+  };
+
+  // ========================= SPLITS =============================
+
+  const powerCollection = createSplitCollection(markersByIndex, pointCollections.power.points, dataFiltering, disabledList);
+
+  return {
+    points: pointCollections,
+    splits: {
+      power: powerCollection,
+      speed: createSplitCollection(markersByIndex, pointCollections.speed.points, false, disabledList),
+      angle: createSplitCollection(markersByIndex, pointCollections.angle.points, false, disabledList),
+      averagePowerFlex: createAverageSplitCollection(goodAnglesSplitCollection.splits, "blue", disabledList),
+      averagePowerExt: createAverageSplitCollection(goodAnglesSplitCollection.splits, "red", disabledList),
+      goodAngles: goodAnglesSplitCollection,
+    }
+  }
+}
+
+const createPointCollections = (markersByIndex, data, dataFiltering, disabledList) => {
+  const angleCollection = createPointCollection(data.map(row => row[2]));
+  let torqueCollection;
+  if (dataFiltering) {
+    torqueCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, data.map(row => row[0]), angleCollection.points)));
+  } else {
+    torqueCollection = createPointCollection(data.map(row => row[0]));
+  }
+
+  const indecies = [];
+  for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
+    pushIndecies(markersByIndex.move1[i], markersByIndex.move2[i], "red");
+    pushIndecies(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
+  }
+
+  function pushIndecies(startIndex, endIndex, color) {
+    indecies.push({
+      color,
+      disabled: disabledList[indecies.length] ?? false,
+      startIndex,
+      endIndex
+    });
+  }
+
+  const averagePowerFlexCollection = createAveragePointCollection(indecies, "blue", torqueCollection.points, angleCollection.points);
+  const averagePowerExtCollection = createAveragePointCollection(indecies, "red", torqueCollection.points, angleCollection.points);
+
+  return {
+    power: torqueCollection,
+    speed: createPointCollection(data.map(row => row[1])),
+    angle: angleCollection,
+    averagePowerFlex: averagePowerFlexCollection,
+    averagePowerExt: averagePowerExtCollection,
+    averagePowerFlexError: createAverageErrorPointCollection(indecies, "blue", torqueCollection.points, averagePowerFlexCollection.points, 1),
+    averagePowerExtError: createAverageErrorPointCollection(indecies, "red", torqueCollection.points, averagePowerExtCollection.points, 1),
   }
 };
 
-function createLowpass11Hz(sampleRate) {
+const createLowpass11Hz = (sampleRate) => {
   asserts.assertFalsy(!sampleRate || sampleRate <= 0, "sampleRate must be > 0");
 
-  const fc = 11.0; // cutoff in Hz
+  const fc = 11.0;
   const omega = 2 * Math.PI * fc;
-  const alpha = omega / (sampleRate + omega); // alpha = 2πfc / (fs + 2πfc)
+  const alpha = omega / (sampleRate + omega);
 
-  let y = 0.0; // filter state (previous output)
-  let initialized = false;
-
+  let y = 0.0;
   return {
-    // process one sample (x). Returns filtered sample (y).
     process(x) {
-      if (!initialized) {
-        // initialize to first input to avoid startup transient
-        y = x;
-        initialized = true;
-      } else {
-        y = y + alpha * (x - y); // single-pole IIR
-      }
+      y = y + alpha * (x - y);
       return y;
     },
 
-    // optional: reset filter state (defaults to 0 or provided value)
     reset(value = 0.0) {
       y = value;
-      initialized = value !== 0.0;
     },
-
-    // expose alpha for diagnostics
-    getAlpha() {
-      return alpha;
-    }
   };
 }
 
@@ -394,12 +520,12 @@ const createPointCollection = (points) => {
   return pointCollection;
 }
 
-const createAveragePointCollection = (indecies, color, points) => {
+const createAveragePointCollection = (color, torquePoints, angleSplits) => {
   const averages = [];
   const collection = { points: averages };
   let count = 0;
 
-  indecies.forEach(split => {
+  angleSplits.forEach(split => {
     if (split.disabled || split.color !== color) {
       return;
     }
@@ -407,7 +533,7 @@ const createAveragePointCollection = (indecies, color, points) => {
     count++;
     for (let i = split.startIndex; i <= split.endIndex; i++) {
       averages[i - split.startIndex] ??= 0;
-      averages[i - split.startIndex] += points[i];
+      averages[i - split.startIndex] += torquePoints[i];
     }
   });
 
@@ -424,16 +550,17 @@ const createAveragePointCollection = (indecies, color, points) => {
     }
   }
 
+
   return collection;
 }
 
-const createAverageErrorPointCollection = (indecies, color, points, averagePoints, errorPercentage) => {
+const createAverageErrorPointCollection = (splits, color, points, averagePoints, errorPercentage) => {
   const highs = Array(averagePoints.length).fill(0);
   const lows = Array(averagePoints.length).fill(0);
   let minValue, maxValue;
   const collection = { points: [highs, lows] };
 
-  indecies.forEach(split => {
+  splits.forEach(split => {
     if (split.disabled || split.color !== color) {
       return;
     }
@@ -547,8 +674,11 @@ const formatRawCTMObject = (rawObject, dataFiltering, disabledList) => {
 
   object.data = rawObject.data.map(arr => arr.map(parseFloat));
   object.markersByIndex = createParsedSectionFromRawObjectSection(rawObject["markers by index"]);
-  object.pointCollections = createPointCollections(object.markersByIndex, object.data, dataFiltering, disabledList);
-  object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections, dataFiltering, disabledList);
+  const collections = createCollections(object.markersByIndex, object.data, dataFiltering, disabledList);
+  object.pointCollections = collections.points;
+  object.splitCollections = collections.splits;
+  // object.pointCollections = createPointCollections(object.markersByIndex, object.data, dataFiltering, disabledList);
+  // object.splitCollections = createSplitCollections(object.markersByIndex, object.pointCollections, dataFiltering, disabledList);
   object.setUp = createParsedSectionFromRawObjectSection(rawObject.SetUp);
 
   object.memo = cleanMemo(rawObject.memo.join("\n"));

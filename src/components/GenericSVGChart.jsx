@@ -496,7 +496,7 @@ export function ChartContent(props) {
       <line x1={props.x} x2={props.x + props.width} y1={zeroLineY()} y2={zeroLineY()} stroke="gray" />
       <line x1={props.x} x2={props.x + props.width} y1={hover().y} y2={hover().y} stroke="black" />
       <line x1={hover().x} x2={hover().x} y1={props.parentY} y2={props.parentY + props.parentHeight} stroke="black" />
-      <text dominant-baseline="start" text-anchor="end" x={hover().x} y={props.parentY}>{hover().index}</text>
+      <text dominant-baseline="start" text-anchor="end" x={hover().x} y={props.parentY}>{numberUtils.truncDecimals(hover().index / 256, 2)}s</text>
       <For each={paths()}>{(path, i) => (
         <path d={path} class="data" fill="none" stroke={props.splits[i()].disabled ? "grey" : props.splits[i()].color} />
       )}</For>
