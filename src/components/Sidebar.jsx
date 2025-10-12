@@ -8,7 +8,7 @@ export function Sidebar() {
     { icon: BiRegularExport, label: "Export" },
     { icon: OcCopy3, label: "Copy" },
     { icon: FiPrinter, label: "Print", onClick: () => window.print() },
-    { icon: FiLogOut, label: "Logout", onClick: () => window.close() },
+    { icon: FiLogOut, label: "Quit", onClick: () => window.close() },
   ];
 
   return (
