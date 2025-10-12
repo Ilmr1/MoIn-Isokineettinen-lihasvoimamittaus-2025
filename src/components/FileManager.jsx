@@ -21,7 +21,7 @@ export function FileManager() {
   }
 
   return (
-    <div class="w-full h-full bg-gray-100 p-4 overflow-auto">
+    <div class="w-full h-full bg-gray-100 pt-4 pr-4 overflow-auto">
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
         <Tabs.List class="bg-gray-200 p-4 flex flex-wrap min-h-10 gap-2 w-full">
@@ -36,7 +36,7 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="files" class="bg-white rounded-lg p-4 shadow-sm flex-1 overflow-auto">
+        <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
           <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
             <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />

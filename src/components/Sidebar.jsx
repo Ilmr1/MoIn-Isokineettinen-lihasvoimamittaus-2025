@@ -13,12 +13,12 @@ export function Sidebar() {
 
   return (
     <nav class="flex flex-row md:flex-col items-center justify-around md:justify-start
-                space-x-2 md:space-x-0 md:space-y-4 p-2 h-full">
+                space-x-2 md:space-x-0 md:space-y-4 px-2 md:pt-10 h-full">
       <For each={otherTools}>
         {(tool) => (
           <div class="flex flex-col items-center py-2">
             <button
-              class="flex flex-col items-center justify-center w-14 h-14 bg-gray-50 hover:bg-gray-200 rounded-xl shadow-sm transition-colors"
+              class="flex flex-col items-center justify-center w-14 h-14 hover:bg-gray-200 rounded-xl transition-colors"
               onClick={tool.onClick}
             >
               <tool.icon class="w-6 h-6 text-gray-600" />
