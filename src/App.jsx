@@ -5,7 +5,7 @@ import { FileManager } from "./components/FileManager.jsx";
 function App() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-      <div className="flex flex-col max-w-7xl md:flex-row erflow:auto mx-auto p-4">
+      <div className="flex flex-col md:flex-row w-full max-w-7xl mx-auto p-4">
         <Sidebar />
         <FileManager />
       </div>
