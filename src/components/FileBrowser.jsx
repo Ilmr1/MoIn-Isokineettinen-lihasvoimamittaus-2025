@@ -21,6 +21,7 @@ export function FileBrowser() {
   const [safeMode, setSafeMode] = createSignal(true)
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
+  const [activeFiles, setActiveFiles] = createSignal([]);
 
   const { parsedFileData, setParsedFileData } = useParsedFiles();
 
@@ -168,6 +169,7 @@ export function FileBrowser() {
     );
     if (alreadySelected) return;
     setSelectedFiles((prev) => [...prev, file.fileHandler]);
+    setActiveFiles((prev) => [...prev, file.fileHandler]);
   }
 
   const handleSubmit = (e) => {
@@ -299,8 +301,10 @@ export function FileBrowser() {
               <Show when={selectedSession().sessionId === session.sessionId}>
                 <For each={selectedSession().files}>
                   {(file) => (
-                    <li>
-                      {console.log("asd",file)}
+                    <li
+                      class="p-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleFileSelect(file)}
+                    >
                       <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
                     </li>
                   )}
@@ -346,6 +350,7 @@ export function FileBrowser() {
     const clearSelectedFiles = () => setSelectedFiles([]);
     const removeFileSelection = (i) => setSelectedFiles(files => {
       files.splice(i, 1);
+      setActiveFiles(files);
       return [...files];
     });
 
@@ -358,11 +363,22 @@ export function FileBrowser() {
       });
     }
 
+    const activateFiles = () => {}
+
     return (
       <Show when={selectedFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
+          <button
+            class="px-3 py-1 bg-gray-200 rounded-lg"
+            onClick={() => {
+              console.log(selectedFiles());
+
+            }}
+          >
+            kons/kons
+          </button>
           <ul class="space-y-1">
-            <For each={selectedFiles()}>{(fileHandler, i) => (
+            <For each={activeFiles()}>{(fileHandler, i) => (
               <li class="text-sm space-x-1">
                 <button 
                   class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
