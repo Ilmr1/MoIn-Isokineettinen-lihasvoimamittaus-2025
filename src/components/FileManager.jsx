@@ -21,7 +21,7 @@ export function FileManager() {
   }
 
   return (
-    <div class="w-full h-full bg-gray-100 pt-4 pr-4 overflow-auto">
+    <div class="w-full h-full bg-gray-100 pt-4 overflow-auto">
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
         <Tabs.List class="bg-gray-200 p-4 flex flex-wrap min-h-10 gap-2 w-full">
