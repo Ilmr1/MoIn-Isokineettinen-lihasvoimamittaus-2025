@@ -15,7 +15,7 @@ export function BarChart(props) {
 function Chart(props) {
   asserts.assertTypeString(props.title, "title");
 
-  const svgArea = { width: 500, height: 300, x: 0, y: 0 };
+  const svgArea = { width: 350, height: 300, x: 0, y: 0 };
 
   const colors = ["oklch(70.4% 0.191 22.216)", "oklch(79.2% 0.209 151.711)", "oklch(62.3% 0.214 259.815)", "oklch(85.2% 0.199 91.936)"];
 
@@ -28,7 +28,7 @@ function Chart(props) {
   function AverageErrorChartForTorque(props) {
     return (
       <svg width={svgArea.width} height={svgArea.height}>
-        <ChartPadding {...svgArea} paddingLeft={100} paddingTop={18} paddingRight={1} paddingBottom={1}>{chartArea => (
+        <ChartPadding {...svgArea} paddingLeft={1} paddingTop={18} paddingRight={1} paddingBottom={1}>{chartArea => (
           <>
             <ChartGrid {...chartArea} />
             <ChartBorder {...chartArea} />
