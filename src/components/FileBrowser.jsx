@@ -22,7 +22,7 @@ export function FileBrowser() {
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
-  const { parsedFileData, setParsedFileData } = useParsedFiles();
+  const { parsedFileData, setParsedFileData, activeProgram, setActiveProgram } = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -36,6 +36,7 @@ export function FileBrowser() {
       sessionId,
       files: sessionFiles
     }))
+    
   }
 
   const filterAndSortNames = createMemo(() => {
@@ -116,7 +117,6 @@ export function FileBrowser() {
           const sessions = groupFilesBySession(files);
           setFiles(files);
           setSessions(sessions);
-          console.log("response", files);
         }
       }
     }
@@ -134,7 +134,6 @@ export function FileBrowser() {
 
       worker2.onmessage = async message => {
         if (message.data.type === "parsedFiles") {
-          console.log(message.data.files)
           setParsedFileData(message.data.files);
         }
       }
@@ -299,8 +298,10 @@ export function FileBrowser() {
               <Show when={selectedSession().sessionId === session.sessionId}>
                 <For each={selectedSession().files}>
                   {(file) => (
-                    <li>
-                      {console.log("asd",file)}
+                    <li
+                      class="p-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleFileSelect(file) }
+                    >
                       <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
                     </li>
                   )}
@@ -403,6 +404,17 @@ export function FileBrowser() {
               </label>
             </div>
           </div>
+          <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))]}>{programType => (
+            <button
+              class="btn-secondary"
+              classList={{active: activeProgram() === programType}}
+              onClick={() => {
+                setActiveProgram(programType);
+              }}
+            >
+              {programType}
+            </button>
+          )}</For>
         </div>
       </Show>
     )

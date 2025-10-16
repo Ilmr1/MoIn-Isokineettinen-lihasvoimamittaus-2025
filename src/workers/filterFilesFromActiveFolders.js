@@ -117,7 +117,7 @@ const extractDataFromString = (data, key) => {
       let values = parts.slice(1).map(v => v.trim());
       return values.join("/");
     case "program":
-      let lastval = parts[2].split(" ")
+      let lastval = parts[2].split(" ").map(s => s.trim())
       return lastval[2];
   }
 }

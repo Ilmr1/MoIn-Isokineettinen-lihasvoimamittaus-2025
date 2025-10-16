@@ -1,15 +1,20 @@
-import { createSignal, createMemo, For, Show, Suspense, lazy } from "solid-js";
+import { createSignal, createMemo, For, Show, Suspense, lazy, createEffect } from "solid-js";
 import { Tabs } from "@kobalte/core";
 import { fileUtils } from "../utils/utils.js";
 import { FileBrowser } from "./FileBrowser.jsx";
 import { AverageChart } from "./AverageChart.jsx";
 import { ThreeCharts } from "./ThreeCharts.jsx"; // keep eager if light; otherwise lazy
 import { Repetitions } from "./Repetitions.jsx";
-import { parsedFileContext } from "../providers.js";
+import { ParsedFileContext } from "../providers.js";
 import { BarChart } from "./BarChart.jsx";
 
 export function FileManager() {
+  const [activeProgram, setActiveProgram] = createSignal(null);
   const [parsedFileData, setParsedFileData] = createSignal([]);
+  const activeFiles = createMemo(() => {
+    const program = activeProgram() ?? parsedFileData()[0]?.rawObject.programType;
+    return parsedFileData().filter(({rawObject}) => rawObject.programType === program);
+  });
 
   const saveDataAsCSV = (data) => {
     const columns = ["Kammen voima", "Kammen nopeus", "Kammen kulma"];
@@ -35,20 +40,19 @@ export function FileManager() {
             Measurement
           </Tabs.Trigger>
         </Tabs.List>
-
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
-          <parsedFileContext.Provider value={{ parsedFileData, setParsedFileData }}>
+          <ParsedFileContext.Provider value={{ parsedFileData, setParsedFileData, activeProgram, setActiveProgram }}>
             <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />
-              <AverageChart listOfParsedCTM={parsedFileData} />
+              <AverageChart listOfParsedCTM={activeFiles} />
               <div class="grid grid-cols-3 gap-2">
-                <BarChart listOfParsedCTM={parsedFileData} title="Torque max" analysisExtKey="110" analysisFlexKey="111" />
-                <BarChart listOfParsedCTM={parsedFileData} title="Torque max avearge" analysisExtKey="112" analysisFlexKey="113" />
-                <BarChart listOfParsedCTM={parsedFileData} title="Torque max aver." analysisExtKey="203" analysisFlexKey="204" />
-                <BarChart listOfParsedCTM={parsedFileData} title="Time aver. to peak Torque Ext" analysisExtKey="116" analysisFlexKey="117" />
-                <BarChart listOfParsedCTM={parsedFileData} title="Position aver. @ peak Torque" analysisExtKey="114" analysisFlexKey="115" />
+                <BarChart listOfParsedCTM={activeFiles} title="Torque max" analysisExtKey="110" analysisFlexKey="111" />
+                <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" analysisExtKey="112" analysisFlexKey="113" />
+                <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." analysisExtKey="203" analysisFlexKey="204" />
+                <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" analysisExtKey="116" analysisFlexKey="117" />
+                <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" analysisExtKey="114" analysisFlexKey="115" />
               </div>
-              <For each={parsedFileData()}>{parsedData => (
+              <For each={activeFiles()}>{parsedData => (
                 <>
                   <ThreeCharts parsedCTM={parsedData.rawObject} />
                   <div>
@@ -59,7 +63,7 @@ export function FileManager() {
                 </>
               )}</For>
             </div>
-          </parsedFileContext.Provider>
+          </ParsedFileContext.Provider>
         </Tabs.Content>
 
         <Tabs.Content value="analysis" class="bg-white rounded-lg p-6 shadow-sm">
