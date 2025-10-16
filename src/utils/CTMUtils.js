@@ -37,7 +37,7 @@ const createParsedSectionFromRawObjectSection = rawObjectSection => {
 };
 
 
-const createSplitCollection = (markersByIndex, points, moveMarkerToNearestNonZeroValue, disabledList) => {
+const createSplitCollection = (markersByIndex, points, moveMarkerToLastZeroValue, disabledList) => {
   const collection = {
     startIndex: markersByIndex.move1[0],
     endIndex: markersByIndex.move1.at(-1),
@@ -45,21 +45,21 @@ const createSplitCollection = (markersByIndex, points, moveMarkerToNearestNonZer
   };
 
   for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
-    filterAndPush(markersByIndex.move1[i], markersByIndex.move2[i], "red");
-    filterAndPush(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
+    push(markersByIndex.move1[i], markersByIndex.move2[i], "red");
+    push(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
   }
 
-  function filterAndPush(start, end, color) {
+  function push(start, end, color) {
     const disabled = disabledList[collection.splits.length];
-    if (moveMarkerToNearestNonZeroValue) {
+    if (moveMarkerToLastZeroValue) {
       for (let i = start; i < end; i++) {
-        if (points[i + 2] === 0) {
+        if (points[i + 1] === 0) {
           start++;
         } else break;
       }
 
       for (let i = end; i > start; i--) {
-        if (points[i - 3] === 0) {
+        if (points[i - 1] === 0) {
           end--;
         } else break;
       }
@@ -79,7 +79,7 @@ const createSplitCollection = (markersByIndex, points, moveMarkerToNearestNonZer
 const createAverageSplitCollection = (splits, color, disabledList) => {
   const collection = {
     startIndex: 0,
-    endIndex: 0,
+    endIndex: null,
     splits: [],
   };
 
@@ -88,18 +88,22 @@ const createAverageSplitCollection = (splits, color, disabledList) => {
       return;
     }
 
-    const delta = (split.endIndex - split.startIndex) - 1;
+    const delta = split.endIndex - split.startIndex;
     collection.endIndex ??= delta;
-    if (collection.endIndex < delta) {
+    if (collection.endIndex > delta) {
       collection.endIndex = delta;
     }
   });
 
-  collection.splits.push({
-    color,
-    startIndex: collection.startIndex,
-    endIndex: collection.endIndex,
-  });
+  if (collection.endIndex) {
+    collection.splits.push({
+      color,
+      startIndex: 0,
+      endIndex: collection.endIndex,
+    });
+  }
+
+  collection.endIndex ??= 0;
 
   return collection;
 }
@@ -401,7 +405,7 @@ const createAveragePointCollection = (indecies, color, points) => {
     }
 
     count++;
-    for (let i = split.startIndex; i < split.endIndex; i++) {
+    for (let i = split.startIndex; i <= split.endIndex; i++) {
       averages[i - split.startIndex] ??= 0;
       averages[i - split.startIndex] += points[i];
     }

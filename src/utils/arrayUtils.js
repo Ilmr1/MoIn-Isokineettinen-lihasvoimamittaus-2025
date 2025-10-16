@@ -20,6 +20,41 @@ export const average = (array, precision) => {
 
   return avg;
 }
+export const findByMinDelta = (array, value) => {
+  if (!isArray(array) || array.length === 0) {
+    return undefined
+  }
+
+  let min, index = 0;
+  for (let i = 0; i < array.length; i++) {
+    const delta = Math.abs(numberUtils.delta(value, array[i]));
+    min ??= delta;
+    if (min > delta) {
+      min = delta;
+      index = i;
+    }
+  }
+
+  return array[index];
+}
+
+export const findByMaxDelta = (array, value) => {
+  if (!isArray(array) || array.length === 0) {
+    return undefined
+  }
+
+  let max, index = 0;
+  for (let i = 0; i < array.length; i++) {
+    const delta = numberUtils.absDelta(value, array[i]);
+    max ??= delta;
+    if (max < delta) {
+      max = delta;
+      index = i;
+    }
+  }
+
+  return array[index];
+}
 export const coeffVar = array => {
   if (!isArray(array) || array.length === 0) {
     return undefined
