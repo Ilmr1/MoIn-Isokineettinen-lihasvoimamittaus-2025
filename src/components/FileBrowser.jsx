@@ -21,10 +21,8 @@ export function FileBrowser() {
   const [safeMode, setSafeMode] = createSignal(true)
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
-  const [activeFiles, setActiveFiles] = createSignal([]);
-  const [activeProgram, setActiveProgram] = createSignal("");
 
-  const { parsedFileData, setParsedFileData } = useParsedFiles();
+  const { parsedFileData, setParsedFileData, activeProgram, setActiveProgram } = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -34,7 +32,6 @@ export function FileBrowser() {
       }
       sessionMap[file.sessionId].push(file);
     }
-    console.log(sessionMap)
     return Object.entries(sessionMap).map(([sessionId, sessionFiles]) => ({
       sessionId,
       files: sessionFiles
@@ -120,7 +117,6 @@ export function FileBrowser() {
           const sessions = groupFilesBySession(files);
           setFiles(files);
           setSessions(sessions);
-          console.log("response", files);
         }
       }
     }
@@ -138,7 +134,6 @@ export function FileBrowser() {
 
       worker2.onmessage = async message => {
         if (message.data.type === "parsedFiles") {
-          console.log(message.data.files)
           setParsedFileData(message.data.files);
         }
       }
@@ -167,13 +162,11 @@ export function FileBrowser() {
 
 
   const handleFileSelect = (file) => {
-    console.log(file)
     const alreadySelected = selectedFiles().some(
       (f) => f.name === file.fileHandler.name
     );
     if (alreadySelected) return;
     setSelectedFiles((prev) => [...prev, file.fileHandler]);
-    setActiveFiles((prev) => [...prev, file.fileHandler]);
   }
 
   const handleSubmit = (e) => {
@@ -308,7 +301,6 @@ export function FileBrowser() {
                     <li
                       class="p-2 cursor-pointer hover:bg-gray-50"
                       onClick={() => handleFileSelect(file) }
-                      
                     >
                       <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
                     </li>
@@ -355,7 +347,6 @@ export function FileBrowser() {
     const clearSelectedFiles = () => setSelectedFiles([]);
     const removeFileSelection = (i) => setSelectedFiles(files => {
       files.splice(i, 1);
-      setActiveFiles(files);
       return [...files];
     });
 
@@ -368,51 +359,9 @@ export function FileBrowser() {
       });
     }
 
-    const activateFiles = (programName) => {
-      if (activeProgram() !== programName){
-        const parsedData = Object.values(parsedFileData());
-        const matches = parsedData.filter(f => {
-          const prog = f.rawObject?.configuration?.program;
-          return prog[1].includes(programName);
-        })
-        const matchedHandler = selectedFiles().filter(fh =>
-          matches.some(m => m.name === fh.name)
-        )
-        setSelectedFiles(matchedHandler)
-        setActiveProgram(programName);
-      } else {
-        setSelectedFiles(activeFiles());
-        setActiveProgram("");
-      }
-    }
-
     return (
       <Show when={selectedFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
-          <button
-            class={`px-3 py-1 rounded-lg transition-colors ${
-              activeProgram() === "kons/kons"
-              ? "bg-green-700 text-white" // darker when filter is active
-              : "bg-green-400 text-black hover:bg-green-500" // lighter when inactive
-            }`}
-            onClick={() => {
-              activateFiles("kons/kons");
-            }}
-          >
-            kons/kons
-          </button>
-          <button
-            class={`px-3 py-1 rounded-lg transition-colors ${
-              activeProgram() === "eks/eks" 
-              ? "bg-green-700 text-white" // darker when filter is active
-              : "bg-green-400 text-black hover:bg-green-500" // lighter when inactive
-            }`}
-            onClick={() => {
-              activateFiles("eks/eks");
-            }}
-          >
-            eks/eks
-          </button>
           <ul class="space-y-1">
             <For each={selectedFiles()}>{(fileHandler, i) => (
               <li class="text-sm space-x-1">
@@ -455,6 +404,17 @@ export function FileBrowser() {
               </label>
             </div>
           </div>
+          <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))]}>{programType => (
+            <button
+              class="btn-secondary"
+              classList={{active: activeProgram() === programType}}
+              onClick={() => {
+                setActiveProgram(programType);
+              }}
+            >
+              {programType}
+            </button>
+          )}</For>
         </div>
       </Show>
     )

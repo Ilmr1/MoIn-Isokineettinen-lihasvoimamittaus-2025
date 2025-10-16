@@ -514,6 +514,30 @@ const fillZerosToPower = (markersByIndex, powerData, angleData) => {
   return powerData;
 }
 
+const createProgramType = configuration => {
+  let programType = "";
+  if (configuration.program[1].startsWith("isokin. ballistinen")) {
+    const [typeA, typeB] = configuration.program[1].substring(20).split("/");
+    if (typeA === typeB) {
+      programType += `${typeA} `
+    } else {
+      programType += `${typeA}/${typeB} `
+    }
+  } else {
+    programType += `${configuration.program[1]} `;
+  }
+
+
+  const [speedA, speedB] = configuration.speed;
+  if (speedA === speedB) {
+    programType += `${speedA}`
+  } else {
+    programType += `${speedA}/${speedB}`
+  }
+
+  return programType;
+}
+
 const formatRawCTMObject = (rawObject, dataFiltering, disabledList) => {
   const object = {};
 
@@ -532,6 +556,7 @@ const formatRawCTMObject = (rawObject, dataFiltering, disabledList) => {
   object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits, object.measurement.samplingrate[0]);
   object.analysis = createAnalysis(object.repetitions, object.session.subjectWeight);
 
+  object.programType = createProgramType(object.configuration);
 
   return object
 }
