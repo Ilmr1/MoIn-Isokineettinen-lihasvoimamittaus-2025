@@ -114,10 +114,9 @@ function Chart(props) {
                       {...controls}
                     ></ChartPath>
                   )}</For>
-                  <ChartMousePositionInPercentage {...controls} {...chartArea} width={linesArea2.width} x={linesArea2.x}>{mouseArea => (
+                  <ChartMousePositionInPercentage {...controls} {...linesArea} width={linesArea2.width} x={linesArea2.x}>{mouseArea => (
                     <>
                       <ChartPercentageVerticalLine {...mouseArea} />
-                      <ChartHeader {...linesArea2} title={mouseArea.mouseXPercentage} />
                       <For each={props.listOfParsedCTM()}>{parsedData => (
                         <ChartHorizontalPointLineWithLabel
                           points={parsedData.rawObject.pointCollections[averageKey()].points}
