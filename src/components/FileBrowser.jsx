@@ -22,6 +22,7 @@ export function FileBrowser() {
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
   const [activeFiles, setActiveFiles] = createSignal([]);
+  const [activeProgram, setActiveProgram] = createSignal("");
 
   const { parsedFileData, setParsedFileData } = useParsedFiles();
 
@@ -33,10 +34,12 @@ export function FileBrowser() {
       }
       sessionMap[file.sessionId].push(file);
     }
+    console.log(sessionMap)
     return Object.entries(sessionMap).map(([sessionId, sessionFiles]) => ({
       sessionId,
       files: sessionFiles
     }))
+    
   }
 
   const filterAndSortNames = createMemo(() => {
@@ -164,6 +167,7 @@ export function FileBrowser() {
 
 
   const handleFileSelect = (file) => {
+    console.log(file)
     const alreadySelected = selectedFiles().some(
       (f) => f.name === file.fileHandler.name
     );
@@ -303,7 +307,8 @@ export function FileBrowser() {
                   {(file) => (
                     <li
                       class="p-2 cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleFileSelect(file)}
+                      onClick={() => handleFileSelect(file) }
+                      
                     >
                       <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
                     </li>
@@ -363,22 +368,53 @@ export function FileBrowser() {
       });
     }
 
-    const activateFiles = () => {}
+    const activateFiles = (programName) => {
+      if (activeProgram() !== programName){
+        const parsedData = Object.values(parsedFileData());
+        const matches = parsedData.filter(f => {
+          const prog = f.rawObject?.configuration?.program;
+          return prog[1].includes(programName);
+        })
+        const matchedHandler = selectedFiles().filter(fh =>
+          matches.some(m => m.name === fh.name)
+        )
+        setSelectedFiles(matchedHandler)
+        setActiveProgram(programName);
+      } else {
+        setSelectedFiles(activeFiles());
+        setActiveProgram("");
+      }
+    }
 
     return (
       <Show when={selectedFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
           <button
-            class="px-3 py-1 bg-gray-200 rounded-lg"
+            class={`px-3 py-1 rounded-lg transition-colors ${
+              activeProgram() === "kons/kons"
+              ? "bg-green-700 text-white" // darker when filter is active
+              : "bg-green-400 text-black hover:bg-green-500" // lighter when inactive
+            }`}
             onClick={() => {
-              console.log(selectedFiles());
-
+              activateFiles("kons/kons");
             }}
           >
             kons/kons
           </button>
+          <button
+            class={`px-3 py-1 rounded-lg transition-colors ${
+              activeProgram() === "eks/eks" 
+              ? "bg-green-700 text-white" // darker when filter is active
+              : "bg-green-400 text-black hover:bg-green-500" // lighter when inactive
+            }`}
+            onClick={() => {
+              activateFiles("eks/eks");
+            }}
+          >
+            eks/eks
+          </button>
           <ul class="space-y-1">
-            <For each={activeFiles()}>{(fileHandler, i) => (
+            <For each={selectedFiles()}>{(fileHandler, i) => (
               <li class="text-sm space-x-1">
                 <button 
                   class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
