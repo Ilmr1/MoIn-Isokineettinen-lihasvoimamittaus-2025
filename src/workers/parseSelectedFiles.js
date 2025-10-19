@@ -17,6 +17,7 @@ onmessage = async (message) => {
       const rawObject = CTMUtils.parseTextToObject(text, dataFiltering, disabledList);
       files.push({
         name: file.name,
+        index: files.length,
         rawObject
       });
     }

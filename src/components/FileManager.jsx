@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For, Show, Suspense, lazy, createEffect } from "solid-js";
+import { createSignal, createMemo, For } from "solid-js";
 import { Tabs } from "@kobalte/core";
 import { fileUtils } from "../utils/utils.js";
 import { FileBrowser } from "./FileBrowser.jsx";
@@ -12,8 +12,14 @@ export function FileManager() {
   const [activeProgram, setActiveProgram] = createSignal(null);
   const [parsedFileData, setParsedFileData] = createSignal([]);
   const activeFiles = createMemo(() => {
-    const program = activeProgram() ?? parsedFileData()[0]?.rawObject.programType;
-    return parsedFileData().filter(({rawObject}) => rawObject.programType === program);
+    const firstProgramType = parsedFileData()[0]?.rawObject.programType;
+    const program = activeProgram() ?? firstProgramType;
+    const files = parsedFileData().filter(({rawObject}) => rawObject.programType === program);
+    if (files.length) {
+      return files;
+    }
+
+    return parsedFileData().filter(({rawObject}) => rawObject.programType === firstProgramType);
   });
 
   const saveDataAsCSV = (data) => {
@@ -41,7 +47,7 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
-          <ParsedFileContext.Provider value={{ parsedFileData, setParsedFileData, activeProgram, setActiveProgram }}>
+          <ParsedFileContext.Provider value={{ parsedFileData, setParsedFileData, activeProgram, setActiveProgram, activeFiles }}>
             <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />
               <AverageChart listOfParsedCTM={activeFiles} />

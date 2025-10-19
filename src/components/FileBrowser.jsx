@@ -22,7 +22,7 @@ export function FileBrowser() {
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
-  const { parsedFileData, setParsedFileData, activeProgram, setActiveProgram } = useParsedFiles();
+  const { parsedFileData, setParsedFileData, activeProgram, setActiveProgram, activeFiles } = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -360,32 +360,43 @@ export function FileBrowser() {
     }
 
     return (
-      <Show when={selectedFiles().length}>
+      <Show when={activeFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
+          <div class="flex justify-center gap-2">
+            <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))]}>{programType => (
+              <button
+                class="btn-secondary"
+                classList={{active: activeProgram() === programType}}
+                onClick={() => {
+                  setActiveProgram(programType);
+                }}
+              >
+                {programType}
+              </button>
+            )}</For>
+          </div>
           <ul class="space-y-1">
-            <For each={selectedFiles()}>{(fileHandler, i) => (
+            <For each={activeFiles()}>{(fileHandler) => (
               <li class="text-sm space-x-1">
                 <button 
                   class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
-                  onClick={() => removeFileSelection(i())}
+                  onClick={() => removeFileSelection(fileHandler.index)}
                 >
                   remove
                 </button>
                 <span class="font-medium">{fileHandler.name}</span>
-                <Show when={i() < parsedFileData().length}>
-                  <ol>
-                    <For each={parsedFileData()?.[i()]?.rawObject.splitCollections.angle.splits}>{(data, j) => (
-                      <Show when={j() % 2 === 0}>
-                        <li>
-                          <label>
-                            <input type="checkbox" name="disableRepetition" checked={!data.disabled} onChange={() => toggleRepetitionDisable(i(), j())} />{" "}
-                            Repetition {j() / 2 + 1}
-                          </label>
-                        </li>
-                      </Show>
-                    )}</For>
-                  </ol>
-                </Show>
+                <ol>
+                  <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
+                    <Show when={j() % 2 === 0}>
+                      <li>
+                        <label>
+                          <input type="checkbox" name="disableRepetition" checked={!data.disabled} onChange={() => toggleRepetitionDisable(fileHandler.index, j())} />{" "}
+                          Repetition {j() / 2 + 1}
+                        </label>
+                      </li>
+                    </Show>
+                  )}</For>
+                </ol>
               </li>
             )}</For>
           </ul>
@@ -404,17 +415,6 @@ export function FileBrowser() {
               </label>
             </div>
           </div>
-          <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))]}>{programType => (
-            <button
-              class="btn-secondary"
-              classList={{active: activeProgram() === programType}}
-              onClick={() => {
-                setActiveProgram(programType);
-              }}
-            >
-              {programType}
-            </button>
-          )}</For>
         </div>
       </Show>
     )
