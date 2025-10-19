@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For } from "solid-js";
+import { createSignal, createMemo, For, createEffect, on } from "solid-js";
 import { Tabs } from "@kobalte/core";
 import { fileUtils } from "../utils/utils.js";
 import { FileBrowser } from "./FileBrowser.jsx";
@@ -12,15 +12,23 @@ export function FileManager() {
   const [activeProgram, setActiveProgram] = createSignal(null);
   const [parsedFileData, setParsedFileData] = createSignal([]);
   const activeFiles = createMemo(() => {
-    const firstProgramType = parsedFileData()[0]?.rawObject.programType;
-    const program = activeProgram() ?? firstProgramType;
-    const files = parsedFileData().filter(({rawObject}) => rawObject.programType === program);
-    if (files.length) {
-      return files;
+    const program = activeProgram();
+    if (!program) {
+      return [];
     }
 
-    return parsedFileData().filter(({rawObject}) => rawObject.programType === firstProgramType);
+    return parsedFileData().filter(({rawObject}) => rawObject.programType === program);
   });
+
+  createEffect(on(parsedFileData, files => {
+    const type = activeProgram();
+    const programTypeIsValid = files.some(file => file.rawObject.programType === type);
+    if (programTypeIsValid) {
+      return;
+    }
+
+    setActiveProgram(files[0]?.rawObject.programType)
+  }));
 
   const saveDataAsCSV = (data) => {
     const columns = ["Kammen voima", "Kammen nopeus", "Kammen kulma"];
