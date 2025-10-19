@@ -363,7 +363,7 @@ export function FileBrowser() {
       <Show when={activeFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
           <div class="flex justify-center gap-2">
-            <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))]}>{programType => (
+            <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))].sort()}>{programType => (
               <button
                 class="btn-secondary"
                 classList={{active: activeProgram() === programType}}

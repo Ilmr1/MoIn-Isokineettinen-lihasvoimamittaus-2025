@@ -42,8 +42,6 @@ function Chart(props) {
     setMouseY(-1);
   });
 
-  console.log("logs", props.parsedCTM);
-
   return (
     <>
       <svg class="cp-chart" width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
