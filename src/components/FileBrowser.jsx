@@ -4,6 +4,7 @@ import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolder
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import { useParsedFiles } from "../providers";
 import { signals } from "../collections/collections";
+import { parsedFileData, setParsedFileData } from "../signals";
 
 
 export function FileBrowser() {
@@ -22,7 +23,7 @@ export function FileBrowser() {
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
-  const { parsedFileData, setParsedFileData, activeProgram, setActiveProgram, activeFiles } = useParsedFiles();
+  const {  activeProgram, setActiveProgram, activeFiles } = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};

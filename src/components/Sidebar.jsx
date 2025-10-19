@@ -2,6 +2,7 @@ import {FiPrinter, FiLogOut } from 'solid-icons/fi';
 import { OcCopy3 } from 'solid-icons/oc';
 import { BiRegularExport } from 'solid-icons/bi';
 import { createSignal, For } from "solid-js";
+import { parsedFileData } from '../signals';
 
 export function Sidebar() {
   const otherTools = [

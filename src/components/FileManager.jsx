@@ -7,10 +7,10 @@ import { ThreeCharts } from "./ThreeCharts.jsx"; // keep eager if light; otherwi
 import { Repetitions } from "./Repetitions.jsx";
 import { ParsedFileContext } from "../providers.js";
 import { BarChart } from "./BarChart.jsx";
+import { parsedFileData } from "../signals.js";
 
 export function FileManager() {
   const [activeProgram, setActiveProgram] = createSignal(null);
-  const [parsedFileData, setParsedFileData] = createSignal([]);
   const activeFiles = createMemo(() => {
     const program = activeProgram();
     if (!program) {
@@ -55,7 +55,7 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
-          <ParsedFileContext.Provider value={{ parsedFileData, setParsedFileData, activeProgram, setActiveProgram, activeFiles }}>
+          <ParsedFileContext.Provider value={{ activeProgram, setActiveProgram, activeFiles }}>
             <div class="w-full h-full space-y-6 grid place-items-center items-start">
               <FileBrowser />
               <AverageChart listOfParsedCTM={activeFiles} />
