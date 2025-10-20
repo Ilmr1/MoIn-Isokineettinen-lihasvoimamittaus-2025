@@ -24,3 +24,12 @@ export const parseIfNumber = value => {
 };
 
 export const toRad = deg => deg * Math.PI / 180;
+
+
+export const symmetryPercent = (value1, value2) => {
+  let num1 = Math.abs(parseFloat(value1));
+  let num2 = Math.abs(parseFloat(value2));
+  let smaller = Math.min(num1, num2)
+  let larger = Math.max(num1, num2)
+  return ((smaller/larger) * 100).toFixed(2);
+};

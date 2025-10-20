@@ -3,12 +3,13 @@ import { OcCopy3 } from 'solid-icons/oc';
 import { BiRegularExport } from 'solid-icons/bi';
 import { createSignal, For } from "solid-js";
 import { parsedFileData } from '../signals';
+import { generatePDF } from '../utils/pdfUtils';
 
 export function Sidebar() {
   const otherTools = [
     { icon: BiRegularExport, label: "Export" },
     { icon: OcCopy3, label: "Copy" },
-    { icon: FiPrinter, label: "Print", onClick: () => window.print() },
+    { icon: FiPrinter, label: "Print", onClick: () => generatePDF() },
     { icon: FiLogOut, label: "Quit", onClick: () => window.close() },
   ];
 
