@@ -6,6 +6,8 @@ import { useParsedFiles } from "../providers";
 import { signals } from "../collections/collections";
 import { parsedFileData, setParsedFileData } from "../signals";
 import { IoDocumentTextSharp, IoFolderOutline } from "solid-icons/io";
+import { FiChevronRight } from "solid-icons/fi";
+import { FiChevronDown } from "solid-icons/fi";
 
 
 export function FileBrowser() {
@@ -218,40 +220,53 @@ export function FileBrowser() {
 
   function SessionsAsATable() {
     return (
-      <div className="session-table">
-        <div className="session-header"></div>
-        <div className="session-body">
+      <div class="session-table">
+        <div class="session-header">
+          <p>Session / File</p>
+          <p>Date</p>
+          <p>Time</p>
+          <p>First</p>
+          <p>Last</p>
+          <p>Foot</p>
+          <p>Speed</p>
+          <p>Program</p>
+          <p>Files</p>
+        </div>
+        <div class="session-body">
 
           <For each={filteredSessions()}>
             {(ses) => {
               const [opened, setOpened] = createSignal(false);
               return (
                 <>
-                  <div className="session-row" onClick={() => setOpened(s => !s)}>
+                  <div class="session-row" classList={{opened: opened()}} onClick={() => setOpened(s => !s)}>
                     <p class="identifier">
-                      <IoFolderOutline class="text-2xl text-orange-400" />
+                      <Show when={opened()} fallback={ <FiChevronRight class="w-4 h-4 text-gray-500" />}>
+                        <FiChevronDown class="w-4 h-4 text-gray-500" />
+                      </Show>
+                      <IoFolderOutline class="text-xl text-orange-400" />
                       {ses.sessionId}
                     </p>
                     <p>{ses.files[0]?.date}</p>
                     <p>{ses.files[0]?.time}</p>
                     <p>{ses.files[0]?.subjectFirstName}</p>
                     <p>{ses.files[0]?.subjectLastName}</p>
-                    <p>{ses.files[0]?.legSide}</p>
-                    <p>{ses.files[0]?.speed}</p>
-                    <p>{ses.files[0]?.program}</p>
+                    <p>-</p>
+                    <p>-</p>
+                    <p>-</p>
                     <p>{ses.files.length}</p>
                   </div>
                   <Show when={opened()}>
                     <For each={ses.files}>
                       {(file) => (
-                        <div className="file-row"
-                        onClick={() => handleFileSelect(file) }
+                        <div
+                          class="file-row"
+                          onClick={() => handleFileSelect(file) }
                         >
                           <p class="identifier">
                             <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
                             {file.name}
                           </p>
-                          <p>{file.date}</p>
                           <p>{file.time}</p>
                           <p>{file.subjectFirstName}</p>
                           <p>{file.subjectLastName}</p>
