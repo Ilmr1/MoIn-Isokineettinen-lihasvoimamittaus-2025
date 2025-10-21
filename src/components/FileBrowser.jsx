@@ -5,6 +5,7 @@ import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import { useParsedFiles } from "../providers";
 import { signals } from "../collections/collections";
 import { parsedFileData, setParsedFileData } from "../signals";
+import { IoDocumentTextSharp, IoFolderOutline } from "solid-icons/io";
 
 
 export function FileBrowser() {
@@ -37,8 +38,23 @@ export function FileBrowser() {
       sessionId,
       files: sessionFiles
     }))
-    
   }
+
+  const filteredSessions = createMemo(() => {
+    console.log("sessions", sessions())
+    const firstName = filterByFirstName();
+    const lastName = filterByLastName();
+    
+    return sessions().filter(session => {
+      if (firstName && !session.files[0]?.subjectFirstName.toLowerCase().includes(firstName.toLowerCase())) {
+        return false;
+      }
+      if (lastName && !session.files[0]?.subjectLastName.toLowerCase().includes(lastName.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+  })
 
   const filterAndSortNames = createMemo(() => {
     const allFiles = files();
@@ -193,12 +209,68 @@ export function FileBrowser() {
       <FileSearchForm />
       <SafeSearchCheckbox />
       <div class="space-y-4">
-        <ListOfFileSessions />
+        <SessionsAsATable />
         <ListOfFilesAndSortingControls />
         <ListOfSelectedFiles />
       </div>
     </div>
   );
+
+  function SessionsAsATable() {
+    return (
+      <div className="session-table">
+        <div className="session-header"></div>
+        <div className="session-body">
+
+          <For each={filteredSessions()}>
+            {(ses) => {
+              const [opened, setOpened] = createSignal(false);
+              return (
+                <>
+                  <div className="session-row" onClick={() => setOpened(s => !s)}>
+                    <p class="identifier">
+                      <IoFolderOutline class="text-2xl text-orange-400" />
+                      {ses.sessionId}
+                    </p>
+                    <p>{ses.files[0]?.date}</p>
+                    <p>{ses.files[0]?.time}</p>
+                    <p>{ses.files[0]?.subjectFirstName}</p>
+                    <p>{ses.files[0]?.subjectLastName}</p>
+                    <p>{ses.files[0]?.legSide}</p>
+                    <p>{ses.files[0]?.speed}</p>
+                    <p>{ses.files[0]?.program}</p>
+                    <p>{ses.files.length}</p>
+                  </div>
+                  <Show when={opened()}>
+                    <For each={ses.files}>
+                      {(file) => (
+                        <div className="file-row"
+                        onClick={() => handleFileSelect(file) }
+                        >
+                          <p class="identifier">
+                            <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
+                            {file.name}
+                          </p>
+                          <p>{file.date}</p>
+                          <p>{file.time}</p>
+                          <p>{file.subjectFirstName}</p>
+                          <p>{file.subjectLastName}</p>
+                          <p>{file.legSide}</p>
+                          <p>{file.speed}</p>
+                          <p>{file.program}</p>
+                          <p>-</p>
+                        </div>
+                      )}
+                    </For>
+                  </Show>
+                </>
+              )
+            }}
+          </For>
+        </div>
+      </div>
+    )
+  }
 
   function ListOfRecentFolders() {
     return (
@@ -285,32 +357,6 @@ export function FileBrowser() {
         <label for="safe-mode" class="text-sm text-gray-700">
           Safe Search?
         </label>
-      </div>
-    )
-  }
-
-  function ListOfFileSessions() {
-    return (
-      <div>
-        <For each={sessions()}>
-          {(session) => (
-            <div>
-              <p onClick={() => setSelectedSession(session)}>{session.sessionId} {session.files[0]?.date}</p>
-              <Show when={selectedSession().sessionId === session.sessionId}>
-                <For each={selectedSession().files}>
-                  {(file) => (
-                    <li
-                      class="p-2 cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleFileSelect(file) }
-                    >
-                      <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
-                    </li>
-                  )}
-                </For>
-              </Show>
-            </div>
-          )}
-        </For>
       </div>
     )
   }

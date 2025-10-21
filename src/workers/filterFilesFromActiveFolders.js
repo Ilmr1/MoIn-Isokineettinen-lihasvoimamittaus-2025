@@ -112,7 +112,7 @@ const extractDataFromString = (data, key) => {
 
   switch (key) {
     case "side":
-      return parts.at(-1);
+      return parts.at(-1).trim();
     case "speed":
       let values = parts.slice(1).map(v => v.trim());
       return values.join("/");
