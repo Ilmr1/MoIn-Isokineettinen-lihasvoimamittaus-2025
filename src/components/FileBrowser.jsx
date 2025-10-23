@@ -8,6 +8,7 @@ import { parsedFileData, setParsedFileData } from "../signals";
 import { IoDocumentTextSharp, IoFolderOutline } from "solid-icons/io";
 import { FiChevronRight } from "solid-icons/fi";
 import { FiChevronDown } from "solid-icons/fi";
+import { createStore } from "solid-js/store";
 
 
 export function FileBrowser() {
@@ -25,6 +26,7 @@ export function FileBrowser() {
   const [safeMode, setSafeMode] = createSignal(true)
   const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
+  const [sessionFilters, storeSessionFilters] = createStore({})
 
   const {  activeProgram, setActiveProgram, activeFiles } = useParsedFiles();
 
@@ -44,6 +46,8 @@ export function FileBrowser() {
 
   const filteredSessions = createMemo(() => {
     console.log("sessions", sessions())
+    console.log(sessionFilters.date)
+    const { date, time } = sessionFilters;
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
     
@@ -55,8 +59,28 @@ export function FileBrowser() {
         return false;
       }
       return true;
-    });
+    }).sort((a, b) => {
+      return (sortByDate(a, b, date) || sortByTime(a, b, time))
+    })
   })
+  const sortByDate = (a, b, date) => {
+     const aDate = a.files[0].date.split(".").reverse().join("")
+     const bDate = b.files[0].date.split(".").reverse().join("")
+     if (date === "Oldest") {
+      return aDate.localeCompare(bDate)
+     } else {
+      return bDate.localeCompare(aDate)
+     }
+  }
+  const sortByTime = (a, b, time) => {
+     const aTime = a.files[0].time.split(".").reverse().join("")
+     const bTime = b.files[0].time.split(".").reverse().join("")
+     if (time === "Oldest") {
+      return aTime.localeCompare(bTime)
+     } else {
+      return bTime.localeCompare(aTime)
+     }
+  }
 
   const filterAndSortNames = createMemo(() => {
     const allFiles = files();
@@ -218,18 +242,43 @@ export function FileBrowser() {
     </div>
   );
 
+  function TableHeaderCell(props) {
+    return (
+      <select onChange={props.onChange}>
+        <option value="">
+          {props.cellName}
+        </option>
+        <For each={props.values}>
+          {value => (
+            <option value={value}>{value}</option>
+          )}
+        </For>
+      </select>
+    )
+  }
+
   function SessionsAsATable() {
+    const collectedValues = createMemo(()=>{
+      const speedValues = new Set();
+      const programValues = new Set();
+      console.log("files", files())
+      files().forEach(file => {
+        speedValues.add(file.speed);
+        programValues.add(file.program);
+      });
+      return {speed: [...speedValues], program: [...programValues]};
+    })
     return (
       <div class="session-table">
         <div class="session-header">
           <p>Session / File</p>
-          <p>Date</p>
-          <p>Time</p>
+          <TableHeaderCell cellName="Date" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("date", e.target.value)}/>
+          <TableHeaderCell cellName="Time" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("time", e.target.value)}/>
           <p>First</p>
           <p>Last</p>
-          <p>Foot</p>
-          <p>Speed</p>
-          <p>Program</p>
+          <TableHeaderCell cellName="Foot" values={["Left","Right"]} onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
+          <TableHeaderCell cellName="Speed" values={collectedValues().speed} onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
+          <TableHeaderCell cellName="Program" values={collectedValues().program} onChange={(e) => storeSessionFilters("program", e.target.value)}/>
           <p>Files</p>
         </div>
         <div class="session-body">
@@ -239,9 +288,9 @@ export function FileBrowser() {
               const [opened, setOpened] = createSignal(false);
               return (
                 <>
-                  <div class="session-row" classList={{opened: opened()}} onClick={() => setOpened(s => !s)}>
+                  <div class="session-row" classList={{ opened: opened() }} onClick={() => setOpened(s => !s)}>
                     <p class="identifier">
-                      <Show when={opened()} fallback={ <FiChevronRight class="w-4 h-4 text-gray-500" />}>
+                      <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500" />}>
                         <FiChevronDown class="w-4 h-4 text-gray-500" />
                       </Show>
                       <IoFolderOutline class="text-xl text-orange-400" />
@@ -249,8 +298,15 @@ export function FileBrowser() {
                     </p>
                     <p>{ses.files[0]?.date}</p>
                     <p>{ses.files[0]?.time}</p>
-                    <p>{ses.files[0]?.subjectFirstName}</p>
-                    <p>{ses.files[0]?.subjectLastName}</p>
+                    <Show when={!safeMode()} fallback={
+                      <>
+                        <p>{ses.files[0]?.subjectFirstName[0]}...</p>
+                        <p>{ses.files[0]?.subjectLastName[0]}...</p>
+                      </>
+                    }>
+                      <p>{ses.files[0]?.subjectFirstName}</p>
+                      <p>{ses.files[0]?.subjectLastName}</p>
+                    </Show>
                     <p>-</p>
                     <p>-</p>
                     <p>-</p>
@@ -261,15 +317,15 @@ export function FileBrowser() {
                       {(file) => (
                         <div
                           class="file-row"
-                          onClick={() => handleFileSelect(file) }
+                          onClick={() => handleFileSelect(file)}
                         >
                           <p class="identifier">
                             <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
                             {file.name}
                           </p>
                           <p>{file.time}</p>
-                          <p>{file.subjectFirstName}</p>
-                          <p>{file.subjectLastName}</p>
+                          <p>-</p>
+                          <p>-</p>
                           <p>{file.legSide}</p>
                           <p>{file.speed}</p>
                           <p>{file.program}</p>
