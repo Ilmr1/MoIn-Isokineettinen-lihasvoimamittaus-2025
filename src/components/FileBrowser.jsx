@@ -44,23 +44,54 @@ export function FileBrowser() {
     }))
   }
 
+  const toggleSelectedFile = (fileHandler) => {
+    const alreadySelected = selectedFiles().some(file => file === fileHandler);
+    if (alreadySelected) {
+      setSelectedFiles(files => files.filter(file => file !== fileHandler));
+    } else {
+      setSelectedFiles((prev) => [...prev, fileHandler]);
+    }
+  }
+
   const filteredSessions = createMemo(() => {
-    console.log("sessions", sessions())
-    console.log(sessionFilters.date)
-    const { date, time } = sessionFilters;
+    const { date, time, foot, speed, program } = sessionFilters;
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
-    
-    return sessions().filter(session => {
+
+    // TODO: this was quick hack :D
+    return structuredClone(sessions().filter(session => {
       if (firstName && !session.files[0]?.subjectFirstName.toLowerCase().includes(firstName.toLowerCase())) {
         return false;
       }
       if (lastName && !session.files[0]?.subjectLastName.toLowerCase().includes(lastName.toLowerCase())) {
         return false;
       }
+
+      if (speed || program || foot) {
+        session.filteredFiles = session.files.filter(file => {
+          if (speed && file.speed !== speed) {
+            return false
+          }
+          if (program && file.program !== program) {
+            return false
+          }
+          if (foot && file.legSide !== foot) {
+            return false
+          }
+
+          return true;
+        });
+      } else {
+        session.filteredFiles = session.files;
+      }
+
+      if (!session.filteredFiles.length) {
+        return false;
+      }
+
       return true;
-    }).sort((a, b) => {
-      return (sortByDate(a, b, date) || sortByTime(a, b, time))
+    })).sort((a, b) => {
+      return sortByDate(a, b, date) || sortByTime(a, b, time);
     })
   })
   const sortByDate = (a, b, date) => {
@@ -257,17 +288,20 @@ export function FileBrowser() {
     )
   }
 
+
   function SessionsAsATable() {
     const collectedValues = createMemo(()=>{
       const speedValues = new Set();
       const programValues = new Set();
-      console.log("files", files())
+
       files().forEach(file => {
         speedValues.add(file.speed);
         programValues.add(file.program);
       });
+
       return {speed: [...speedValues], program: [...programValues]};
-    })
+    });
+
     return (
       <div class="session-table">
         <div class="session-header">
@@ -276,7 +310,7 @@ export function FileBrowser() {
           <TableHeaderCell cellName="Time" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("time", e.target.value)}/>
           <p>First</p>
           <p>Last</p>
-          <TableHeaderCell cellName="Foot" values={["Left","Right"]} onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
+          <TableHeaderCell cellName="Foot" values={["left","right"]} onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
           <TableHeaderCell cellName="Speed" values={collectedValues().speed} onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
           <TableHeaderCell cellName="Program" values={collectedValues().program} onChange={(e) => storeSessionFilters("program", e.target.value)}/>
           <p>Files</p>
@@ -290,36 +324,37 @@ export function FileBrowser() {
                 <>
                   <div class="session-row" classList={{ opened: opened() }} onClick={() => setOpened(s => !s)}>
                     <p class="identifier">
+                      <input type="checkbox" onClick={(e) => e.stopPropagation()} />
                       <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500" />}>
                         <FiChevronDown class="w-4 h-4 text-gray-500" />
                       </Show>
                       <IoFolderOutline class="text-xl text-orange-400" />
                       {ses.sessionId}
                     </p>
-                    <p>{ses.files[0]?.date}</p>
-                    <p>{ses.files[0]?.time}</p>
+                    <p>{ses.filteredFiles[0]?.date}</p>
+                    <p>{ses.filteredFiles[0]?.time}</p>
                     <Show when={!safeMode()} fallback={
                       <>
-                        <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
-                        <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
+                        <p>{ses.filteredFiles[0]?.subjectFirstName?.[0]}...</p>
+                        <p>{ses.filteredFiles[0]?.subjectLastName?.[0]}...</p>
                       </>
                     }>
-                      <p>{ses.files[0]?.subjectFirstName}</p>
-                      <p>{ses.files[0]?.subjectLastName}</p>
+                      <p>{ses.filteredFiles[0]?.subjectFirstName}</p>
+                      <p>{ses.filteredFiles[0]?.subjectLastName}</p>
                     </Show>
                     <p>-</p>
                     <p>-</p>
                     <p>-</p>
-                    <p>{ses.files.length}</p>
+                    <p>{ses.filteredFiles.length}</p>
                   </div>
                   <Show when={opened()}>
-                    <For each={ses.files}>
+                    <For each={ses.filteredFiles}>
                       {(file) => (
-                        <div
+                        <label
                           class="file-row"
-                          onClick={() => handleFileSelect(file)}
                         >
                           <p class="identifier">
+                            <input type="checkbox" onChange={() => toggleSelectedFile(file.fileHandler)}/>
                             <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
                             {file.name}
                           </p>
@@ -330,7 +365,7 @@ export function FileBrowser() {
                           <p>{file.speed}</p>
                           <p>{file.program}</p>
                           <p>-</p>
-                        </div>
+                        </label>
                       )}
                     </For>
                   </Show>
