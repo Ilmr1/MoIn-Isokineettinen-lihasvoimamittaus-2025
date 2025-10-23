@@ -300,8 +300,8 @@ export function FileBrowser() {
                     <p>{ses.files[0]?.time}</p>
                     <Show when={!safeMode()} fallback={
                       <>
-                        <p>{ses.files[0]?.subjectFirstName[0]}...</p>
-                        <p>{ses.files[0]?.subjectLastName[0]}...</p>
+                        <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
+                        <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
                       </>
                     }>
                       <p>{ses.files[0]?.subjectFirstName}</p>

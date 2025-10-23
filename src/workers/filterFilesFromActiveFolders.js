@@ -94,7 +94,7 @@ function parseCTMForFiltering(text, fileHandler) {
     name: fileHandler.name.replace(/\.CTM$/i, ""),
     measurementType: measurement.name,
     date,
-    time: measurement["time (hh/mm/ss)"].split(".", 2).join(":"),
+    time: measurement["time (hh/mm/ss)"].split(/\.|:/g, 2).join(":"),
     subjectFirstName,
     subjectLastName,
     sessionId,
