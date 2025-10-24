@@ -8,7 +8,7 @@ import { parsedFileData, setParsedFileData } from "../signals";
 import { IoDocumentTextSharp, IoFolderOutline } from "solid-icons/io";
 import { FiChevronRight } from "solid-icons/fi";
 import { FiChevronDown } from "solid-icons/fi";
-import { createStore } from "solid-js/store";
+import { createStore, produce, reconcile, unwrap } from "solid-js/store";
 
 
 export function FileBrowser() {
@@ -18,6 +18,7 @@ export function FileBrowser() {
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
+  const [$selectedSessionsCounts, storeSelectedSessionsCounts] = createStore({});
   const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
   const [filterByLastName, setFilterByLastName] = createSignal("");
   const [filterByFirstName, setFilterByFirstName] = createSignal("");
@@ -40,17 +41,26 @@ export function FileBrowser() {
     }
     return Object.entries(sessionMap).map(([sessionId, sessionFiles]) => ({
       sessionId,
-      files: sessionFiles
+      files: sessionFiles,
     }))
   }
 
-  const toggleSelectedFile = (fileHandler) => {
+  const toggleSelectedFile = (sessionId, fileHandler) => {
     const alreadySelected = selectedFiles().some(file => file === fileHandler);
-    if (alreadySelected) {
-      setSelectedFiles(files => files.filter(file => file !== fileHandler));
-    } else {
-      setSelectedFiles((prev) => [...prev, fileHandler]);
-    }
+    batch(() => {
+      if (alreadySelected) {
+        setSelectedFiles(files => files.filter(file => file !== fileHandler));
+        storeSelectedSessionsCounts(produce(store => {
+          store[sessionId] = store[sessionId].filter(file => file !== fileHandler);
+        }));
+      } else {
+        setSelectedFiles((prev) => [...prev, fileHandler]);
+        storeSelectedSessionsCounts(produce(store => {
+          store[sessionId] ??= [];
+          store[sessionId].push(fileHandler);
+        }));
+      }
+    })
   }
 
   const filteredSessions = createMemo(() => {
@@ -244,13 +254,13 @@ export function FileBrowser() {
 
 
 
-  const handleFileSelect = (file) => {
-    const alreadySelected = selectedFiles().some(
-      (f) => f.name === file.fileHandler.name
-    );
-    if (alreadySelected) return;
-    setSelectedFiles((prev) => [...prev, file.fileHandler]);
-  }
+  // const handleFileSelect = (file) => {
+  //   const alreadySelected = selectedFiles().some(
+  //     (f) => f.name === file.fileHandler.name
+  //   );
+  //   if (alreadySelected) return;
+  //   setSelectedFiles((prev) => [...prev, file.fileHandler]);
+  // }
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -297,6 +307,21 @@ export function FileBrowser() {
     )
   }
 
+  function testasdadasd(sessionId, files) {
+    const count = $selectedSessionsCounts[sessionId]?.length;
+    let sum = 0;
+    if (count > 0) {
+      $selectedSessionsCounts[sessionId].forEach(file => {
+        for (const f of files) {
+          if (f.fileHandler === file) {
+            sum++;
+            break;
+          }
+        }
+      });
+    }
+    return sum;
+  }
 
   function SessionsAsATable() {
     const collectedValues = createMemo(()=>{
@@ -333,7 +358,27 @@ export function FileBrowser() {
                 <>
                   <div class="session-row" classList={{ opened: opened() }} onClick={() => setOpened(s => !s)}>
                     <p class="identifier">
-                      <input type="checkbox" onClick={(e) => e.stopPropagation()} />
+                      <input
+                        type="checkbox"
+                        checked={testasdadasd(ses.sessionId, ses.files) > 0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const count = testasdadasd(ses.sessionId, ses.files);
+                          if (count > 0) {
+                            const files = unwrap($selectedSessionsCounts[ses.sessionId]);
+                            ses.files.forEach(file => {
+                              if (files.includes(file.fileHandler)) {
+                                toggleSelectedFile(ses.sessionId, file.fileHandler);
+                              }
+                            });
+                          } else {
+                            ses.files.forEach(file => {
+                              toggleSelectedFile(ses.sessionId, file.fileHandler);
+                            });
+                          }
+                        }}
+                        indeterminate={testasdadasd(ses.sessionId, ses.files) > 0 && testasdadasd(ses.sessionId, ses.files) < ses.files.length}
+                      />
                       <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500" />}>
                         <FiChevronDown class="w-4 h-4 text-gray-500" />
                       </Show>
@@ -359,11 +404,13 @@ export function FileBrowser() {
                   <Show when={opened()}>
                     <For each={ses.files}>
                       {(file) => (
-                        <label
-                          class="file-row"
-                        >
+                        <label class="file-row">
                           <p class="identifier">
-                            <input type="checkbox" onChange={() => toggleSelectedFile(file.fileHandler)}/>
+                            <input
+                              type="checkbox"
+                              checked={selectedFiles().includes(file.fileHandler)}
+                              onChange={() => toggleSelectedFile(ses.sessionId, file.fileHandler)}
+                            />
                             <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
                             {file.name}
                           </p>
@@ -483,7 +530,7 @@ export function FileBrowser() {
           <For each={filterAndSortNames()}>{(file) => (
             <li
               class="p-2 cursor-pointer hover:bg-gray-50"
-              onClick={() => handleFileSelect(file)}
+              // onClick={() => handleFileSelect(file)}
             >
               <p class="text-sm text-gray-700">
                 {file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}
@@ -506,10 +553,18 @@ export function FileBrowser() {
 
   function ListOfSelectedFiles() {
     const toggleDataFiltering = () => setDataFiltering((s) => !s);
-    const clearSelectedFiles = () => setSelectedFiles([]);
-    const removeFileSelection = (i) => setSelectedFiles(files => {
-      files.splice(i, 1);
-      return [...files];
+    const clearSelectedFiles = () => {
+      batch(() => {
+        setSelectedFiles([]);
+        storeSelectedSessionsCounts(reconcile({}));
+      });
+    }
+    const removeFileSelection = (i) => batch(() => {
+      // TODO: fix this
+      setSelectedFiles(files => {
+        files.splice(i, 1);
+        return [...files];
+      })
     });
 
     const toggleRepetitionDisable = (index, repetition) => {
