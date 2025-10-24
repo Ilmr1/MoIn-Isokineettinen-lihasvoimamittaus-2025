@@ -45,7 +45,7 @@ html {
 
 .session-table {
   display: grid;
-  grid-template-columns: 1fr repeat(8, 1fr);
+  grid-template-columns: 2fr repeat(7, 1fr) auto;
   gap: 8px;
 
   .session-header, .session-body, .session-row, .file-row {

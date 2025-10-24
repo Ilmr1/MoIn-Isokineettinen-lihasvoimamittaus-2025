@@ -265,7 +265,7 @@ export function FileBrowser() {
     )
   }
 
-  function testasdadasd(sessionId, files) {
+  function activeFilesCountInsideSession(sessionId, files) {
     const count = $selectedSessionsCounts[sessionId]?.length;
     let sum = 0;
     if (count > 0) {
@@ -318,11 +318,11 @@ export function FileBrowser() {
                     <p class="identifier">
                       <input
                         type="checkbox"
-                        checked={testasdadasd(ses.sessionId, ses.files) > 0}
+                        checked={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0}
                         onClick={(e) => {
                           e.stopPropagation();
                           batch(() => {
-                            const count = testasdadasd(ses.sessionId, ses.files);
+                            const count = activeFilesCountInsideSession(ses.sessionId, ses.files);
                             if (count > 0) {
                               const files = unwrap($selectedSessionsCounts[ses.sessionId]);
                               ses.files.forEach(file => {
@@ -337,7 +337,7 @@ export function FileBrowser() {
                             }
                           })
                         }}
-                        indeterminate={testasdadasd(ses.sessionId, ses.files) > 0 && testasdadasd(ses.sessionId, ses.files) < ses.files.length}
+                        indeterminate={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0 && activeFilesCountInsideSession(ses.sessionId, ses.files) < ses.files.length}
                       />
                       <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500" />}>
                         <FiChevronDown class="w-4 h-4 text-gray-500" />
