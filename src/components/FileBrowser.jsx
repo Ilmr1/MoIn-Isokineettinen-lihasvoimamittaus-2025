@@ -58,42 +58,50 @@ export function FileBrowser() {
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
 
-    // TODO: this was quick hack :D
-    return structuredClone(sessions().filter(session => {
+    const returnArray = [];
+    sessions().forEach(session => {
       if (firstName && !session.files[0]?.subjectFirstName.toLowerCase().includes(firstName.toLowerCase())) {
-        return false;
+        return;
       }
       if (lastName && !session.files[0]?.subjectLastName.toLowerCase().includes(lastName.toLowerCase())) {
-        return false;
+        return;
       }
 
       if (speed || program || foot) {
-        session.filteredFiles = session.files.filter(file => {
-          if (speed && file.speed !== speed) {
-            return false
-          }
-          if (program && file.program !== program) {
-            return false
-          }
-          if (foot && file.legSide !== foot) {
-            return false
-          }
+        var ses = {
+          ...session,
+          files: session.files.filter(file => {
+            if (speed && file.speed !== speed) {
+              return false
+            }
+            if (program && file.program !== program) {
+              return false
+            }
+            if (foot && file.legSide !== foot) {
+              return false
+            }
 
-          return true;
-        });
+            return true;
+          })
+        }
       } else {
-        session.filteredFiles = session.files;
+        var ses = session;
       }
 
-      if (!session.filteredFiles.length) {
-        return false;
+      if (!ses.files.length) {
+        return;
       }
 
-      return true;
-    })).sort((a, b) => {
+      returnArray.push(ses);
+    });
+
+    returnArray.sort((a, b) => {
       return sortByDate(a, b, date) || sortByTime(a, b, time);
-    })
-  })
+    });
+
+    return returnArray;
+  });
+
   const sortByDate = (a, b, date) => {
      const aDate = a.files[0].date.split(".").reverse().join("")
      const bDate = b.files[0].date.split(".").reverse().join("")
@@ -188,6 +196,7 @@ export function FileBrowser() {
       worker.onmessage = async message => {
         if(message.data === "success") {
           const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
+          console.log("files", files);
           const sessions = groupFilesBySession(files);
           setFiles(files);
           setSessions(sessions);
@@ -331,24 +340,24 @@ export function FileBrowser() {
                       <IoFolderOutline class="text-xl text-orange-400" />
                       {ses.sessionId}
                     </p>
-                    <p>{ses.filteredFiles[0]?.date}</p>
-                    <p>{ses.filteredFiles[0]?.time}</p>
+                    <p>{ses.files[0]?.date}</p>
+                    <p>{ses.files[0]?.time}</p>
                     <Show when={!safeMode()} fallback={
                       <>
-                        <p>{ses.filteredFiles[0]?.subjectFirstName?.[0]}...</p>
-                        <p>{ses.filteredFiles[0]?.subjectLastName?.[0]}...</p>
+                        <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
+                        <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
                       </>
                     }>
-                      <p>{ses.filteredFiles[0]?.subjectFirstName}</p>
-                      <p>{ses.filteredFiles[0]?.subjectLastName}</p>
+                      <p>{ses.files[0]?.subjectFirstName}</p>
+                      <p>{ses.files[0]?.subjectLastName}</p>
                     </Show>
                     <p>-</p>
                     <p>-</p>
                     <p>-</p>
-                    <p>{ses.filteredFiles.length}</p>
+                    <p>{ses.files.length}</p>
                   </div>
                   <Show when={opened()}>
-                    <For each={ses.filteredFiles}>
+                    <For each={ses.files}>
                       {(file) => (
                         <label
                           class="file-row"
