@@ -22,29 +22,11 @@ onmessage = async (message) => {
   await indexedDBUtils.setValue("file-handlers", "filtered-files", filteredFiles);
 
   postMessage("success");
-  // if (data?.length) {
-  //   const [picker] = data;
-  //   if ((await picker.queryPermission()) === 'granted') {
-  //     // return true;
-  //   } else if ((await picker.requestPermission(opts)) === 'granted') {
-  //     // return true;
-  //   }
-  //
-  //   // const relativePaths = await picker.resolve(handle);
-  //   // console.log(relativePaths);
-  //   for await (const fileHandle of getFilesRecursively(picker)) {
-  //     console.log("From worker", fileHandle);
-  //   }
-  // }
 }
 
 async function* getFilesRecursively(entry) {
   if (entry.kind === "file") {
     yield entry;
-    /* const file = await entry.getFile();
-    if (file !== null) {
-      yield file;
-    } */
   } else if (entry.kind === "directory") {
     for await (const handle of entry.values()) {
       yield* getFilesRecursively(handle);
@@ -94,7 +76,7 @@ function parseCTMForFiltering(text, fileHandler) {
     name: fileHandler.name.replace(/\.CTM$/i, ""),
     measurementType: measurement.name,
     date,
-    time: measurement["time (hh/mm/ss)"],
+    time: measurement["time (hh/mm/ss)"].split(/\.|:/g, 2).join(":"),
     subjectFirstName,
     subjectLastName,
     sessionId,
@@ -112,7 +94,7 @@ const extractDataFromString = (data, key) => {
 
   switch (key) {
     case "side":
-      return parts.at(-1);
+      return parts.at(-1).trim();
     case "speed":
       let values = parts.slice(1).map(v => v.trim());
       return values.join("/");

@@ -4,6 +4,10 @@ input {
   @apply border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
 }
 
+html {
+  overflow-y: scroll;
+}
+
 .tab-trigger {
   @apply min-w-[8rem] px-6 py-2   /* pienennä py-3 → py-2 */
          text-center font-medium text-gray-800 text-lg
@@ -36,5 +40,47 @@ input {
 
   &.active {
     @apply bg-green-700 text-white;
+  }
+}
+
+.session-table {
+  display: grid;
+  grid-template-columns: 1fr repeat(8, 1fr);
+  gap: 8px;
+
+  .session-header, .session-body, .session-row, .file-row {
+    grid-column: 1/-1;
+    display: grid;
+    grid-template-columns: subgrid;
+    justify-items: start;
+
+    .identifier {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    };
+  }
+
+  .session-row, .file-row {
+    cursor: pointer;
+    padding-inline: 8px;
+    &:hover {
+      @apply bg-gray-50;
+    }
+
+    &.opened {
+      @apply bg-gray-100;
+      &:hover {
+        @apply bg-gray-50;
+      }
+    }
+  }
+
+
+  .file-row {
+    .identifier {
+      grid-column: span 2;
+      margin-left: 16px;
+    }
   }
 }

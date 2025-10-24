@@ -1,27 +1,31 @@
-import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show} from "solid-js";
-import {fileUtils, indexedDBUtils} from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
-import {useParsedFiles} from "../providers";
-import {signals} from "../collections/collections";
-import {parsedFileData, setParsedFileData} from "../signals";
 import {Checkbox} from "./ui/Checkbox.jsx";
+import {FiChevronDown} from "solid-icons/fi";
+import {FiChevronRight} from "solid-icons/fi";
+import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
+import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show, untrack} from "solid-js";
+import {createStore, produce, reconcile, unwrap} from "solid-js/store";
+import {fileUtils, indexedDBUtils} from "../utils/utils";
+import {parsedFileData, setParsedFileData} from "../signals";
+import {signals} from "../collections/collections";
+import {useParsedFiles} from "../providers";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
   const [sessions, setSessions] = createSignal([]);
-  const [selectedSession, setSelectedSession] = createSignal("");
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
+  const [$selectedSessionsCounts, storeSelectedSessionsCounts] = createStore({});
   const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
   const [filterByLastName, setFilterByLastName] = createSignal("");
   const [filterByFirstName, setFilterByFirstName] = createSignal("");
   const [firstNameInput, setFirstNameInput] = createSignal("");
   const [lastNameInput, setLastNameInput] = createSignal("");
   const [safeMode, setSafeMode] = createSignal(true)
-  const [sortState, setSortState] = createSignal({field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
+  const [sessionFilters, storeSessionFilters] = createStore({})
 
   const {activeProgram, setActiveProgram, activeFiles} = useParsedFiles();
 
@@ -35,54 +39,101 @@ export function FileBrowser() {
     }
     return Object.entries(sessionMap).map(([sessionId, sessionFiles]) => ({
       sessionId,
-      files: sessionFiles
+      files: sessionFiles,
     }))
-
   }
 
-  const filterAndSortNames = createMemo(() => {
-    const allFiles = files();
-    const {field, asc} = sortState();
-
-    let firstName = safeMode() ? filterByFirstName() : firstNameInput().trim().toLowerCase();
-    let lastName = safeMode() ? filterByLastName() : lastNameInput().trim().toLowerCase();
-
-    let filtered;
-
-    if (safeMode()) {
-      if (!firstName || !lastName) {
-        return [];
+  const toggleSelectedFile = (sessionId, fileHandler) => {
+    const alreadySelected = selectedFiles().some(file => file === fileHandler);
+    batch(() => {
+      if (alreadySelected) {
+        setSelectedFiles(files => files.filter(file => file !== fileHandler));
+        storeSelectedSessionsCounts(produce(store => {
+          const newFiles = store[sessionId].filter(file => file !== fileHandler);
+          if (newFiles.length === 0) {
+            delete store[sessionId];
+          } else {
+            store[sessionId] = newFiles;
+          }
+        }));
+      } else {
+        setSelectedFiles((prev) => [...prev, fileHandler]);
+        storeSelectedSessionsCounts(produce(store => {
+          store[sessionId] ??= [];
+          store[sessionId].push(fileHandler);
+        }));
       }
-      filtered = allFiles.filter((file) => {
-        const fn = file.subjectFirstName?.toLowerCase() ?? "";
-        const ln = file.subjectLastName?.toLowerCase() ?? "";
-        return fn === firstName && ln === lastName;
-      });
-    } else {
-      filtered = allFiles.filter((file) => {
-        const fn = file.subjectFirstName?.toLowerCase() ?? "";
-        const ln = file.subjectLastName?.toLowerCase() ?? "";
-        return (
-          (!firstName || fn.includes(firstName)) &&
-          (!lastName || ln.includes(lastName))
-        );
-      });
-    }
+    })
+  }
 
-    return [...filtered].sort((a, b) => {
-      let valA = a[field] ?? "";
-      let valB = b[field] ?? "";
-      if (valA === valB) return 0;
-      return asc ? (valA < valB ? -1 : 1) : valA > valB ? -1 : 1;
+  const filteredSessions = createMemo(() => {
+    const { date, time, foot, speed, program } = sessionFilters;
+    const firstName = filterByFirstName();
+    const lastName = filterByLastName();
+
+    const returnArray = [];
+    sessions().forEach(session => {
+      if (firstName && !session.files[0]?.subjectFirstName.toLowerCase().includes(firstName.toLowerCase())) {
+        return;
+      }
+      if (lastName && !session.files[0]?.subjectLastName.toLowerCase().includes(lastName.toLowerCase())) {
+        return;
+      }
+
+      if (speed || program || foot) {
+        var ses = {
+          ...session,
+          files: session.files.filter(file => {
+            if (speed && file.speed !== speed) {
+              return false
+            }
+            if (program && file.program !== program) {
+              return false
+            }
+            if (foot && file.legSide !== foot) {
+              return false
+            }
+
+            return true;
+          })
+        }
+      } else {
+        var ses = session;
+      }
+
+      if (!ses.files.length) {
+        return;
+      }
+
+      returnArray.push(ses);
     });
+
+    returnArray.sort((a, b) => {
+      return sortByDate(a, b, date) || sortByTime(a, b, time);
+    });
+
+    return returnArray;
   });
 
-  const toggleSort = (field) => {
-    setSortState((prev) => ({
-      field,
-      asc: prev.field === field ? !prev.asc : true
-    }));
+  const sortByDate = (a, b, date) => {
+     const aDate = a.files[0].date.split(".").reverse().join("")
+     const bDate = b.files[0].date.split(".").reverse().join("")
+     if (date === "Oldest") {
+      return aDate.localeCompare(bDate)
+     } else {
+      return bDate.localeCompare(aDate)
+     }
   }
+  const sortByTime = (a, b, time) => {
+     const aTime = a.files[0].time.split(".").reverse().join("")
+     const bTime = b.files[0].time.split(".").reverse().join("")
+     if (time === "Oldest") {
+      return aTime.localeCompare(bTime)
+     } else {
+      return bTime.localeCompare(aTime)
+     }
+  }
+
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
@@ -115,6 +166,7 @@ export function FileBrowser() {
       worker.onmessage = async message => {
         if (message.data === "success") {
           const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
+          console.log("files", files);
           const sessions = groupFilesBySession(files);
           setFiles(files);
           setSessions(sessions);
@@ -179,7 +231,7 @@ export function FileBrowser() {
 
 
   return (
-    <div class="w-full max-w-2xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-6">
+    <div class="w-full max-w-4xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-6">
       {/* Folder management */}
       <button
         class="bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-lg shadow mb-3"
@@ -192,12 +244,155 @@ export function FileBrowser() {
       <FileSearchForm/>
       <SafeSearchCheckbox/>
       <div class="space-y-4">
-        <ListOfFileSessions/>
-        <ListOfFilesAndSortingControls/>
-        <ListOfSelectedFiles/>
+        <SessionsAsATable />
+        <ListOfSelectedFiles />
       </div>
     </div>
   );
+
+  function TableHeaderCell(props) {
+    return (
+      <select onChange={props.onChange}>
+        <option value="">
+          {props.cellName}
+        </option>
+        <For each={props.values}>
+          {value => (
+            <option value={value}>{value}</option>
+          )}
+        </For>
+      </select>
+    )
+  }
+
+  function testasdadasd(sessionId, files) {
+    const count = $selectedSessionsCounts[sessionId]?.length;
+    let sum = 0;
+    if (count > 0) {
+      $selectedSessionsCounts[sessionId].forEach(file => {
+        for (const f of files) {
+          if (f.fileHandler === file) {
+            sum++;
+            break;
+          }
+        }
+      });
+    }
+    return sum;
+  }
+
+  function SessionsAsATable() {
+    const collectedValues = createMemo(()=>{
+      const speedValues = new Set();
+      const programValues = new Set();
+
+      files().forEach(file => {
+        speedValues.add(file.speed);
+        programValues.add(file.program);
+      });
+
+      return {speed: [...speedValues], program: [...programValues]};
+    });
+
+    return (
+      <div class="session-table">
+        <div class="session-header">
+          <p>Session / File</p>
+          <TableHeaderCell cellName="Date" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("date", e.target.value)}/>
+          <TableHeaderCell cellName="Time" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("time", e.target.value)}/>
+          <p>First</p>
+          <p>Last</p>
+          <TableHeaderCell cellName="Foot" values={["left","right"]} onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
+          <TableHeaderCell cellName="Speed" values={collectedValues().speed} onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
+          <TableHeaderCell cellName="Program" values={collectedValues().program} onChange={(e) => storeSessionFilters("program", e.target.value)}/>
+          <p>Files</p>
+        </div>
+        <div class="session-body">
+
+          <For each={filteredSessions()}>
+            {(ses) => {
+              const [opened, setOpened] = createSignal(false);
+              return (
+                <>
+                  <div class="session-row" classList={{ opened: opened() }} onClick={() => setOpened(s => !s)}>
+                    <p class="identifier">
+                      <input
+                        type="checkbox"
+                        checked={testasdadasd(ses.sessionId, ses.files) > 0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          batch(() => {
+                            const count = testasdadasd(ses.sessionId, ses.files);
+                            if (count > 0) {
+                              const files = unwrap($selectedSessionsCounts[ses.sessionId]);
+                              ses.files.forEach(file => {
+                                if (files.includes(file.fileHandler)) {
+                                  toggleSelectedFile(ses.sessionId, file.fileHandler);
+                                }
+                              });
+                            } else {
+                              ses.files.forEach(file => {
+                                toggleSelectedFile(ses.sessionId, file.fileHandler);
+                              });
+                            }
+                          })
+                        }}
+                        indeterminate={testasdadasd(ses.sessionId, ses.files) > 0 && testasdadasd(ses.sessionId, ses.files) < ses.files.length}
+                      />
+                      <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500" />}>
+                        <FiChevronDown class="w-4 h-4 text-gray-500" />
+                      </Show>
+                      <IoFolderOutline class="text-xl text-orange-400" />
+                      {ses.sessionId}
+                    </p>
+                    <p>{ses.files[0]?.date}</p>
+                    <p>{ses.files[0]?.time}</p>
+                    <Show when={!safeMode()} fallback={
+                      <>
+                        <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
+                        <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
+                      </>
+                    }>
+                      <p>{ses.files[0]?.subjectFirstName}</p>
+                      <p>{ses.files[0]?.subjectLastName}</p>
+                    </Show>
+                    <p>-</p>
+                    <p>-</p>
+                    <p>-</p>
+                    <p>{ses.files.length}</p>
+                  </div>
+                  <Show when={opened()}>
+                    <For each={ses.files}>
+                      {(file) => (
+                        <label class="file-row">
+                          <p class="identifier">
+                            <input
+                              type="checkbox"
+                              checked={selectedFiles().includes(file.fileHandler)}
+                              onChange={() => toggleSelectedFile(ses.sessionId, file.fileHandler)}
+                            />
+                            <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
+                            {file.name}
+                          </p>
+                          <p>{file.time}</p>
+                          <p>-</p>
+                          <p>-</p>
+                          <p>{file.legSide}</p>
+                          <p>{file.speed}</p>
+                          <p>{file.program}</p>
+                          <p>-</p>
+                        </label>
+                      )}
+                    </For>
+                  </Show>
+                </>
+              )
+            }}
+          </For>
+        </div>
+      </div>
+    )
+  }
 
   function ListOfRecentFolders() {
     return (
@@ -285,66 +480,37 @@ export function FileBrowser() {
     );
   }
 
-  function ListOfFileSessions() {
-    return (
-      <div>
-        <For each={sessions()}>
-          {(session) => (
-            <div>
-              <p onClick={() => setSelectedSession(session)}>{session.sessionId} {session.files[0]?.date}</p>
-              <Show when={selectedSession().sessionId === session.sessionId}>
-                <For each={selectedSession().files}>
-                  {(file) => (
-                    <li
-                      class="p-2 cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleFileSelect(file)}
-                    >
-                      <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
-                    </li>
-                  )}
-                </For>
-              </Show>
-            </div>
-          )}
-        </For>
-      </div>
-    )
-  }
-
-  function ListOfFilesAndSortingControls() {
-    return (
-      <Show when={filterAndSortNames().length}>
-        <ul class="divide-y divide-gray-200 rounded-lg border">
-          <For each={filterAndSortNames()}>{(file) => (
-            <li
-              class="p-2 cursor-pointer hover:bg-gray-50"
-              onClick={() => handleFileSelect(file)}
-            >
-              <p class="text-sm text-gray-700">
-                {file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}
-              </p>
-            </li>
-          )}</For>
-        </ul>
-
-        <div class="flex justify-center space-x-3 mt-2">
-          <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("time")}>
-            Time {sortState().field === "time" ? (sortState().asc ? "↓" : "↑") : ""}
-          </button>
-          <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("date")}>
-            Date {sortState().field === "date" ? (sortState().asc ? "↓" : "↑") : ""}
-          </button>
-        </div>
-      </Show>
-    )
-  }
-
   function ListOfSelectedFiles() {
     const toggleDataFiltering = () => setDataFiltering((s) => !s);
-    const clearSelectedFiles = () => setSelectedFiles([]);
-    const removeFileSelection = (i) => setSelectedFiles(files => {
-      files.splice(i, 1);
-      return [...files];
+    const clearSelectedFiles = () => {
+      batch(() => {
+        setSelectedFiles([]);
+        storeSelectedSessionsCounts(reconcile({}));
+      });
+    }
+
+    const removeFileSelection = (i) => batch(() => {
+      const file = untrack(selectedFiles)[i];
+      batch(() => {
+        setSelectedFiles(files => {
+          files.splice(i, 1);
+          return [...files];
+        });
+        for (const key in $selectedSessionsCounts) {
+          if ($selectedSessionsCounts[key].includes(file)) {
+            storeSelectedSessionsCounts(produce(store => {
+              const newFiles = store[key].filter(f => f !== file)
+              if (newFiles.length) {
+                store[key] = newFiles;
+              } else {
+                delete store[key];
+              }
+            }));
+
+            break;
+          }
+        }
+      })
     });
 
     const toggleRepetitionDisable = (index, repetition) => {
