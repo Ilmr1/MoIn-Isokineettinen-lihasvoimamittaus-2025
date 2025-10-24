@@ -1,4 +1,4 @@
-import { batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
+import { batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show, untrack } from "solid-js";
 import { fileUtils, indexedDBUtils } from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
@@ -14,7 +14,6 @@ import { createStore, produce, reconcile, unwrap } from "solid-js/store";
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
   const [sessions, setSessions] = createSignal([]);
-  const [selectedSession, setSelectedSession] = createSignal("");
   const [recentFolders, setRecentFolders] = createSignal([]);
   const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
   const [selectedFiles, setSelectedFiles] = createSignal([]);
@@ -51,7 +50,12 @@ export function FileBrowser() {
       if (alreadySelected) {
         setSelectedFiles(files => files.filter(file => file !== fileHandler));
         storeSelectedSessionsCounts(produce(store => {
-          store[sessionId] = store[sessionId].filter(file => file !== fileHandler);
+          const newFiles = store[sessionId].filter(file => file !== fileHandler);
+          if (newFiles.length === 0) {
+            delete store[sessionId];
+          } else {
+            store[sessionId] = newFiles;
+          }
         }));
       } else {
         setSelectedFiles((prev) => [...prev, fileHandler]);
@@ -131,49 +135,6 @@ export function FileBrowser() {
      }
   }
 
-  const filterAndSortNames = createMemo(() => {
-    const allFiles = files();
-    const { field, asc } = sortState();
-
-    let firstName = safeMode() ? filterByFirstName() : firstNameInput().trim().toLowerCase();
-    let lastName = safeMode() ? filterByLastName() : lastNameInput().trim().toLowerCase();
-
-    let filtered;
-
-    if (safeMode()) {
-      if (!firstName || !lastName) {
-        return [];
-      }
-      filtered = allFiles.filter((file) => {
-        const fn = file.subjectFirstName?.toLowerCase() ?? "";
-        const ln = file.subjectLastName?.toLowerCase() ?? "";
-        return fn === firstName && ln === lastName;
-      });
-    } else {
-      filtered = allFiles.filter((file) => {
-        const fn = file.subjectFirstName?.toLowerCase() ?? "";
-        const ln = file.subjectLastName?.toLowerCase() ?? "";
-        return (
-          (!firstName || fn.includes(firstName)) &&
-          (!lastName || ln.includes(lastName))
-        );
-      });
-    }
-
-    return [...filtered].sort((a, b) => {
-      let valA = a[field] ?? "";
-      let valB = b[field] ?? "";
-      if (valA === valB) return 0;
-      return asc ? (valA < valB ? -1 : 1) : valA > valB ? -1 : 1;
-    });
-  });
-
-  const toggleSort = (field) => {
-    setSortState((prev) => ({
-      field,
-      asc: prev.field === field ? !prev.asc : true
-    }));
-  }
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
@@ -253,15 +214,6 @@ export function FileBrowser() {
   }
 
 
-
-  // const handleFileSelect = (file) => {
-  //   const alreadySelected = selectedFiles().some(
-  //     (f) => f.name === file.fileHandler.name
-  //   );
-  //   if (alreadySelected) return;
-  //   setSelectedFiles((prev) => [...prev, file.fileHandler]);
-  // }
-
   const handleSubmit = (e) => {
     e.preventDefault();
     batch(() => {
@@ -286,7 +238,6 @@ export function FileBrowser() {
       <SafeSearchCheckbox />
       <div class="space-y-4">
         <SessionsAsATable />
-        <ListOfFilesAndSortingControls />
         <ListOfSelectedFiles />
       </div>
     </div>
@@ -363,19 +314,21 @@ export function FileBrowser() {
                         checked={testasdadasd(ses.sessionId, ses.files) > 0}
                         onClick={(e) => {
                           e.stopPropagation();
-                          const count = testasdadasd(ses.sessionId, ses.files);
-                          if (count > 0) {
-                            const files = unwrap($selectedSessionsCounts[ses.sessionId]);
-                            ses.files.forEach(file => {
-                              if (files.includes(file.fileHandler)) {
+                          batch(() => {
+                            const count = testasdadasd(ses.sessionId, ses.files);
+                            if (count > 0) {
+                              const files = unwrap($selectedSessionsCounts[ses.sessionId]);
+                              ses.files.forEach(file => {
+                                if (files.includes(file.fileHandler)) {
+                                  toggleSelectedFile(ses.sessionId, file.fileHandler);
+                                }
+                              });
+                            } else {
+                              ses.files.forEach(file => {
                                 toggleSelectedFile(ses.sessionId, file.fileHandler);
-                              }
-                            });
-                          } else {
-                            ses.files.forEach(file => {
-                              toggleSelectedFile(ses.sessionId, file.fileHandler);
-                            });
-                          }
+                              });
+                            }
+                          })
                         }}
                         indeterminate={testasdadasd(ses.sessionId, ses.files) > 0 && testasdadasd(ses.sessionId, ses.files) < ses.files.length}
                       />
@@ -523,34 +476,6 @@ export function FileBrowser() {
     )
   }
 
-  function ListOfFilesAndSortingControls() {
-    return (
-      <Show when={filterAndSortNames().length}>
-        <ul class="divide-y divide-gray-200 rounded-lg border">
-          <For each={filterAndSortNames()}>{(file) => (
-            <li
-              class="p-2 cursor-pointer hover:bg-gray-50"
-              // onClick={() => handleFileSelect(file)}
-            >
-              <p class="text-sm text-gray-700">
-                {file.name} {file.date} {file.time} {file.subjectLastName} {file.subjectFirstName}
-              </p>
-            </li>
-          )}</For>
-        </ul>
-
-        <div class="flex justify-center space-x-3 mt-2">
-          <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("time")}>
-            Time {sortState().field === "time" ? (sortState().asc ? "↓" : "↑") : ""}
-          </button>
-          <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={() => toggleSort("date")}>
-            Date {sortState().field === "date" ? (sortState().asc ? "↓" : "↑") : ""}
-          </button>
-        </div>
-      </Show>
-    )
-  }
-
   function ListOfSelectedFiles() {
     const toggleDataFiltering = () => setDataFiltering((s) => !s);
     const clearSelectedFiles = () => {
@@ -559,11 +484,28 @@ export function FileBrowser() {
         storeSelectedSessionsCounts(reconcile({}));
       });
     }
+
     const removeFileSelection = (i) => batch(() => {
-      // TODO: fix this
-      setSelectedFiles(files => {
-        files.splice(i, 1);
-        return [...files];
+      const file = untrack(selectedFiles)[i];
+      batch(() => {
+        setSelectedFiles(files => {
+          files.splice(i, 1);
+          return [...files];
+        });
+        for (const key in $selectedSessionsCounts) {
+          if ($selectedSessionsCounts[key].includes(file)) {
+            storeSelectedSessionsCounts(produce(store => {
+              const newFiles = store[key].filter(f => f !== file)
+              if (newFiles.length) {
+                store[key] = newFiles;
+              } else {
+                delete store[key];
+              }
+            }));
+
+            break;
+          }
+        }
       })
     });
 
