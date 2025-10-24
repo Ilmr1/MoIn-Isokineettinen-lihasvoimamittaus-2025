@@ -24,7 +24,6 @@ export function FileBrowser() {
   const [firstNameInput, setFirstNameInput] = createSignal("");
   const [lastNameInput, setLastNameInput] = createSignal("");
   const [safeMode, setSafeMode] = createSignal(true)
-  const [sortState, setSortState] = createSignal({ field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
   const [sessionFilters, storeSessionFilters] = createStore({})
 
@@ -224,7 +223,7 @@ export function FileBrowser() {
 
 
   return (
-    <div class="w-full max-w-2xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-6">
+    <div class="w-full max-w-4xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-6">
       {/* Folder management */}
       <button
         class="bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-lg shadow mb-3"

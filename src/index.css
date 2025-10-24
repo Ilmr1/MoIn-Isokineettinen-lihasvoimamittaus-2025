@@ -63,6 +63,7 @@ html {
 
   .session-row, .file-row {
     cursor: pointer;
+    padding-inline: 8px;
     &:hover {
       @apply bg-gray-50;
     }
@@ -75,17 +76,11 @@ html {
     }
   }
 
-  .session-body {
-
-  }
-
-  .session-row {
-
-  }
 
   .file-row {
     .identifier {
       grid-column: span 2;
+      margin-left: 16px;
     }
   }
 }
