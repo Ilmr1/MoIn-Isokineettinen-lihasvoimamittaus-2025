@@ -1,11 +1,11 @@
-import { batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
-import { fileUtils, indexedDBUtils } from "../utils/utils";
+import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show} from "solid-js";
+import {fileUtils, indexedDBUtils} from "../utils/utils";
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
-import { useParsedFiles } from "../providers";
-import { signals } from "../collections/collections";
-import { parsedFileData, setParsedFileData } from "../signals";
-
+import {useParsedFiles} from "../providers";
+import {signals} from "../collections/collections";
+import {parsedFileData, setParsedFileData} from "../signals";
+import {Checkbox} from "./ui/Checkbox.jsx";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -20,10 +20,10 @@ export function FileBrowser() {
   const [firstNameInput, setFirstNameInput] = createSignal("");
   const [lastNameInput, setLastNameInput] = createSignal("");
   const [safeMode, setSafeMode] = createSignal(true)
-  const [sortState, setSortState] = createSignal({ field: "date", asc: true})
+  const [sortState, setSortState] = createSignal({field: "date", asc: true})
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
 
-  const {  activeProgram, setActiveProgram, activeFiles } = useParsedFiles();
+  const {activeProgram, setActiveProgram, activeFiles} = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -37,12 +37,12 @@ export function FileBrowser() {
       sessionId,
       files: sessionFiles
     }))
-    
+
   }
 
   const filterAndSortNames = createMemo(() => {
     const allFiles = files();
-    const { field, asc } = sortState();
+    const {field, asc} = sortState();
 
     let firstName = safeMode() ? filterByFirstName() : firstNameInput().trim().toLowerCase();
     let lastName = safeMode() ? filterByLastName() : lastNameInput().trim().toLowerCase();
@@ -95,7 +95,7 @@ export function FileBrowser() {
     }
 
     setFoldersThatHaveAccess(newFoldersThatHaveAccess);
-  }, { defer: true }));
+  }, {defer: true}));
 
   createRenderEffect(async () => {
     const files = await indexedDBUtils.getValue("file-handlers", "recent-files");
@@ -113,7 +113,7 @@ export function FileBrowser() {
       });
 
       worker.onmessage = async message => {
-        if(message.data === "success") {
+        if (message.data === "success") {
           const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
           const sessions = groupFilesBySession(files);
           setFiles(files);
@@ -141,11 +141,11 @@ export function FileBrowser() {
     }
   });
 
-  createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
+  createRenderEffect(on(foldersThatHaveAccess, sendToWorker, {defer: true}));
 
 
   const handleOpenDirectory = async () => {
-    const directoryHandler = await window.showDirectoryPicker({ id: "innovation-project", mode: "readwrite" });
+    const directoryHandler = await window.showDirectoryPicker({id: "innovation-project", mode: "readwrite"});
     const folders = await indexedDBUtils.getValue("file-handlers", "recent-files") || [];
 
     for (const folder of folders) {
@@ -159,7 +159,6 @@ export function FileBrowser() {
 
     setRecentFolders(folders);
   }
-
 
 
   const handleFileSelect = (file) => {
@@ -189,13 +188,13 @@ export function FileBrowser() {
         Open Folder
       </button>
 
-      <ListOfRecentFolders />
-      <FileSearchForm />
-      <SafeSearchCheckbox />
+      <ListOfRecentFolders/>
+      <FileSearchForm/>
+      <SafeSearchCheckbox/>
       <div class="space-y-4">
-        <ListOfFileSessions />
-        <ListOfFilesAndSortingControls />
-        <ListOfSelectedFiles />
+        <ListOfFileSessions/>
+        <ListOfFilesAndSortingControls/>
+        <ListOfSelectedFiles/>
       </div>
     </div>
   );
@@ -204,7 +203,7 @@ export function FileBrowser() {
     return (
       <ul class="space-y-2">
         <For each={recentFolders()}>{(directoryHandler, i) => (
-          <RecentFolderItem directoryHandler={directoryHandler} i={i} />
+          <RecentFolderItem directoryHandler={directoryHandler} i={i}/>
         )}</For>
       </ul>
     )
@@ -256,13 +255,13 @@ export function FileBrowser() {
           placeholder="First name"
           value={firstNameInput()}
           onInput={(e) => setFirstNameInput(e.currentTarget.value)}
-          class="p-2 border rounded-lg" />
+          class="p-2 border rounded-lg"/>
         <input
           type="text"
           placeholder="Last name"
           value={lastNameInput()}
           onInput={(e) => setLastNameInput(e.currentTarget.value)}
-          class="p-2 border rounded-lg" />
+          class="p-2 border rounded-lg"/>
         <button
           type="submit"
           class="bg-sky-500 hover:bg-sky-400 text-white px-4 py-2 rounded-lg shadow"
@@ -276,17 +275,14 @@ export function FileBrowser() {
   function SafeSearchCheckbox() {
     return (
       <div class="flex items-center space-x-2 mt-2">
-        <input
+        <Checkbox
           id="safe-mode"
-          type="checkbox"
+          label="Safe Search?"
           checked={safeMode()}
-          onClick={() => setSafeMode((m) => !m)}
-          class="w-4 h-4" />
-        <label for="safe-mode" class="text-sm text-gray-700">
-          Safe Search?
-        </label>
+          onChange={() => setSafeMode((m) => !m)}
+        />
       </div>
-    )
+    );
   }
 
   function ListOfFileSessions() {
@@ -301,7 +297,7 @@ export function FileBrowser() {
                   {(file) => (
                     <li
                       class="p-2 cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleFileSelect(file) }
+                      onClick={() => handleFileSelect(file)}
                     >
                       <p>{file.legSide} {file.time} {file.program} {file.speed}</p>
                     </li>
@@ -364,7 +360,8 @@ export function FileBrowser() {
       <Show when={activeFiles().length}>
         <div class="bg-gray-50 p-3 rounded-lg space-y-2">
           <div class="flex justify-center gap-2">
-            <For each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))].sort()}>{programType => (
+            <For
+              each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))].sort()}>{programType => (
               <button
                 class="btn-secondary"
                 classList={{active: activeProgram() === programType}}
@@ -379,21 +376,23 @@ export function FileBrowser() {
           <ul class="space-y-1">
             <For each={activeFiles()}>{(fileHandler) => (
               <li class="text-sm space-x-1">
-                <button 
+                <button
                   class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
                   onClick={() => removeFileSelection(fileHandler.index)}
                 >
                   remove
                 </button>
                 <span class="font-medium">{fileHandler.name}</span>
-                <ol>
+                <ol class="flex flex-col items-center">
                   <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
                     <Show when={j() % 2 === 0}>
                       <li>
-                        <label>
-                          <input type="checkbox" name="disableRepetition" checked={!data.disabled} onChange={() => toggleRepetitionDisable(fileHandler.index, j())} />{" "}
-                          Repetition {j() / 2 + 1}
-                        </label>
+                        <Checkbox
+                          id={`disableRepetition-${fileHandler.index}-${j()}`}
+                          label={`Repetition ${j() / 2 + 1}`}
+                          checked={!data.disabled}
+                          onChange={() => toggleRepetitionDisable(fileHandler.index, j())}
+                        />
                       </li>
                     </Show>
                   )}</For>
@@ -406,14 +405,12 @@ export function FileBrowser() {
               Clear all
             </button>
             <div class="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="dataFiltering"
+                label="Filter data"
                 checked={dataFiltering()}
-                onChange={toggleDataFiltering} />
-              <label for="dataFiltering" class="text-sm">
-                Filter data
-              </label>
+                onChange={toggleDataFiltering}
+              />
             </div>
           </div>
         </div>
