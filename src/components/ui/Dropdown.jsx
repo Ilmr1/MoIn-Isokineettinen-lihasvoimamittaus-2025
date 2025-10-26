@@ -27,17 +27,22 @@ export function Dropdown(props) {
       <button
         type="button"
         onClick={() => setOpen(!open())}
-        class="px-4 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-100 hover:border-gray-400"
+        className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
       >
         {selected() ?? props.label ?? "Select"}
+        <span className="ml-2 inline-block transform transition-transform duration-200"
+              classList={{"rotate-180": open()}}>
+          ▼
+        </span>
       </button>
 
       <Show when={open()}>
-        <ul class="absolute left-0 top-full mt-1 w-40 bg-white border border-gray-300 rounded z-10">
+        <ul
+          class="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-auto py-1 transition ease-out duration-200">
           <For each={props.options}>
             {(opt) => (
               <li
-                class="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 hover:border-gray-400 border-b last:border-b-0"
+                class="px-4 py-2 text-sm cursor-pointer hover:bg-indigo-100 hover:text-indigo-700 transition"
                 onClick={() => handleSelect(opt)}
               >
                 {opt}

@@ -10,6 +10,7 @@ import {fileUtils, indexedDBUtils} from "../utils/utils";
 import {parsedFileData, setParsedFileData} from "../signals";
 import {signals} from "../collections/collections";
 import {useParsedFiles} from "../providers";
+import {Button} from "./ui/Button.jsx";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -67,7 +68,7 @@ export function FileBrowser() {
   }
 
   const filteredSessions = createMemo(() => {
-    const { date, time, foot, speed, program } = sessionFilters;
+    const {date, time, foot, speed, program} = sessionFilters;
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
 
@@ -116,22 +117,22 @@ export function FileBrowser() {
   });
 
   const sortByDate = (a, b, date) => {
-     const aDate = a.files[0].date.split(".").reverse().join("")
-     const bDate = b.files[0].date.split(".").reverse().join("")
-     if (date === "Oldest") {
+    const aDate = a.files[0].date.split(".").reverse().join("")
+    const bDate = b.files[0].date.split(".").reverse().join("")
+    if (date === "Oldest") {
       return aDate.localeCompare(bDate)
-     } else {
+    } else {
       return bDate.localeCompare(aDate)
-     }
+    }
   }
   const sortByTime = (a, b, time) => {
-     const aTime = a.files[0].time.split(".").reverse().join("")
-     const bTime = b.files[0].time.split(".").reverse().join("")
-     if (time === "Oldest") {
+    const aTime = a.files[0].time.split(".").reverse().join("")
+    const bTime = b.files[0].time.split(".").reverse().join("")
+    if (time === "Oldest") {
       return aTime.localeCompare(bTime)
-     } else {
+    } else {
       return bTime.localeCompare(aTime)
-     }
+    }
   }
 
 
@@ -233,19 +234,20 @@ export function FileBrowser() {
   return (
     <div class="w-full max-w-4xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-6">
       {/* Folder management */}
-      <button
-        class="bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-lg shadow mb-3"
+      <Button
+        variant="primary"
+        size="lg"
         onClick={handleOpenDirectory}
       >
         Open Folder
-      </button>
+      </Button>
 
       <ListOfRecentFolders/>
       <FileSearchForm/>
       <SafeSearchCheckbox/>
       <div class="space-y-4">
-        <SessionsAsATable />
-        <ListOfSelectedFiles />
+        <SessionsAsATable/>
+        <ListOfSelectedFiles/>
       </div>
     </div>
   );
@@ -282,7 +284,7 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
-    const collectedValues = createMemo(()=>{
+    const collectedValues = createMemo(() => {
       const speedValues = new Set();
       const programValues = new Set();
 
@@ -298,13 +300,18 @@ export function FileBrowser() {
       <div class="session-table">
         <div class="session-header">
           <p>Session / File</p>
-          <TableHeaderCell cellName="Date" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("date", e.target.value)}/>
-          <TableHeaderCell cellName="Time" values={["Newest","Oldest"]} onChange={(e) => storeSessionFilters("time", e.target.value)}/>
+          <TableHeaderCell cellName="Date" values={["Newest", "Oldest"]}
+                           onChange={(e) => storeSessionFilters("date", e.target.value)}/>
+          <TableHeaderCell cellName="Time" values={["Newest", "Oldest"]}
+                           onChange={(e) => storeSessionFilters("time", e.target.value)}/>
           <p>First</p>
           <p>Last</p>
-          <TableHeaderCell cellName="Foot" values={["left","right"]} onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
-          <TableHeaderCell cellName="Speed" values={collectedValues().speed} onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
-          <TableHeaderCell cellName="Program" values={collectedValues().program} onChange={(e) => storeSessionFilters("program", e.target.value)}/>
+          <TableHeaderCell cellName="Foot" values={["left", "right"]}
+                           onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
+          <TableHeaderCell cellName="Speed" values={collectedValues().speed}
+                           onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
+          <TableHeaderCell cellName="Program" values={collectedValues().program}
+                           onChange={(e) => storeSessionFilters("program", e.target.value)}/>
           <p>Files</p>
         </div>
         <div class="session-body">
@@ -314,7 +321,7 @@ export function FileBrowser() {
               const [opened, setOpened] = createSignal(false);
               return (
                 <>
-                  <div class="session-row" classList={{ opened: opened() }} onClick={() => setOpened(s => !s)}>
+                  <div class="session-row" classList={{opened: opened()}} onClick={() => setOpened(s => !s)}>
                     <p class="identifier">
                       <input
                         type="checkbox"
@@ -339,10 +346,10 @@ export function FileBrowser() {
                         }}
                         indeterminate={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0 && activeFilesCountInsideSession(ses.sessionId, ses.files) < ses.files.length}
                       />
-                      <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500" />}>
-                        <FiChevronDown class="w-4 h-4 text-gray-500" />
+                      <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500"/>}>
+                        <FiChevronDown class="w-4 h-4 text-gray-500"/>
                       </Show>
-                      <IoFolderOutline class="text-xl text-orange-400" />
+                      <IoFolderOutline class="text-xl text-orange-400"/>
                       {ses.sessionId}
                     </p>
                     <p>{ses.files[0]?.date}</p>
@@ -371,7 +378,7 @@ export function FileBrowser() {
                               checked={selectedFiles().includes(file.fileHandler)}
                               onChange={() => toggleSelectedFile(ses.sessionId, file.fileHandler)}
                             />
-                            <IoDocumentTextSharp class="w-5 h-5 text-blue-500" />
+                            <IoDocumentTextSharp class="w-5 h-5 text-blue-400"/>
                             {file.name}
                           </p>
                           <p>{file.time}</p>
@@ -425,18 +432,20 @@ export function FileBrowser() {
       <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow-sm">
         <span class="font-medium">{props.directoryHandler.name}</span>
         <div class="space-x-2">
-          <button
-            class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={askForFolderAccess}
           >
             load
-          </button>
-          <button
-            class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
             onClick={removeRecentFolderByIndex}
           >
             delete
-          </button>
+          </Button>
         </div>
       </li>
     )
@@ -457,12 +466,13 @@ export function FileBrowser() {
           value={lastNameInput()}
           onInput={(e) => setLastNameInput(e.currentTarget.value)}
           class="p-2 border rounded-lg"/>
-        <button
+        <Button
+          variant="info"
+          size="lg"
           type="submit"
-          class="bg-sky-500 hover:bg-sky-400 text-white px-4 py-2 rounded-lg shadow"
         >
           Search
-        </button>
+        </Button>
       </form>
     )
   }
@@ -542,12 +552,13 @@ export function FileBrowser() {
           <ul class="space-y-1">
             <For each={activeFiles()}>{(fileHandler) => (
               <li class="text-sm space-x-1">
-                <button
-                  class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={() => removeFileSelection(fileHandler.index)}
                 >
                   remove
-                </button>
+                </Button>
                 <span class="font-medium">{fileHandler.name}</span>
                 <ol class="flex flex-col items-center">
                   <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
@@ -567,9 +578,13 @@ export function FileBrowser() {
             )}</For>
           </ul>
           <div class="flex space-x-2">
-            <button class="px-3 py-1 bg-gray-200 rounded-lg" onClick={clearSelectedFiles}>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={clearSelectedFiles}
+            >
               Clear all
-            </button>
+            </Button>
             <div class="flex items-center space-x-2">
               <Checkbox
                 id="dataFiltering"
