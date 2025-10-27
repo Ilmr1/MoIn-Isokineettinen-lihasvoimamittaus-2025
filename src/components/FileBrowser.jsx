@@ -246,7 +246,7 @@ export function FileBrowser() {
 
   function TableHeaderCell(props) {
     return (
-      <select onChange={props.onChange}>
+      <select onChange={props.onChange} value={props.value || ""}>
         <option value="">
           {props.cellName}
         </option>
@@ -293,17 +293,17 @@ export function FileBrowser() {
       <div class="session-table">
         <div class="session-header">
           <p>Session / File</p>
-          <TableHeaderCell cellName="Date" values={["Newest", "Oldest"]}
+          <TableHeaderCell cellName="Date" values={["Newest", "Oldest"]} value={sessionFilters.date}
                            onChange={(e) => storeSessionFilters("date", e.target.value)}/>
-          <TableHeaderCell cellName="Time" values={["Newest", "Oldest"]}
+          <TableHeaderCell cellName="Time" values={["Newest", "Oldest"]} value={sessionFilters.time}
                            onChange={(e) => storeSessionFilters("time", e.target.value)}/>
           <p>First</p>
           <p>Last</p>
-          <TableHeaderCell cellName="Foot" values={["left", "right"]}
+          <TableHeaderCell cellName="Foot" values={["left", "right"]} value={sessionFilters.foot}
                            onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
-          <TableHeaderCell cellName="Speed" values={collectedValues().speed}
+          <TableHeaderCell cellName="Speed" values={collectedValues().speed} value={sessionFilters.speed}
                            onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
-          <TableHeaderCell cellName="Program" values={collectedValues().program}
+          <TableHeaderCell cellName="Program" values={collectedValues().program} value={sessionFilters.program}
                            onChange={(e) => storeSessionFilters("program", e.target.value)}/>
           <p>Files</p>
         </div>
@@ -484,6 +484,19 @@ export function FileBrowser() {
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />
+        <Button
+          variant="info"
+          size="sm"
+          onClick={() => {
+            storeSessionFilters({
+              foot: "",
+              speed: "",
+              program: "",
+            });
+          }}
+        >
+          Clear filters
+        </Button>
       </div>
     );
   }
