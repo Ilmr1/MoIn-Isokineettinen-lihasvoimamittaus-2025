@@ -2,6 +2,10 @@ export const truncDecimals = (number, decimals) => {
   const precision = Math.pow(10, decimals);
   return Math.trunc(number * precision) / precision;
 }
+export const padTrucateDecimalsToLength = (number, charactersCount) => {
+  const decimals = String(Math.trunc(number)).length;
+  return truncDecimals(number, Math.max(0, charactersCount - decimals));
+}
 
 export const delta = (start, end) => Math.abs(end) - Math.abs(start);
 export const absDelta = (start, end) => Math.abs(Math.max(end, start) - Math.min(end, start));
