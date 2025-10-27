@@ -214,14 +214,6 @@ export function FileBrowser() {
   }
 
 
-  const handleFileSelect = (file) => {
-    const alreadySelected = selectedFiles().some(
-      (f) => f.name === file.fileHandler.name
-    );
-    if (alreadySelected) return;
-    setSelectedFiles((prev) => [...prev, file.fileHandler]);
-  }
-
   const handleSubmit = (e) => {
     e.preventDefault();
     batch(() => {
@@ -284,6 +276,7 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
+    const openSessionsMemory = {};
     const collectedValues = createMemo(() => {
       const speedValues = new Set();
       const programValues = new Set();
@@ -315,13 +308,18 @@ export function FileBrowser() {
           <p>Files</p>
         </div>
         <div class="session-body">
-
           <For each={filteredSessions()}>
             {(ses) => {
-              const [opened, setOpened] = createSignal(false);
+              const [opened, setOpened] = createSignal(openSessionsMemory[ses.sessionId]);
+              const toggleOpen = () => {
+                setOpened(s => {
+                  openSessionsMemory[ses.sessionId] = !s;
+                  return !s
+                });
+              }
               return (
                 <>
-                  <div class="session-row" classList={{opened: opened()}} onClick={() => setOpened(s => !s)}>
+                  <div class="session-row" classList={{opened: opened()}} onClick={toggleOpen}>
                     <p class="identifier">
                       <input
                         type="checkbox"
