@@ -4,16 +4,15 @@ import {
   onCleanup,
   Show,
   For,
-  mergeProps,
-  splitProps,
+  mergeProps
 } from "solid-js";
 import { signalUtils } from "../../utils/utils";
 
 let activeDropdownSetter = null;
 
 export function Dropdown(props) {
-  // Oletuspropsit + jaetaan local propsit
-  const merged = mergeProps(
+  // lisää oletuspropsit
+  props = mergeProps(
     {
       label: "",
       options: [],
@@ -23,26 +22,20 @@ export function Dropdown(props) {
     },
     props
   );
-  const [local] = splitProps(merged, [
-    "label",
-    "options",
-    "onSelect",
-    "disabled",
-  ]);
 
   const [open, setOpen] = createSignal(false);
-  const [selected, setSelected] = signalUtils.createEffectSignal(() => merged.selected);
+  const [selected, setSelected] = signalUtils.createEffectSignal(() => props.selected);
 
   const resolve = (v) => (typeof v === "function" ? v() : v);
 
   // --- Nappi avaa/sulkee dropdownin ---
   const handleButtonClick = () => {
-    if (local.disabled) return;
+    if (props.disabled) return;
 
     if (open()) {
       // Jos painetaan uudestaan → resetoi valinta
       setSelected(null);
-      local.onSelect(null);
+      props.onSelect(null);
       setOpen(false);
       activeDropdownSetter = null;
     } else {
@@ -58,7 +51,7 @@ export function Dropdown(props) {
   // --- Valinnan tekeminen ---
   const handleSelect = (value) => {
     setSelected(value);
-    local.onSelect(value);
+    props.onSelect(value);
     setOpen(false);
     activeDropdownSetter = null;
   };
@@ -92,17 +85,17 @@ export function Dropdown(props) {
       <button
         type="button"
         onClick={handleButtonClick}
-        disabled={local.disabled}
+        disabled={props.disabled}
         class="relative flex flex-col items-center justify-start cursor-pointer h-[52px] outline-none"
         classList={{
-          "cursor-default text-gray-400": local.disabled,
-          "hover:text-indigo-600": !local.disabled,
+          "cursor-default text-gray-400": props.disabled,
+          "hover:text-indigo-600": !props.disabled,
         }}
       >
         {/* Label + nuoli */}
         <div class="flex items-center justify-center gap-[2px] font-semibold text-sm leading-none text-gray-700">
-          <span>{local.label}</span>
-          <Show when={!local.disabled}>
+          <span>{props.label}</span>
+          <Show when={!props.disabled}>
             <span
               class="transition-transform duration-200 text-gray-500"
               classList={{"rotate-180": open()}}
@@ -131,7 +124,7 @@ export function Dropdown(props) {
             isolation: "isolate",
           }}
         >
-          <For each={resolve(local.options)}>
+          <For each={resolve(props.options)}>
             {(opt) => (
               <li
                 class="flex items-center justify-center px-4 py-1 cursor-pointer
