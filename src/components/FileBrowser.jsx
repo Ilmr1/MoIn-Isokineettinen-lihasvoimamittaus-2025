@@ -120,16 +120,16 @@ export function FileBrowser() {
   const sortByDate = (a, b, date) => {
     const aDate = a.files[0].date.split(".").reverse().join("")
     const bDate = b.files[0].date.split(".").reverse().join("")
-    if (date === "Oldest") {
-      return aDate.localeCompare(bDate)
-    } else {
+    if (date === "Old") {
       return bDate.localeCompare(aDate)
+    } else {
+      return aDate.localeCompare(bDate)
     }
   }
   const sortByTime = (a, b, time) => {
-    const aTime = a.files[0].time.split(".").reverse().join("")
-    const bTime = b.files[0].time.split(".").reverse().join("")
-    if (time === "Oldest") {
+    const aTime = a.files[0].time.split(":").reverse().join("")
+    const bTime = b.files[0].time.split(":").reverse().join("")
+    if (time === "Old") {
       return aTime.localeCompare(bTime)
     } else {
       return bTime.localeCompare(aTime)
