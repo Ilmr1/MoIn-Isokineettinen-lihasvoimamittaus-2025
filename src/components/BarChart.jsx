@@ -83,7 +83,7 @@ function Chart(props) {
                   y={props.y + props.height - (value / maxValue()) * props.height}
                 >{bounds => (
                     <>
-                      <ChartHeader {...bounds} title={numberUtils.truncDecimals(value, 3)} />
+                      <ChartHeader {...bounds} title={numberUtils.padTrucateDecimalsToLength(value, 3)} />
                       <rect {...bounds} fill={arrayUtils.atWithWrapping(colors, j())}></rect>
                     </>
                   )}
