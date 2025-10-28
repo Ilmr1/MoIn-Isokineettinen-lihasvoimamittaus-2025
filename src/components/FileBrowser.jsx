@@ -11,6 +11,7 @@ import {parsedFileData, setParsedFileData} from "../signals";
 import {signals} from "../collections/collections";
 import {useParsedFiles} from "../providers";
 import {Button} from "./ui/Button.jsx";
+import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -299,22 +300,37 @@ export function FileBrowser() {
     return (
       <div class="session-table">
         <div class="session-header">
-          <p>Session / File</p>
-          <TableHeaderCell cellName="Date" values={["Newest", "Oldest"]}
-                           onChange={(e) => storeSessionFilters("date", e.target.value)}/>
-          <TableHeaderCell cellName="Time" values={["Newest", "Oldest"]}
-                           onChange={(e) => storeSessionFilters("time", e.target.value)}/>
-          <p>First</p>
-          <p>Last</p>
-          <TableHeaderCell cellName="Foot" values={["left", "right"]}
-                           onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
-          <TableHeaderCell cellName="Speed" values={collectedValues().speed}
-                           onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
-          <TableHeaderCell cellName="Program" values={collectedValues().program}
-                           onChange={(e) => storeSessionFilters("program", e.target.value)}/>
-          <p>Files</p>
+          <Dropdown label="Session / File" disabled/>
+          <Dropdown
+            label="Date"
+            options={["New", "Old"]}
+            onSelect={(value) => storeSessionFilters("date", value)}
+          />
+          <Dropdown
+            label="Time"
+            options={["New", "Old"]}
+            onSelect={(v) => storeSessionFilters("time", v)}
+          />
+          <Dropdown label="First" disabled/>
+          <Dropdown label="Last" disabled/>
+          <Dropdown
+            label="Foot"
+            options={["left", "right"]}
+            onSelect={(value) => storeSessionFilters("foot", value)}
+          />
+          <Dropdown
+            label="Speed"
+            options={collectedValues().speed}
+            onSelect={(value) => storeSessionFilters("speed", value)}
+          />
+          <Dropdown
+            label="Program"
+            options={collectedValues().program}
+            onSelect={(value) => storeSessionFilters("program", value)}
+          />
+          <Dropdown label="Files" disabled/>
         </div>
-        <div class="session-body">
+        <div class="session-body pb-8 sm:pb-10 md:pb-12">
 
           <For each={filteredSessions()}>
             {(ses) => {
