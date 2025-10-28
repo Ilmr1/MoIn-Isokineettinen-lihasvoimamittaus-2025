@@ -1,13 +1,13 @@
-import { createSignal, createMemo, For, createEffect, on } from "solid-js";
-import { Tabs } from "@kobalte/core";
-import { fileUtils } from "../utils/utils.js";
-import { FileBrowser } from "./FileBrowser.jsx";
-import { AverageChart } from "./AverageChart.jsx";
-import { ThreeCharts } from "./ThreeCharts.jsx"; // keep eager if light; otherwise lazy
-import { Repetitions } from "./Repetitions.jsx";
-import { ParsedFileContext } from "../providers.js";
-import { BarChart } from "./BarChart.jsx";
-import { parsedFileData } from "../signals.js";
+import {createSignal, createMemo, For, createEffect, on} from "solid-js";
+import {Tabs} from "@kobalte/core";
+import {fileUtils} from "../utils/utils.js";
+import {FileBrowser} from "./FileBrowser.jsx";
+import {AverageChart} from "./AverageChart.jsx";
+import {ThreeCharts} from "./ThreeCharts.jsx"; // keep eager if light; otherwise lazy
+import {Repetitions} from "./Repetitions.jsx";
+import {ParsedFileContext} from "../providers.js";
+import {BarChart} from "./BarChart.jsx";
+import {parsedFileData} from "../signals.js";
 
 export function FileManager() {
   const [activeProgram, setActiveProgram] = createSignal(null);
@@ -54,26 +54,32 @@ export function FileManager() {
             Measurement
           </Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
-          <ParsedFileContext.Provider value={{ activeProgram, setActiveProgram, activeFiles }}>
-            <div class="w-full h-full space-y-6 grid place-items-center items-start">
-              <FileBrowser />
-              <AverageChart listOfParsedCTM={activeFiles} />
+        <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-visible">
+          <ParsedFileContext.Provider value={{activeProgram, setActiveProgram, activeFiles}}>
+            <div class="w-full h-full space-y-30 grid place-items-center items-start">
+              <FileBrowser/>
+              <AverageChart listOfParsedCTM={activeFiles}/>
               <div class="grid grid-cols-3 gap-2">
-                <BarChart listOfParsedCTM={activeFiles} title="Torque max" analysisExtKey="110" analysisFlexKey="111" />
-                <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" analysisExtKey="112" analysisFlexKey="113" />
-                <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." analysisExtKey="203" analysisFlexKey="204" />
-                <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" analysisExtKey="116" analysisFlexKey="117" />
-                <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" analysisExtKey="114" analysisFlexKey="115" />
+                <BarChart listOfParsedCTM={activeFiles} title="Torque max" analysisExtKey="110" analysisFlexKey="111"/>
+                <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" analysisExtKey="112"
+                          analysisFlexKey="113"/>
+                <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." analysisExtKey="203"
+                          analysisFlexKey="204"/>
+                <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" analysisExtKey="116"
+                          analysisFlexKey="117"/>
+                <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" analysisExtKey="114"
+                          analysisFlexKey="115"/>
               </div>
               <For each={activeFiles()}>{parsedData => (
                 <>
-                  <ThreeCharts parsedCTM={parsedData.rawObject} />
+                  <ThreeCharts parsedCTM={parsedData.rawObject}/>
                   <div>
                     <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
-                    <button class="button_blue" onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt</button>
+                    <button class="button_blue"
+                            onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt
+                    </button>
                   </div>
-                  <Repetitions repetitions={parsedData.rawObject.repetitions} />
+                  <Repetitions repetitions={parsedData.rawObject.repetitions}/>
                 </>
               )}</For>
             </div>

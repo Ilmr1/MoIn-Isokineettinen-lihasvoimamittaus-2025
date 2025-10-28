@@ -11,6 +11,7 @@ import {parsedFileData, setParsedFileData} from "../signals";
 import {signals} from "../collections/collections";
 import {useParsedFiles} from "../providers";
 import {Button} from "./ui/Button.jsx";
+import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
   const [files, setFiles] = createSignal([]);
@@ -244,21 +245,6 @@ export function FileBrowser() {
     </div>
   );
 
-  function TableHeaderCell(props) {
-    return (
-      <select onChange={props.onChange} value={props.value || ""}>
-        <option value="">
-          {props.cellName}
-        </option>
-        <For each={props.values}>
-          {value => (
-            <option value={value}>{value}</option>
-          )}
-        </For>
-      </select>
-    )
-  }
-
   function activeFilesCountInsideSession(sessionId, files) {
     const count = $selectedSessionsCounts[sessionId]?.length;
     let sum = 0;
@@ -292,22 +278,42 @@ export function FileBrowser() {
     return (
       <div class="session-table">
         <div class="session-header">
-          <p>Session / File</p>
-          <TableHeaderCell cellName="Date" values={["Newest", "Oldest"]} value={sessionFilters.date}
-                           onChange={(e) => storeSessionFilters("date", e.target.value)}/>
-          <TableHeaderCell cellName="Time" values={["Newest", "Oldest"]} value={sessionFilters.time}
-                           onChange={(e) => storeSessionFilters("time", e.target.value)}/>
-          <p>First</p>
-          <p>Last</p>
-          <TableHeaderCell cellName="Foot" values={["left", "right"]} value={sessionFilters.foot}
-                           onChange={(e) => storeSessionFilters("foot", e.target.value)}/>
-          <TableHeaderCell cellName="Speed" values={collectedValues().speed} value={sessionFilters.speed}
-                           onChange={(e) => storeSessionFilters("speed", e.target.value)}/>
-          <TableHeaderCell cellName="Program" values={collectedValues().program} value={sessionFilters.program}
-                           onChange={(e) => storeSessionFilters("program", e.target.value)}/>
-          <p>Files</p>
+          <Dropdown label="Session / File" disabled/>
+          <Dropdown
+            label="Date"
+            options={["New", "Old"]}
+            onSelect={(value) => storeSessionFilters("date", value)}
+            selected={sessionFilters.date}
+          />
+          <Dropdown
+            label="Time"
+            options={["New", "Old"]}
+            onSelect={(v) => storeSessionFilters("time", v)}
+            selected={sessionFilters.time}
+          />
+          <Dropdown label="First" disabled/>
+          <Dropdown label="Last" disabled/>
+          <Dropdown
+            label="Foot"
+            options={["left", "right"]}
+            onSelect={(value) => storeSessionFilters("foot", value)}
+            selected={sessionFilters.foot}
+          />
+          <Dropdown
+            label="Speed"
+            options={collectedValues().speed}
+            onSelect={(value) => storeSessionFilters("speed", value)}
+            selected={sessionFilters.speed}
+          />
+          <Dropdown
+            label="Program"
+            options={collectedValues().program}
+            onSelect={(value) => storeSessionFilters("program", value)}
+            selected={sessionFilters.program}
+          />
+          <Dropdown label="Files" disabled/>
         </div>
-        <div class="session-body">
+        <div class="session-body pb-8 sm:pb-10 md:pb-12">
           <For each={filteredSessions()}>
             {(ses) => {
               const [opened, setOpened] = createSignal(openSessionsMemory[ses.sessionId]);
