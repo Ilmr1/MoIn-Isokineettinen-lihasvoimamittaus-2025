@@ -3,5 +3,6 @@ export * as chartUtils from "./chartUtils.js";
 export * as CTMUtils from "./CTMUtils.js";
 export * as stringUtils from "./stringUtils.js";
 export * as indexedDBUtils from "./indexedDBUtils.js";
+export * as signalUtils from "./signalUtils.js";
 export * as numberUtils from "./numberUtils.js";
 export * as arrayUtils from "./arrayUtils.js";

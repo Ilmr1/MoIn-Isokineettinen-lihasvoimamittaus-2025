@@ -245,21 +245,6 @@ export function FileBrowser() {
     </div>
   );
 
-  function TableHeaderCell(props) {
-    return (
-      <select onChange={props.onChange} value={props.value || ""}>
-        <option value="">
-          {props.cellName}
-        </option>
-        <For each={props.values}>
-          {value => (
-            <option value={value}>{value}</option>
-          )}
-        </For>
-      </select>
-    )
-  }
-
   function activeFilesCountInsideSession(sessionId, files) {
     const count = $selectedSessionsCounts[sessionId]?.length;
     let sum = 0;
@@ -298,11 +283,13 @@ export function FileBrowser() {
             label="Date"
             options={["New", "Old"]}
             onSelect={(value) => storeSessionFilters("date", value)}
+            selected={sessionFilters.date}
           />
           <Dropdown
             label="Time"
             options={["New", "Old"]}
             onSelect={(v) => storeSessionFilters("time", v)}
+            selected={sessionFilters.time}
           />
           <Dropdown label="First" disabled/>
           <Dropdown label="Last" disabled/>
@@ -310,16 +297,19 @@ export function FileBrowser() {
             label="Foot"
             options={["left", "right"]}
             onSelect={(value) => storeSessionFilters("foot", value)}
+            selected={sessionFilters.foot}
           />
           <Dropdown
             label="Speed"
             options={collectedValues().speed}
             onSelect={(value) => storeSessionFilters("speed", value)}
+            selected={sessionFilters.speed}
           />
           <Dropdown
             label="Program"
             options={collectedValues().program}
             onSelect={(value) => storeSessionFilters("program", value)}
+            selected={sessionFilters.program}
           />
           <Dropdown label="Files" disabled/>
         </div>

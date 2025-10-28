@@ -7,20 +7,21 @@ import {
   mergeProps,
   splitProps,
 } from "solid-js";
+import { signalUtils } from "../../utils/utils";
 
 let activeDropdownSetter = null;
 
-export function Dropdown(p) {
+export function Dropdown(props) {
   // Oletuspropsit + jaetaan local propsit
   const merged = mergeProps(
     {
       label: "",
       options: [],
-      onSelect: () => {
-      },
+      onSelect: () => null,
+      selected: null,
       disabled: false,
     },
-    p
+    props
   );
   const [local] = splitProps(merged, [
     "label",
@@ -30,7 +31,7 @@ export function Dropdown(p) {
   ]);
 
   const [open, setOpen] = createSignal(false);
-  const [selected, setSelected] = createSignal(null);
+  const [selected, setSelected] = signalUtils.createEffectSignal(() => merged.selected);
 
   const resolve = (v) => (typeof v === "function" ? v() : v);
 
