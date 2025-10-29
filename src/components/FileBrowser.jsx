@@ -279,12 +279,14 @@ export function FileBrowser() {
     const raw = activeFile.rawObject ?? {};
     const measurement = raw.measurement ?? {};
 
+    const name = activeFile.name;
+
     let time = measurement["time(system)".split(/\.|:/g, 2).join(":")];
     if (time.includes?.(" ")) time = time.split(/\s+/).pop();
     time = String(time).split(/\.|:/g, 2).join(":");
 
     const leg = raw.configuration?.side?.[1] ?? "";
-    return [time, leg].join("-");
+    return [name, time, leg].join("-");
   }
 
   function SessionsAsATable() {
@@ -582,7 +584,7 @@ export function FileBrowser() {
                 >
                   remove
                 </Button>
-                <span class="font-medium">{fileHandler.name}-{activeFileDisplayName(fileHandler)}</span>
+                <span class="font-medium">{activeFileDisplayName(fileHandler)}</span>
                 <ol class="flex flex-col items-center">
                   <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
                     <Show when={j() % 2 === 0}>
