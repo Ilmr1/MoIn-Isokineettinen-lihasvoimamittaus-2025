@@ -275,6 +275,18 @@ export function FileBrowser() {
     return sum;
   }
 
+  function activeFileDisplayName(activeFile) {
+    const raw = activeFile.rawObject ?? {};
+    const measurement = raw.measurement ?? {};
+
+    let time = measurement["time(system)".split(/\.|:/g, 2).join(":")];
+    if (time.includes?.(" ")) time = time.split(/\s+/).pop();
+    time = String(time).split(/\.|:/g, 2).join(":");
+
+    const leg = raw.configuration?.side?.[1] ?? "";
+    return [time, leg].join("-");
+  }
+
   function SessionsAsATable() {
     const openSessionsMemory = {};
     const collectedValues = createMemo(() => {
@@ -570,7 +582,7 @@ export function FileBrowser() {
                 >
                   remove
                 </Button>
-                <span class="font-medium">{fileHandler.name}</span>
+                <span class="font-medium">{fileHandler.name}-{activeFileDisplayName(fileHandler)}</span>
                 <ol class="flex flex-col items-center">
                   <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
                     <Show when={j() % 2 === 0}>
