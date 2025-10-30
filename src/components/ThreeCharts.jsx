@@ -1,5 +1,5 @@
 import { batch, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
-import { ChartBorder, ChartGrid, ChartHorizontalPointLineWithLabel, ChartHorizontalSplitLineWithLabel, ChartHorizontalZeroLine, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartVecticalLinePercentageToRelativeIndex, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartGrid, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLineWithLabel, ChartHorizontalSplitLineWithLabel, ChartHorizontalZeroLine, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartVecticalLinePercentageToRelativeIndex, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { asserts } from "../collections/collections.js";
 export function ThreeCharts(props) {
@@ -96,8 +96,21 @@ function Chart(props) {
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <ChartTextTop {...props.borderArea} title={props.title} />
-        <ChartBorder {...props.borderArea} height={props.borderArea.height} />
-        <ChartGrid {...props.borderArea} height={props.borderArea.height} />
+        <ChartBorder {...props.borderArea} />
+        <ChartGridAlignedWithFloorXAxisLabels
+          startValue={props.startIndex / 256}
+          endValue={props.endIndex / 256}
+          {...props.lineArea}
+          y={props.borderArea.y}
+          height={props.borderArea.height}
+        />
+        <ChartGridAlignedWithFloorYAxisLabels
+          startValue={props.maxValue}
+          endValue={props.minValue}
+          {...props.lineArea}
+          x={props.borderArea.x}
+          width={props.borderArea.width}
+        />
         <ChartHorizontalZeroLine
           {...props.lineArea}
           x={props.borderArea.x}
