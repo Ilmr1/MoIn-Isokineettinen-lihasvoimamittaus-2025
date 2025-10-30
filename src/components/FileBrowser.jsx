@@ -491,7 +491,7 @@ export function FileBrowser() {
           onChange={() => setSafeMode((m) => !m)}
         />
         <Button
-          variant="info"
+          variant={sessionFilters.foot || sessionFilters.speed || sessionFilters.program ? "danger" : "secondary"}
           size="sm"
           onClick={() => {
             storeSessionFilters({
@@ -555,15 +555,14 @@ export function FileBrowser() {
           <div class="flex justify-center gap-2">
             <For
               each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))].sort()}>{programType => (
-              <button
-                class="btn-secondary"
-                classList={{active: activeProgram() === programType}}
-                onClick={() => {
-                  setActiveProgram(programType);
-                }}
+              <Button
+                variant={activeProgram() === programType ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => setActiveProgram(programType)}
               >
                 {programType}
-              </button>
+              </Button>
+
             )}</For>
           </div>
           <ul class="space-y-1">

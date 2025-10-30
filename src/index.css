@@ -10,11 +10,12 @@ html {
 
 .tab-trigger {
   @apply min-w-[8rem] px-6 py-2   /* pienennä py-3 → py-2 */
-         text-center font-medium text-gray-800 text-lg
-         rounded-full transition w-fit
-         lg:flex-1;
+  text-center font-medium text-gray-800 text-lg
+  rounded-full transition w-fit
+  lg:flex-1;
 
-  @apply bg-transparent shadow-none; /* oletuksena läpinäkyvä, ei varjoa */
+  @apply bg-transparent shadow-none;
+  /* oletuksena läpinäkyvä, ei varjoa */
 }
 
 .tab-trigger:hover {
@@ -27,21 +28,6 @@ html {
   @apply bg-white shadow text-gray-900;
 }
 
-.btn {
-  @apply border px-3 py-1 rounded text-gray-700 hover:bg-gray-50;
-}
-
-.btn-primary {
-  @apply px-3 py-1 rounded border text-sm bg-blue-600 text-white hover:bg-blue-500;
-}
-
-.btn-secondary {
-  @apply px-3 py-1 rounded-lg transition-colors bg-green-400 text-black hover:bg-green-500;
-
-  &.active {
-    @apply bg-green-700 text-white;
-  }
-}
 
 .session-table {
   display: grid;
@@ -58,18 +44,20 @@ html {
       display: flex;
       gap: 8px;
       align-items: center;
-    };
+    }
   }
 
   .session-row, .file-row {
     cursor: pointer;
     padding-inline: 8px;
+
     &:hover {
       @apply bg-gray-50;
     }
 
     &.opened {
       @apply bg-gray-100;
+
       &:hover {
         @apply bg-gray-50;
       }
