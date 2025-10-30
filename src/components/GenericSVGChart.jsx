@@ -971,6 +971,13 @@ export function ChartYAxisFloor(props) {
   const labels = createMemo(() => {
     const { height, startValue, endValue } = props;
     const initialDelta = numberUtils.absDelta(startValue, endValue);
+
+    if (!initialDelta) {
+      return {
+        values: []
+      };
+    }
+
     const idealSegmentCount = Math.round(height / idealSegmentSize);
     const rawLabelIncrementCount = initialDelta / idealSegmentCount;
     const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
