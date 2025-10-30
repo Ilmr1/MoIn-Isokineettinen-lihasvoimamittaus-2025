@@ -491,7 +491,7 @@ export function FileBrowser() {
           onChange={() => setSafeMode((m) => !m)}
         />
         <Button
-          variant="danger"
+          variant={sessionFilters.foot || sessionFilters.speed || sessionFilters.program ? "danger" : "secondary"}
           size="sm"
           onClick={() => {
             storeSessionFilters({
