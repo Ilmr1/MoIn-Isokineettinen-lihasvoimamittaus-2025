@@ -1,5 +1,5 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { ChartBorder, ChartBorderPadding, ChartErrorBands, ChartFooter, ChartGrid, ChartHeader, ChartHeaderPadding, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartXAxisCeil, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartErrorBands, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { arrayUtils, numberUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
@@ -87,10 +87,23 @@ function Chart(props) {
         <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
           <>
             <ChartTextTop {...borderArea} title={props.type + " average"} />
-            <ChartBorder {...borderArea} height={borderArea.height} />
-            <ChartGrid {...borderArea} height={borderArea.height} />
+            <ChartBorder {...borderArea} />
             <ChartPadding name="lines" {...borderArea} padding={15}>{lineArea => (
               <>
+                <ChartGridAlignedWithFloorXAxisLabels
+                  startValue={combinedValues().xStartValue}
+                  endValue={combinedValues().xEndValue}
+                  {...lineArea}
+                  y={borderArea.y}
+                  height={borderArea.height}
+                />
+                <ChartGridAlignedWithFloorYAxisLabels
+                  startValue={combinedValues().maxValue}
+                  endValue={combinedValues().minValue}
+                  {...lineArea}
+                  x={borderArea.x}
+                  width={borderArea.width}
+                />
                 <ChartXAxisFloor {...borderArea} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} x={lineArea.x} width={lineArea.width} />
                 <ChartYAxisFloor {...borderArea} startValue={combinedValues().maxValue} endValue={combinedValues().minValue} y={lineArea.y} height={lineArea.height} />
                 <g data-error-bands>
