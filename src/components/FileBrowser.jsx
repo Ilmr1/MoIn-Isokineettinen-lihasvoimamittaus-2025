@@ -121,9 +121,9 @@ export function FileBrowser() {
     const aDate = a.files[0].date.split(".").reverse().join("")
     const bDate = b.files[0].date.split(".").reverse().join("")
     if (date === "Old") {
-      return bDate.localeCompare(aDate)
-    } else {
       return aDate.localeCompare(bDate)
+    } else {
+      return bDate.localeCompare(aDate)
     }
   }
   const sortByTime = (a, b, time) => {
