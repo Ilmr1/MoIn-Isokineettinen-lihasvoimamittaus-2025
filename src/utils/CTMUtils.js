@@ -217,7 +217,7 @@ const createFilteredTorquePointCollection = (goodAngleSplits, torquePoints) => {
 
 const createCollections = (markersByIndex, data, dataFiltering, disabledList) => {
   // ========================= POINTS =============================
-  const anglePointCollection = createPointCollection(data.map(row => row[2]));
+  const anglePointCollection = createPointCollection(markersByIndex, data.map(row => row[2]));
   const torquePoints = data.map(row => row[0]);
   const goodAnglesSplitCollection = createGoodAnglesSplitCollection(markersByIndex, anglePointCollection.points, disabledList);
   let torquePointCollection;
@@ -225,7 +225,7 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
     // torquePointCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, torquePoints, anglePointCollection.points)));
     torquePointCollection = createFilteredTorquePointCollection(goodAnglesSplitCollection.splits, torquePoints);
   } else {
-    torquePointCollection = createPointCollection(torquePoints);
+    torquePointCollection = createPointCollection(markersByIndex, torquePoints);
   }
   const torqueSplitCollection = createSplitCollection(markersByIndex, torquePointCollection.points, dataFiltering, disabledList);
   // if (dataFiltering) {
@@ -240,7 +240,7 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
 
   const pointCollections = {
     power: torquePointCollection,
-    speed: createPointCollection(data.map(row => row[1])),
+    speed: createPointCollection(markersByIndex, data.map(row => row[1])),
     angle: anglePointCollection,
     averagePowerFlex: averagePowerFlexCollection,
     averagePowerExt: averagePowerExtCollection,
@@ -481,10 +481,14 @@ const lowpass11Hz= (markersByIndex, points) => {
   return points;
 }
 
-const createPointCollection = (points) => {
+const createPointCollection = (markersByIndex, points) => {
   const pointCollection = { points };
 
-  for (const point of points) {
+  const start = markersByIndex.move1[0];
+  const end = markersByIndex.move1.at(-1);
+
+  for (let i = start; i < end; i++) {
+    const point = points[i];
     pointCollection.maxValue ??= point;
     pointCollection.minValue ??= point;
 
