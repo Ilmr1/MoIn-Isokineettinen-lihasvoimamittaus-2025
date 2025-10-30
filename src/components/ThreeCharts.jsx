@@ -96,7 +96,7 @@ function Chart(props) {
                     {...controls}
                   ></ChartPath>
                 </g>
-                <ChartMousePositionInPercentage {...controls} {...lineArea}>{mouseArea => (
+                <ChartMousePositionInPercentage {...controls} {...lineArea} y={borderArea.y} height={borderArea.height}>{mouseArea => (
                   <>
                     <ChartPercentageVerticalLine
                       {...mouseArea}
@@ -107,6 +107,7 @@ function Chart(props) {
                       {...props}
                       {...controls}
                       {...mouseArea}
+                      {...lineArea}
                       x={borderArea.x}
                       width={borderArea.width}
                     />
