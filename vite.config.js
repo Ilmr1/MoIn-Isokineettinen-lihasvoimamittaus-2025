@@ -8,6 +8,9 @@ export default defineConfig({
     tailwindcss(),
     solid(),
   ],
+  css: {
+    devSourcemap: true,
+  },
   server: {
     port: 5175
   }

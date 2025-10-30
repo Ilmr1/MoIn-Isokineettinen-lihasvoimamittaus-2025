@@ -1,5 +1,5 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { ChartBorder, ChartBorderPadding, ChartErrorBands, ChartFooter, ChartGrid, ChartHeader, ChartHeaderPadding, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartXAxis } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartBorderPadding, ChartErrorBands, ChartFooter, ChartGrid, ChartHeader, ChartHeaderPadding, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartXAxisCeil, ChartXAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { arrayUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
@@ -86,7 +86,7 @@ function Chart(props) {
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <ChartPadding {...svgArea} paddingLeft={80} paddingRight={25}>{chartArea => (
           <ChartHeaderPadding {...chartArea} title={props.type + " average"}>{chartArea => (
-            <ChartXAxis paddingInline={15} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} gap={4} {...chartArea} >{linesArea => (
+            <ChartXAxisFloor paddingInline={15} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} gap={4} {...chartArea} >{linesArea => (
               <ChartPadding {...linesArea} paddingBlock={15}>{linesArea2 => (
                 <>
                   <ChartBorder {...chartArea} height={linesArea.height} />
@@ -134,7 +134,7 @@ function Chart(props) {
                   )}</ChartMousePositionInPercentage>
                 </>
               )}</ChartPadding>
-            )}</ChartXAxis>
+            )}</ChartXAxisFloor>
           )}</ChartHeaderPadding>
         )}</ChartPadding>
       </svg>
