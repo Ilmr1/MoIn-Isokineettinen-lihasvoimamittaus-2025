@@ -854,12 +854,6 @@ export function ChartYAxisFloor(props) {
 
     const labelHeight = (height / initialDelta) * roundedDelta;
 
-    // console.log("top", height * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),)
-    // console.log("top2", labelHeight * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),)
-    console.log("height", height, labelHeight, initialDelta, roundedDelta);
-    console.log("start", startValue, endValue, roundedStartValue, roundedEndValue);
-    console.log("interval", closestLabelIncrementCount);
-
     return {
       values: listOfLabels,
       gap: labelHeight / labelSegmentCount,
