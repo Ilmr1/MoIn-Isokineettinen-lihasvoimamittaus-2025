@@ -106,6 +106,46 @@ export function ChartHeader(props) {
   );
 }
 
+export function ChartTextTop(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  return (
+    <text dominant-baseline="ideographic" text-anchor="middle" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+  );
+}
+
+export function ChartTextBottom(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  return (
+    <text dominant-baseline="hanging" text-anchor="middle" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+  );
+}
+
+export function ChartTextRight(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  return (
+    <text dominant-baseline="middle" text-anchor="start" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+  );
+}
+
+export function ChartTextLeft(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  return (
+    <text dominant-baseline="middle" text-anchor="end" x={props.x + props.width / 2} y={props.y}>{props.title}</text>
+  );
+}
+
 export function ChartHeaderPadding(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
@@ -698,101 +738,152 @@ export function ChartXAxisCeil(props) {
 }
 
 export function ChartXAxisFloor(props) {
+  asserts.assertTypeNumber(props.startValue, "startValue");
+  asserts.assertTypeNumber(props.endValue, "endValue");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({
+    fill: "black",
+    gap: 3,
+    "font-size": 16
+  }, props);
+
+
+  const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
+
+  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+  const idealSegmentSize = 40;
+
+  const labels = createMemo(() => {
+    const { width, startValue, endValue } = props;
+    const initialDelta = numberUtils.absDelta(startValue, endValue);
+    const idealSegmentCount = Math.round(width / idealSegmentSize);
+    const rawLabelIncrementCount = initialDelta / idealSegmentCount;
+    const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
+
+    const roundedStartValue = numberUtils.floorClosestToValue(startValue / closestLabelIncrementCount, endValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedEndValue = numberUtils.floorClosestToValue(endValue / closestLabelIncrementCount, startValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
+    const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
+
+    const listOfLabels = [];
+    for (let i = roundedStartValue; i <= roundedEndValue; i += closestLabelIncrementCount) {
+      listOfLabels.push(i);
+    }
+    for (let i = roundedStartValue; i >= roundedEndValue; i -= closestLabelIncrementCount) {
+      listOfLabels.push(i);
+    }
+
+    const labelWidth = (width / initialDelta) * roundedDelta;
+
+    return {
+      values: listOfLabels,
+      gap: labelWidth / labelSegmentCount,
+      paddingLeft: width * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),
+    }
+  });
+
   return (
-    <ChartPadding {...props}>{area => (
-      <Component {...props} {...area} />
-    )}</ChartPadding>
+    <g data-x-axis>
+      <For each={labels().values}>{(value, i) => (
+        <>
+          <line
+            x1={labels().paddingLeft + props.x + labels().gap * i()}
+            x2={labels().paddingLeft + props.x + labels().gap * i()}
+            y1={props.y + props.height - 2}
+            y2={props.y + props.height + 2}
+            stroke="black"
+          ></line>
+          <text
+            dominant-baseline="hanging"
+            text-anchor="middle"
+            x={labels().paddingLeft + props.x + labels().gap * i()}
+            y={props.y + props.height + props.gap}
+            {...local}
+          >
+            {numberUtils.truncDecimals(value, 1)}
+          </text>
+        </>
+      )}</For>
+    </g>
   );
+}
 
-  function Component(props) {
-    asserts.assertTypeNumber(props.startValue, "startValue");
-    asserts.assertTypeNumber(props.endValue, "endValue");
-    asserts.assertTypeNumber(props.width, "width");
-    asserts.assertTypeNumber(props.height, "height");
-    asserts.assertTypeNumber(props.x, "x");
-    asserts.assertTypeNumber(props.y, "y");
+export function ChartYAxisFloor(props) {
+  asserts.assertTypeNumber(props.startValue, "startValue");
+  asserts.assertTypeNumber(props.endValue, "endValue");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
 
-    const [sizes] = splitProps(props, ["x", "y", "width", "height" ]);
-
-    props = mergeProps({
-      fill: "black",
-      gap: 3,
-      "font-size": 16
-    }, props);
+  props = mergeProps({
+    fill: "black",
+    gap: 3,
+    "font-size": 16
+  }, props);
 
 
-    const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
+  const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
 
-    const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
-    const idealSegmentSize = 40;
+  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+  const idealSegmentSize = 30;
 
-    const labels = createMemo(() => {
-      const { x, width, startValue, endValue } = props;
-      const initialDelta = numberUtils.absDelta(startValue, endValue);
-      const idealSegmentCount = Math.round(width / idealSegmentSize);
-      const rawLabelIncrementCount = initialDelta / idealSegmentCount;
-      const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
-      //
-      const roundedStartValue = numberUtils.floorClosestToValue(startValue / closestLabelIncrementCount, endValue) * closestLabelIncrementCount;
-      const roundedEndValue = numberUtils.floorClosestToValue(endValue / closestLabelIncrementCount, startValue) * closestLabelIncrementCount;
-      const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
-      const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-      console.log("start", startValue, endValue);
-      console.log("rounded", roundedStartValue, roundedEndValue, roundedDelta);
+  const labels = createMemo(() => {
+    const { height, startValue, endValue } = props;
+    const initialDelta = numberUtils.absDelta(startValue, endValue);
+    const idealSegmentCount = Math.round(height / idealSegmentSize);
+    const rawLabelIncrementCount = initialDelta / idealSegmentCount;
+    const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
 
-      const listOfLabels = [];
-      for (let i = roundedStartValue; i <= roundedEndValue; i += closestLabelIncrementCount) {
-        listOfLabels.push(i);
-      }
-      for (let i = roundedStartValue; i >= roundedEndValue; i -= closestLabelIncrementCount) {
-        listOfLabels.push(i);
-      }
+    const roundedStartValue = numberUtils.floorClosestToValue(startValue / closestLabelIncrementCount, endValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedEndValue = numberUtils.floorClosestToValue(endValue / closestLabelIncrementCount, startValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
+    const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
 
-      const labelWidth = (width / initialDelta) * roundedDelta;
+    const listOfLabels = [];
+    for (let i = roundedStartValue; i <= roundedEndValue; i += closestLabelIncrementCount) {
+      listOfLabels.push(i);
+    }
+    for (let i = roundedStartValue; i >= roundedEndValue; i -= closestLabelIncrementCount) {
+      listOfLabels.push(i);
+    }
 
-      console.log("width", width, initialDelta, roundedDelta, (width / initialDelta) * roundedDelta);
+    const labelHeight = (height / initialDelta) * roundedDelta;
 
-      return {
-        values: listOfLabels,
-        gap: labelWidth / labelSegmentCount,
-        paddingLeft: width * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),
-        paddingBottom: local["font-size"] * (64 / 48) + props.gap,
-      }
-    });
+    // console.log("top", height * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),)
+    // console.log("top2", labelHeight * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),)
+    console.log("height", height, labelHeight, initialDelta, roundedDelta);
+    console.log("start", startValue, endValue, roundedStartValue, roundedEndValue);
+    console.log("interval", closestLabelIncrementCount);
 
-    return (
-      <>
-        <g data-x-axis>
-          <For each={labels().values}>{(value, i) => (
-            <>
-              <line
-                x1={labels().paddingLeft + props.x + labels().gap * i()}
-                x2={labels().paddingLeft + props.x + labels().gap * i()}
-                y1={props.y + props.height - labels().paddingBottom - 2}
-                y2={props.y + props.height - labels().paddingBottom + 2}
-                stroke="black"
-              ></line>
-              <text
-                dominant-baseline="hanging"
-                text-anchor="middle"
-                x={labels().paddingLeft + props.x + labels().gap * i()}
-                y={props.y + props.height - labels().paddingBottom + props.gap}
-                {...local}
-              >
-                {numberUtils.truncDecimals(value, 1)}
-              </text>
-            </>
-          )}</For>
-        </g>
-        <ChartPadding
-          {...props}
-          paddingInline={0}
-          paddingBlock={0}
-          paddingBottom={labels().paddingBottom}
-        />
-      </>
-    );
-  }
+    return {
+      values: listOfLabels,
+      gap: labelHeight / labelSegmentCount,
+      paddingTop: height * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),
+    }
+  });
+
+  return (
+    <g data-y-axis>
+      <For each={labels().values}>{(value, i) => (
+        <>
+          <text
+            dominant-baseline="middle"
+            text-anchor="start"
+            x={props.x + props.width + 4}
+            y={labels().paddingTop + props.y + labels().gap * i()}
+            {...local}
+          >
+            {numberUtils.truncDecimals(value, 1)}
+          </text>
+        </>
+      )}</For>
+    </g>
+  );
 }
 
 export function ChartPadding(props) {

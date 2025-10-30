@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { ChartBorder, ChartBorderPadding, ChartErrorBands, ChartFooter, ChartGrid, ChartHeader, ChartHeaderPadding, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartXAxisCeil, ChartXAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartBorderPadding, ChartErrorBands, ChartFooter, ChartGrid, ChartHeader, ChartHeaderPadding, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartXAxisCeil, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
-import { arrayUtils } from "../utils/utils.js";
+import { arrayUtils, numberUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
 export function AverageChart(props) {
 
@@ -84,24 +84,29 @@ function Chart(props) {
 
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-        <ChartPadding {...svgArea} paddingLeft={80} paddingRight={25}>{chartArea => (
-          <ChartHeaderPadding {...chartArea} title={props.type + " average"}>{chartArea => (
-            <ChartXAxisFloor paddingInline={15} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} gap={4} {...chartArea} >{linesArea => (
-              <ChartPadding {...linesArea} paddingBlock={15}>{linesArea2 => (
-                <>
-                  <ChartBorder {...chartArea} height={linesArea.height} />
-                  <ChartGrid {...chartArea} height={linesArea.height} />
+        <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
+          <>
+            <ChartTextTop {...borderArea} title={props.type + " average"} />
+            <ChartBorder {...borderArea} height={borderArea.height} />
+            <ChartGrid {...borderArea} height={borderArea.height} />
+            <ChartPadding name="lines" {...borderArea} paddingBlock={15} paddingInline={15}>{lineArea => (
+              <>
+                <ChartXAxisFloor {...borderArea} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} x={lineArea.x} width={lineArea.width} />
+                <ChartYAxisFloor {...borderArea} startValue={combinedValues().maxValue} endValue={combinedValues().minValue} y={lineArea.y} height={lineArea.height} />
+                <g data-error-bands>
                   <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
                     <ChartErrorBands
                       points={parsedData.rawObject.pointCollections[errorAverageKey()].points}
                       splits={parsedData.rawObject.splitCollections[averageKey()].splits}
                       startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
                       endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
+                      {...lineArea}
                       {...getColorStyles(i())}
-                      {...linesArea2}
                       {...combinedValues()}
                     ></ChartErrorBands>
                   )}</For>
+                </g>
+                <g data-lines>
                   <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
                     <ChartPath
                       points={parsedData.rawObject.pointCollections[averageKey()].points}
@@ -109,33 +114,32 @@ function Chart(props) {
                       startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
                       endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
                       stroke={arrayUtils.atWithWrapping(colors, i())}
-                      {...linesArea2}
+                      {...lineArea}
                       {...combinedValues()}
                       {...controls}
                     ></ChartPath>
                   )}</For>
-                  <ChartMousePositionInPercentage {...controls} {...linesArea} width={linesArea2.width} x={linesArea2.x}>{mouseArea => (
-                    <>
-                      <ChartPercentageVerticalLine {...mouseArea} />
-                      <For each={props.listOfParsedCTM()}>{parsedData => (
-                        <ChartHorizontalPointLineWithLabel
-                          points={parsedData.rawObject.pointCollections[averageKey()].points}
-                          splits={parsedData.rawObject.splitCollections[averageKey()].splits}
-                          startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
-                          endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
-                          {...combinedValues()}
-                          {...mouseArea}
-                          {...linesArea2}
-                          x={chartArea.x}
-                          width={chartArea.width} 
-                        />
-                      )}</For>
-                    </>
-                  )}</ChartMousePositionInPercentage>
-                </>
-              )}</ChartPadding>
-            )}</ChartXAxisFloor>
-          )}</ChartHeaderPadding>
+                </g>
+                <ChartMousePositionInPercentage {...controls} {...lineArea} width={lineArea.width} x={lineArea.x}>{mouseArea => (
+                  <>
+                    <ChartPercentageVerticalLine {...mouseArea} y={borderArea.y} height={borderArea.height} />
+                    <For each={props.listOfParsedCTM()}>{parsedData => (
+                      <ChartHorizontalPointLineWithLabel
+                        points={parsedData.rawObject.pointCollections[averageKey()].points}
+                        splits={parsedData.rawObject.splitCollections[averageKey()].splits}
+                        startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
+                        endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
+                        {...combinedValues()}
+                        {...mouseArea}
+                        x={borderArea.x}
+                        width={borderArea.width}
+                      />
+                    )}</For>
+                  </>
+                )}</ChartMousePositionInPercentage>
+              </>
+            )}</ChartPadding>
+          </>
         )}</ChartPadding>
       </svg>
     )
