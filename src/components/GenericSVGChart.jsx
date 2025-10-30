@@ -444,8 +444,10 @@ export function ChartGrid(props) {
 }
 
 export function ChartGridAlignedWithFloorXAxisLabels(props) {
-  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.startValue, "startValue");
+  asserts.assertTypeNumber(props.endValue, "endValue");
   asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
 
@@ -491,8 +493,10 @@ export function ChartGridAlignedWithFloorXAxisLabels(props) {
 }
 
 export function ChartGridAlignedWithFloorYAxisLabels(props) {
-  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.startValue, "startValue");
+  asserts.assertTypeNumber(props.endValue, "endValue");
   asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
 
