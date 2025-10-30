@@ -443,6 +443,100 @@ export function ChartGrid(props) {
   );
 }
 
+export function ChartGridAlignedWithFloorXAxisLabels(props) {
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({
+    stroke: "black",
+    "stroke-width": ".25",
+    "stroke-dasharray": "2",
+    fill: "none",
+  }, props);
+  const [local, _] = splitProps(props, ["fill", "stroke-width", "stroke-dasharray", "stroke"]);
+
+  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+  const idealSegmentSize = 40;
+
+  const grid = createMemo(() => {
+    const { x, y, height, width, startValue, endValue } = props;
+    const initialDelta = numberUtils.absDelta(startValue, endValue);
+    const idealSegmentCount = Math.round(width / idealSegmentSize);
+    const rawLabelIncrementCount = initialDelta / idealSegmentCount;
+    const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
+
+    const roundedStartValue = numberUtils.floorClosestToValue(startValue / closestLabelIncrementCount, endValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedEndValue = numberUtils.floorClosestToValue(endValue / closestLabelIncrementCount, startValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
+    const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
+
+    const labelWidth = (width / initialDelta) * roundedDelta;
+
+    const start = width * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
+    const step = labelWidth / labelSegmentCount;
+    const string = [];
+
+    for (let i = start; i < width; i += step) {
+      string.push(`M ${x + i} ${y} l 0 ${height}`);
+    }
+
+    return string.join(" ");
+});
+
+  return (
+    <path d={grid()} {...local} />
+  );
+}
+
+export function ChartGridAlignedWithFloorYAxisLabels(props) {
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({
+    stroke: "black",
+    "stroke-width": ".25",
+    "stroke-dasharray": "2",
+    fill: "none",
+  }, props);
+  const [local, _] = splitProps(props, ["fill", "stroke-width", "stroke-dasharray", "stroke"]);
+
+  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+  const idealSegmentSize = 30;
+
+  const grid = createMemo(() => {
+    const { x, y, height, width, startValue, endValue } = props;
+    const initialDelta = numberUtils.absDelta(startValue, endValue);
+    const idealSegmentCount = Math.round(height / idealSegmentSize);
+    const rawLabelIncrementCount = initialDelta / idealSegmentCount;
+    const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
+
+    const roundedStartValue = numberUtils.floorClosestToValue(startValue / closestLabelIncrementCount, endValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedEndValue = numberUtils.floorClosestToValue(endValue / closestLabelIncrementCount, startValue / closestLabelIncrementCount) * closestLabelIncrementCount;
+    const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
+    const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
+
+    const labelHeight = (height / initialDelta) * roundedDelta;
+
+    const start = height * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
+    const step = labelHeight / labelSegmentCount;
+    const string = [];
+
+    for (let i = start; i < height; i += step) {
+      string.push(`M ${x} ${y + i} l ${width} 0`);
+    }
+
+    return string.join(" ");
+});
+
+  return (
+    <path d={grid()} {...local} />
+  );
+}
+
 export function ChartMouseHoverValue(props) {
   asserts.assertTypeNumber(props.mouseX, "mouseX");
   asserts.assertTypeNumber(props.mouseY, "mouseY");
