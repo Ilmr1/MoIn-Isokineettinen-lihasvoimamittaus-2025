@@ -191,6 +191,48 @@ export function ChartPercentageVerticalLine(props) {
   );
 }
 
+export function ChartHorizontalLineFromValue(props) {
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeNumber(props.maxValue, "maxValue");
+  asserts.assertTypeNumber(props.minValue, "minValue");
+  asserts.assertTypeNumber(props.value, "value");
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+
+  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
+  const [local] = splitProps(props, ["stroke", "stroke-width"]);
+
+  const y = createMemo(() => {
+    const { height, minValue, maxValue, value} = props;
+    const delta = maxValue - minValue;
+    const y = chartUtils.flipYAxes((value - minValue) / delta * height, height);
+    return y + props.y;
+  });
+
+  return (
+    <line
+      data-test
+      x1={props.x}
+      x2={props.x + props.width}
+      y1={y()}
+      y2={y()}
+      {...local}
+    />
+  );
+}
+
+export function ChartHorizontalZeroLine(props) {
+  asserts.assertTypeNumber(props.maxValue, "maxValue");
+  asserts.assertTypeNumber(props.minValue, "minValue");
+
+  return (
+    <Show when={(props.minValue <= 0 && props.maxValue >= 0) || (props.minValue >= 0 && props.maxValue <= 0)}>
+      <ChartHorizontalLineFromValue value={0} stroke="grey" {...props} />
+    </Show>
+  );
+}
+
 export function ChartHorizontalPointLineWithLabel(props) {
   asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
   asserts.assertTypeNumber(props.endIndex, "endIndex");
