@@ -226,8 +226,6 @@ export function ChartHorizontalZeroLine(props) {
   asserts.assertTypeNumber(props.maxValue, "maxValue");
   asserts.assertTypeNumber(props.minValue, "minValue");
 
-  console.log(props.minValue, props.maxValue);
-
   return (
     <Show when={(props.minValue <= 0 && props.maxValue >= 0) || (props.minValue >= 0 && props.maxValue <= 0)}>
       <ChartHorizontalLineFromValue value={0} stroke="grey" {...props} />

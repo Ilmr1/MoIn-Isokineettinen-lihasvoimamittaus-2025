@@ -68,7 +68,6 @@ function Chart(props) {
   function LineChartWithLabels(props) {
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-        {console.log(props.title, props.minValue , props.maxValue)}
         <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
           <>
             <ChartTextTop {...borderArea} title={props.title} />
