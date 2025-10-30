@@ -45,13 +45,13 @@ export function FileBrowser() {
     }))
   }
 
-  const toggleSelectedFile = (sessionId, fileHandler) => {
-    const alreadySelected = selectedFiles().some(file => file === fileHandler);
+  const toggleSelectedFile = (sessionId, selectedFile) => {
+    const alreadySelected = selectedFiles().some(file => file.fileHandler === selectedFile.fileHandler);
     batch(() => {
       if (alreadySelected) {
-        setSelectedFiles(files => files.filter(file => file !== fileHandler));
+        setSelectedFiles(files => files.filter(selection => selection.fileHandler !== selectedFile.fileHandler));
         storeSelectedSessionsCounts(produce(store => {
-          const newFiles = store[sessionId].filter(file => file !== fileHandler);
+          const newFiles = store[sessionId].filter(file => file !== selectedFile.fileHandler);
           if (newFiles.length === 0) {
             delete store[sessionId];
           } else {
@@ -59,10 +59,10 @@ export function FileBrowser() {
           }
         }));
       } else {
-        setSelectedFiles((prev) => [...prev, fileHandler]);
+        setSelectedFiles((prev) => [...prev, selectedFile]);
         storeSelectedSessionsCounts(produce(store => {
           store[sessionId] ??= [];
-          store[sessionId].push(fileHandler);
+          store[sessionId].push(selectedFile.fileHandler);
         }));
       }
     })
@@ -338,12 +338,12 @@ export function FileBrowser() {
                               const files = unwrap($selectedSessionsCounts[ses.sessionId]);
                               ses.files.forEach(file => {
                                 if (files.includes(file.fileHandler)) {
-                                  toggleSelectedFile(ses.sessionId, file.fileHandler);
+                                  toggleSelectedFile(ses.sessionId, file);
                                 }
                               });
                             } else {
                               ses.files.forEach(file => {
-                                toggleSelectedFile(ses.sessionId, file.fileHandler);
+                                toggleSelectedFile(ses.sessionId, file);
                               });
                             }
                           })
@@ -379,8 +379,8 @@ export function FileBrowser() {
                           <p class="identifier">
                             <input
                               type="checkbox"
-                              checked={selectedFiles().includes(file.fileHandler)}
-                              onChange={() => toggleSelectedFile(ses.sessionId, file.fileHandler)}
+                              checked={selectedFiles().some(f => f.fileHandler === file.fileHandler)}
+                              onChange={() => toggleSelectedFile(ses.sessionId, file)}
                             />
                             <IoDocumentTextSharp class="w-5 h-5 text-blue-400"/>
                             {file.name}
@@ -517,16 +517,16 @@ export function FileBrowser() {
     }
 
     const removeFileSelection = (i) => batch(() => {
-      const file = untrack(selectedFiles)[i];
+      const { fileHandler } = untrack(selectedFiles)[i];
       batch(() => {
         setSelectedFiles(files => {
           files.splice(i, 1);
           return [...files];
         });
         for (const key in $selectedSessionsCounts) {
-          if ($selectedSessionsCounts[key].includes(file)) {
+          if ($selectedSessionsCounts[key].includes(fileHandler)) {
             storeSelectedSessionsCounts(produce(store => {
-              const newFiles = store[key].filter(f => f !== file)
+              const newFiles = store[key].filter(f => f.fileHandler !== fileHandler)
               if (newFiles.length) {
                 store[key] = newFiles;
               } else {
@@ -576,7 +576,7 @@ export function FileBrowser() {
                 >
                   remove
                 </Button>
-                <span class="font-medium">{fileHandler.name}</span>
+                <span class="font-medium">{fileHandler.name} {fileHandler.legSide} {fileHandler.time}</span>
                 <ol class="flex flex-col items-center">
                   <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
                     <Show when={j() % 2 === 0}>

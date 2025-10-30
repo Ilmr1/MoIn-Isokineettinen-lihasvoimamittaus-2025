@@ -9,13 +9,14 @@ onmessage = async (message) => {
   let files = [];
 
   for (let i = 0; i < filesToParse.length; i++) {
-    const handle = filesToParse[i];
+    const { fileHandler } = filesToParse[i];
     const disabledList = disabledRepetitions[i] || {};
-    if (handle.kind === "file") {
-      const file = await handle.getFile();
+    if (fileHandler.kind === "file") {
+      const file = await fileHandler.getFile();
       const text = await file.text();
       const rawObject = CTMUtils.parseTextToObject(text, dataFiltering, disabledList);
       files.push({
+        ...filesToParse[i],
         name: file.name,
         index: files.length,
         rawObject
