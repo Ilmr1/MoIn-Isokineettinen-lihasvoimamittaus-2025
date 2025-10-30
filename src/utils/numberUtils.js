@@ -37,3 +37,7 @@ export const symmetryPercent = (value1, value2) => {
   let larger = Math.max(num1, num2)
   return ((smaller/larger) * 100).toFixed(2);
 };
+
+export const trueToOneAndFalseToNegativeOne = boolean => !!boolean * 2 - 1;
+export const ceilFurthestFromValue = (num, val = 0) => num > val ? Math.ceil(num) : Math.floor(num);
+export const floorClosestToValue = (num, val = 0) => num > val ? Math.floor(num) : Math.ceil(num);

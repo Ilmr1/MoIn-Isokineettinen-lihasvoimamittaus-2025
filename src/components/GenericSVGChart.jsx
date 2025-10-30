@@ -607,7 +607,7 @@ export function ChartErrorBands(props) {
   );
 }
 
-export function ChartXAxis(props) {
+export function ChartXAxisCeil(props) {
   return (
     <ChartPadding {...props}>{area => (
       <Component {...props} {...area} />
@@ -697,6 +697,104 @@ export function ChartXAxis(props) {
   }
 }
 
+export function ChartXAxisFloor(props) {
+  return (
+    <ChartPadding {...props}>{area => (
+      <Component {...props} {...area} />
+    )}</ChartPadding>
+  );
+
+  function Component(props) {
+    asserts.assertTypeNumber(props.startValue, "startValue");
+    asserts.assertTypeNumber(props.endValue, "endValue");
+    asserts.assertTypeNumber(props.width, "width");
+    asserts.assertTypeNumber(props.height, "height");
+    asserts.assertTypeNumber(props.x, "x");
+    asserts.assertTypeNumber(props.y, "y");
+
+    const [sizes] = splitProps(props, ["x", "y", "width", "height" ]);
+
+    props = mergeProps({
+      fill: "black",
+      gap: 3,
+      "font-size": 16
+    }, props);
+
+
+    const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
+
+    const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
+    const idealSegmentSize = 40;
+
+    const labels = createMemo(() => {
+      const { x, width, startValue, endValue } = props;
+      const initialDelta = numberUtils.absDelta(startValue, endValue);
+      const idealSegmentCount = Math.round(width / idealSegmentSize);
+      const rawLabelIncrementCount = initialDelta / idealSegmentCount;
+      const closestLabelIncrementCount = arrayUtils.findByMinDelta(labelIncrements, rawLabelIncrementCount);
+      //
+      const roundedStartValue = numberUtils.floorClosestToValue(startValue / closestLabelIncrementCount, endValue) * closestLabelIncrementCount;
+      const roundedEndValue = numberUtils.floorClosestToValue(endValue / closestLabelIncrementCount, startValue) * closestLabelIncrementCount;
+      const roundedDelta = numberUtils.absDelta(roundedStartValue, roundedEndValue);
+      const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
+      console.log("start", startValue, endValue);
+      console.log("rounded", roundedStartValue, roundedEndValue, roundedDelta);
+
+      const listOfLabels = [];
+      for (let i = roundedStartValue; i <= roundedEndValue; i += closestLabelIncrementCount) {
+        listOfLabels.push(i);
+      }
+      for (let i = roundedStartValue; i >= roundedEndValue; i -= closestLabelIncrementCount) {
+        listOfLabels.push(i);
+      }
+
+      const labelWidth = (width / initialDelta) * roundedDelta;
+
+      console.log("width", width, initialDelta, roundedDelta, (width / initialDelta) * roundedDelta);
+
+      return {
+        values: listOfLabels,
+        gap: labelWidth / labelSegmentCount,
+        paddingLeft: width * (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),
+        paddingBottom: local["font-size"] * (64 / 48) + props.gap,
+      }
+    });
+
+    return (
+      <>
+        <g data-x-axis>
+          <For each={labels().values}>{(value, i) => (
+            <>
+              <line
+                x1={labels().paddingLeft + props.x + labels().gap * i()}
+                x2={labels().paddingLeft + props.x + labels().gap * i()}
+                y1={props.y + props.height - labels().paddingBottom - 2}
+                y2={props.y + props.height - labels().paddingBottom + 2}
+                stroke="black"
+              ></line>
+              <text
+                dominant-baseline="hanging"
+                text-anchor="middle"
+                x={labels().paddingLeft + props.x + labels().gap * i()}
+                y={props.y + props.height - labels().paddingBottom + props.gap}
+                {...local}
+              >
+                {numberUtils.truncDecimals(value, 1)}
+              </text>
+            </>
+          )}</For>
+        </g>
+        <ChartPadding
+          {...props}
+          paddingInline={0}
+          paddingBlock={0}
+          paddingBottom={labels().paddingBottom}
+        />
+      </>
+    );
+  }
+}
+
 export function ChartPadding(props) {
   asserts.assertTypeNumber(props.x);
   asserts.assertTypeNumber(props.y);
@@ -709,7 +807,7 @@ export function ChartPadding(props) {
   return (
     <>
       <Show when={debug && hasValues()}>
-        <g data-debug-padding>
+        <g data-debug-padding data-debug-name={props.name}>
           <rect
             data-debug-padding-top
             x={props.x}
