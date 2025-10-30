@@ -89,7 +89,7 @@ function Chart(props) {
             <ChartTextTop {...borderArea} title={props.type + " average"} />
             <ChartBorder {...borderArea} height={borderArea.height} />
             <ChartGrid {...borderArea} height={borderArea.height} />
-            <ChartPadding name="lines" {...borderArea} paddingBlock={15} paddingInline={15}>{lineArea => (
+            <ChartPadding name="lines" {...borderArea} padding={15}>{lineArea => (
               <>
                 <ChartXAxisFloor {...borderArea} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} x={lineArea.x} width={lineArea.width} />
                 <ChartYAxisFloor {...borderArea} startValue={combinedValues().maxValue} endValue={combinedValues().minValue} y={lineArea.y} height={lineArea.height} />

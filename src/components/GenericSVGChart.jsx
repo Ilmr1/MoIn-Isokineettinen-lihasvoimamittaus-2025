@@ -673,7 +673,7 @@ export function ChartXAxisCeil(props) {
     const gapSizes = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
 
     const labels = createMemo(() => {
-      const { x, width, startValue, endValue } = props;
+      const { width, startValue, endValue } = props;
       const delta = endValue - startValue;
       const idealSegmentSize = 40;
       const idealSegment = Math.round(width / idealSegmentSize);
@@ -893,54 +893,67 @@ export function ChartPadding(props) {
   asserts.assertTypeNumber(props.height);
   asserts.assertTypeFunction(props.children);
 
-  const hasValues = createMemo(() => props.paddingBlock || props.paddingInline || props.paddingRight || props.paddingLeft || props.paddingBottom || props.paddingTop);
+  const right = createMemo(() => props.paddingRight ?? props.paddingInline ?? props.padding ?? 0);
+  const left = createMemo(() => props.paddingLeft ?? props.paddingInline ?? props.padding ?? 0);
+  const top = createMemo(() => props.paddingTop ?? props.paddingBlock ?? props.padding ?? 0);
+  const bottom = createMemo(() => props.paddingBottom ?? props.paddingBlock ?? props.padding ?? 0);
+
+  const hasValues = () => right() || left() || top() || bottom();
 
   return (
     <>
       <Show when={debug && hasValues()}>
         <g data-debug-padding data-debug-name={props.name}>
-          <rect
-            data-debug-padding-top
-            x={props.x}
-            y={props.y}
-            width={props.width}
-            height={props.paddingTop ?? props.paddingBlock ?? 0}
-            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-            outline="none"
-          ></rect>
-          <rect
-            data-debug-padding-bottom
-            x={props.x}
-            y={props.y + props.height - (props.paddingBottom ?? props.paddingBlock ?? 0)}
-            width={props.width}
-            height={props.paddingBottom ?? props.paddingBlock ?? 0}
-            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-            outline="none"
-          ></rect>
-          <rect
-            data-debug-padding-left
-            x={props.x}
-            y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
-            width={props.paddingLeft ?? props.paddingInline ?? 0}
-            height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
-            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-            outline="none"
-          ></rect>
-          <rect
-            data-debug-padding-right
-            x={props.x + props.width - (props.paddingRight ?? (props.paddingInline ?? 0))}
-            y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
-            width={props.paddingRight ?? props.paddingInline ?? 0}
-            height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
-            fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-            outline="none"
-          ></rect>
+          <Show when={top()}>
+            <rect
+              data-debug-padding-top
+              x={props.x}
+              y={props.y}
+              width={props.width}
+              height={top()}
+              fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+              outline="none"
+            ></rect>
+          </Show>
+          <Show when={bottom()}>
+            <rect
+              data-debug-padding-bottom
+              x={props.x}
+              y={props.y + props.height - bottom()}
+              width={props.width}
+              height={bottom()}
+              fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+              outline="none"
+            ></rect>
+          </Show>
+          <Show when={left()}>
+            <rect
+              data-debug-padding-left
+              x={props.x}
+              y={props.y + top()}
+              width={left()}
+              height={props.height - bottom() - top()}
+              fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+              outline="none"
+            ></rect>
+          </Show>
+          <Show when={right()}>
+            <rect
+              data-debug-padding-right
+              x={props.x + props.width - right()}
+              y={props.y + top()}
+              width={right()}
+              height={props.height - bottom() - top()}
+              fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
+              outline="none"
+            ></rect>
+          </Show>
           <rect
             data-debug-padding-inner-outline
-            x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
-            y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
-            width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0)) - (props.paddingLeft ?? (props.paddingInline ?? 0))}
-            height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
+            x={props.x + left()}
+            y={props.y + top()}
+            width={props.width - right() - left()}
+            height={props.height - bottom() - top()}
             fill="none"
             stroke="color-mix(in oklab, oklch(71.2% 0.194 13.428) 50%, transparent)"
             stroke-width="1"
@@ -949,10 +962,10 @@ export function ChartPadding(props) {
       </Show>
       <Dynamic
         component={props.children}
-        x={props.x + (props.paddingLeft ?? props.paddingInline ?? 0)}
-        y={props.y + (props.paddingTop ?? props.paddingBlock ?? 0)}
-        width={props.width - (props.paddingRight ?? (props.paddingInline ?? 0)) - (props.paddingLeft ?? (props.paddingInline ?? 0))}
-        height={props.height - (props.paddingBottom ?? (props.paddingBlock ?? 0)) - (props.paddingTop ?? (props.paddingBlock ?? 0))}
+        x={props.x + left()}
+        y={props.y + top()}
+        width={props.width - right() - left()}
+        height={props.height - bottom() - top()}
       />
     </>
   );
