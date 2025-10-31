@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { ChartBorder, ChartErrorBands, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLineWithLabel, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartErrorBands, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLine, ChartHoverToolTip, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
-import { arrayUtils, numberUtils } from "../utils/utils.js";
+import { arrayUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
 export function AverageChart(props) {
 
@@ -133,21 +133,32 @@ function Chart(props) {
                     ></ChartPath>
                   )}</For>
                 </g>
-                <ChartMousePositionInPercentage {...controls} {...lineArea} width={lineArea.width} x={lineArea.x}>{mouseArea => (
+                <ChartMousePositionInPercentage {...controls} {...borderArea} width={lineArea.width} x={lineArea.x}>{mouseArea => (
                   <>
                     <ChartPercentageVerticalLine {...mouseArea} y={borderArea.y} height={borderArea.height} />
                     <For each={props.listOfParsedCTM()}>{parsedData => (
-                      <ChartHorizontalPointLineWithLabel
+                      <ChartHorizontalPointLine
                         points={parsedData.rawObject.pointCollections[averageKey()].points}
                         splits={parsedData.rawObject.splitCollections[averageKey()].splits}
                         startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
                         endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
                         {...combinedValues()}
                         {...mouseArea}
+                        {...lineArea}
                         x={borderArea.x}
                         width={borderArea.width}
                       />
                     )}</For>
+                    <ChartHoverToolTip
+                      {...mouseArea}
+                      {...lineArea}
+                      x={borderArea.x}
+                      listOfPoints={props.listOfParsedCTM().map(v => v.rawObject.pointCollections[averageKey()].points)}
+                      listOfSplits={props.listOfParsedCTM().map(v => v.rawObject.splitCollections[averageKey()])}
+                      maxValue={combinedValues().maxValue}
+                      minValue={combinedValues().minValue}
+                      colors={colors}
+                    />
                   </>
                 )}</ChartMousePositionInPercentage>
               </>

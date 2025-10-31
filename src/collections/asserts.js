@@ -24,6 +24,15 @@ export const assert1DArrayOfNumbersOrEmptyArray = (array, variableName = "Value"
   }
 }
 
+export const assert2DArrayOfNumbersOrEmptyArray = (array, variableName = "Value", message = variableName + " is not type of 2D number array") => {
+  if (array?.length) {
+    assert2DArray(array, null, message);
+    assert1DArrayOfNumbersOrEmptyArray(array[0], null, message);
+  } else {
+    assertTypeArray(array, null, message);
+  }
+}
+
 export const assertIsIntegerLike = (value, varName = "Value", message = "") => {
   const localMessage = varName + " is not integer. " + message;
   assertTruthy(typeof value === "string" || Number.isInteger(value), localMessage);
