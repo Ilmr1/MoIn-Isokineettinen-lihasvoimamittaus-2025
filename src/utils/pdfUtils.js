@@ -2,6 +2,8 @@ import { parsedFileData } from "../signals";
 import { jsPDF } from "jspdf";
 import { symmetryPercent } from "./numberUtils";
 import autoTable from "jspdf-autotable";
+import tickIcon from "../assets/icons/tick.png"
+import crossIcon from "../assets/icons/delete.png"
 
 function drawSymmetryBar(pdf, x, y, precentage) {
   const barWidth = 50;
@@ -23,10 +25,14 @@ function drawSymmetryBar(pdf, x, y, precentage) {
   pdf.setDrawColor(0);
   pdf.line(posX, y - 1, posX, y + barHeight + 1);
   
+  const isAbove = value >= 90;
+  const icon = isAbove ? tickIcon : crossIcon
 
-  pdf.setFontSize(8);
-  pdf.text(`${value}%`, x + barWidth + 5, y + barHeight - 1);
+  const iconSize = 5.5;
+  const iconX = x + barWidth + 5;
+  const iconY = y - (iconSize/2) + (barHeight/2);
 
+  pdf.addImage(icon, "PNG", iconX, iconY, iconSize, iconSize)
 }
 
 function groupByMeasurement(files) {
