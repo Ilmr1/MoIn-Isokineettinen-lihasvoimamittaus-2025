@@ -82,15 +82,15 @@ html {
   width: calc(min(100% - 16px, 1200px));
   padding: 16px;
   border-radius: 14px;
+
   #file-popup-close {
     position: absolute;
     top: 0px;
     right: 0px;
   }
-  &:open {
-    &::backdrop {
-      background-color: black;
-      opacity: 0.4;
-    }
+
+  &::backdrop {
+    background-color: black;
+    opacity: 0.4;
   }
 }
