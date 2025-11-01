@@ -72,3 +72,25 @@ html {
     }
   }
 }
+
+#file-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  height: calc(100% - 16px);
+  width: calc(min(100% - 16px, 1200px));
+  padding: 16px;
+  border-radius: 14px;
+  #file-popup-close {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+  }
+  &:open {
+    &::backdrop {
+      background-color: black;
+      opacity: 0.4;
+    }
+  }
+}
