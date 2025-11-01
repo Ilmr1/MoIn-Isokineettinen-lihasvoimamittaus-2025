@@ -222,27 +222,36 @@ export function FileBrowser() {
       setFilterByLastName(lastNameInput().trim().toLowerCase());
     });
   }
-
-
+  
   return (
-    <div class="w-full max-w-4xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-6">
-      {/* Folder management */}
-      <Button
-        variant="primary"
-        size="lg"
-        onClick={handleOpenDirectory}
-      >
-        Open Folder
-      </Button>
 
-      <ListOfRecentFolders/>
-      <FileSearchForm/>
-      <SafeSearchCheckbox/>
-      <div class="space-y-4">
-        <SessionsAsATable/>
-        <ListOfSelectedFiles/>
-      </div>
-    </div>
+      <dialog id="file-popup">
+        {/* Folder management */}
+        <Button
+        variant="info"
+        size="sm"
+        id="file-popup-close"
+        onClick={() => document.querySelector("#file-popup").close()}>
+          Close
+
+        </Button>
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={handleOpenDirectory}
+        >
+          Open Folder
+        </Button>
+
+        <ListOfRecentFolders />
+        <FileSearchForm />
+        <SafeSearchCheckbox />
+        <div class="space-y-4">
+          <SessionsAsATable />
+          <ListOfSelectedFiles />
+        </div>
+      </dialog>
+
   );
 
   function activeFilesCountInsideSession(sessionId, files) {

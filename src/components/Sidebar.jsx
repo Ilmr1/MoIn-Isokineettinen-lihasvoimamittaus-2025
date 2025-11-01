@@ -1,4 +1,4 @@
-import {FiPrinter, FiLogOut } from 'solid-icons/fi';
+import {FiPrinter, FiLogOut, FiHardDrive } from 'solid-icons/fi';
 import { OcCopy3 } from 'solid-icons/oc';
 import { BiRegularExport } from 'solid-icons/bi';
 import { createSignal, For } from "solid-js";
@@ -7,10 +7,12 @@ import { generatePDF } from '../utils/pdfUtils';
 
 export function Sidebar() {
   const otherTools = [
+    { icon: FiHardDrive, label: "Files", onClick: () => document.querySelector("#file-popup")?.showModal() },
     { icon: BiRegularExport, label: "Export" },
     { icon: OcCopy3, label: "Copy" },
     { icon: FiPrinter, label: "Print", onClick: () => generatePDF() },
     { icon: FiLogOut, label: "Quit", onClick: () => window.close() },
+    
   ];
 
   return (
