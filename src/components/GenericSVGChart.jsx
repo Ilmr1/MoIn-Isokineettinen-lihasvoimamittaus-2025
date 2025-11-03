@@ -813,7 +813,7 @@ export function ChartHoverToolTip(props) {
       }
       const y = chartUtils.flipYAxes((value - minValue) / delta * height, height);
 
-      hovers.push({ y: y + props.y, value, color: colors[i] || "black"});
+      hovers.push({ y: y + props.y, value, color: arrayUtils.atWithWrapping(colors, i) || "black"});
     }
 
     hovers.sort((a, b) => (a.value - b.value));
