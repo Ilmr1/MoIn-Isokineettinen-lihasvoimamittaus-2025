@@ -93,4 +93,11 @@ html {
     background-color: black;
     opacity: 0.4;
   }
+
+  .file-color-dot {
+    display: inline-block;
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+  }
 }

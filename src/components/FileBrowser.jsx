@@ -585,6 +585,7 @@ export function FileBrowser() {
                   remove
                 </Button>
                 <span class="font-medium">{fileHandler.name} {fileHandler.legSide} {fileHandler.time}</span>
+                <div class="file-color-dot" style={{"background-color": fileHandler.baseColor}}></div>
                 <ol class="flex flex-col items-center">
                   <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
                     <Show when={j() % 2 === 0}>
