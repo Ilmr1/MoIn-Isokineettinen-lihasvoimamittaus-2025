@@ -17,8 +17,6 @@ function Chart(props) {
 
   const svgArea = { width: 350, height: 300, x: 0, y: 0 };
 
-  const colors = ["oklch(70.4% 0.191 22.216)", "oklch(79.2% 0.209 151.711)", "oklch(62.3% 0.214 259.815)", "oklch(85.2% 0.199 91.936)"];
-
   return (
     <Show when={props.listOfParsedCTM()?.length}>
       <AverageErrorChartForTorque {...props} />
@@ -84,7 +82,7 @@ function Chart(props) {
                 >{bounds => (
                     <>
                       <ChartHeader {...bounds} title={numberUtils.padTrucateDecimalsToLength(value, 3)} />
-                      <rect {...bounds} fill={arrayUtils.atWithWrapping(colors, j())}></rect>
+                      <rect {...bounds} fill={props.listOfParsedCTM()[j()].baseColor}></rect>
                     </>
                   )}
                 </ChartPadding>

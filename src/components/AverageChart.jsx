@@ -29,14 +29,6 @@ function Chart(props) {
   const controls = { mouseX, mouseY };
   const svgArea = { width: 800, height: 220, x: 0, y: 0 };
 
-  const colors = ["oklch(70.4% 0.191 22.216)", "oklch(79.2% 0.209 151.711)", "oklch(62.3% 0.214 259.815)", "oklch(85.2% 0.199 91.936)"];
-  const strokeColor = colors.map(color => `color-mix(in oklab, ${color} 50%, transparent)`);
-  const fillColor = colors.map(color => `color-mix(in oklab, ${color} 15%, transparent)`);
-  const getColorStyles = i => ({
-    fill: arrayUtils.atWithWrapping(fillColor, i),
-    stroke: arrayUtils.atWithWrapping(strokeColor, i),
-  });
-
   return (
     <Show when={props.listOfParsedCTM()?.length}>
       <AverageErrorChartForTorque type="Ext" {...props} />
@@ -82,6 +74,8 @@ function Chart(props) {
       }
     });
 
+    const colors = createMemo(() => props.listOfParsedCTM().map(file => file.baseColor));
+
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
@@ -113,8 +107,9 @@ function Chart(props) {
                       splits={parsedData.rawObject.splitCollections[averageKey()].splits}
                       startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
                       endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
+                      fill={`color-mix(in oklab, ${parsedData.baseColor} 15%, transparent)`}
+                      stroke={`color-mix(in oklab, ${parsedData.baseColor} 30%, transparent)`}
                       {...lineArea}
-                      {...getColorStyles(i())}
                       {...combinedValues()}
                     ></ChartErrorBands>
                   )}</For>
@@ -126,7 +121,7 @@ function Chart(props) {
                       splits={parsedData.rawObject.splitCollections[averageKey()].splits}
                       startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
                       endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
-                      stroke={arrayUtils.atWithWrapping(colors, i())}
+                      stroke={parsedData.baseColor}
                       {...lineArea}
                       {...combinedValues()}
                       {...controls}
@@ -157,7 +152,7 @@ function Chart(props) {
                       listOfSplits={props.listOfParsedCTM().map(v => v.rawObject.splitCollections[averageKey()])}
                       maxValue={combinedValues().maxValue}
                       minValue={combinedValues().minValue}
-                      colors={colors}
+                      colors={colors()}
                     />
                   </>
                 )}</ChartMousePositionInPercentage>
