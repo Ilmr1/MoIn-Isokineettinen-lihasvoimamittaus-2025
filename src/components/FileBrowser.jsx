@@ -75,10 +75,10 @@ export function FileBrowser() {
 
     const returnArray = [];
     sessions().forEach(session => {
-      if (firstName && !session.files[0]?.subjectFirstName.toLowerCase().includes(firstName.toLowerCase())) {
+      if (firstName && !session.files[0]?.subjectFirstName?.toLowerCase().includes(firstName.toLowerCase())) {
         return;
       }
-      if (lastName && !session.files[0]?.subjectLastName.toLowerCase().includes(lastName.toLowerCase())) {
+      if (lastName && !session.files[0]?.subjectLastName?.toLowerCase().includes(lastName.toLowerCase())) {
         return;
       }
 
