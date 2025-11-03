@@ -11,6 +11,7 @@ import {parsedFileData} from "../signals.js";
 
 export function FileManager() {
   const [activeProgram, setActiveProgram] = createSignal(null);
+  const [showErrorBands, setShowErrorBands] = createSignal(true);
   const activeFiles = createMemo(() => {
     const program = activeProgram();
     if (!program) {
@@ -75,10 +76,10 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-visible">
-          <ParsedFileContext.Provider value={{activeProgram, setActiveProgram, activeFiles}}>
-            <div class="w-full h-full space-y-30 grid place-items-center items-start">
+          <ParsedFileContext.Provider value={{activeProgram, setActiveProgram, activeFiles, showErrorBands, setShowErrorBands}}>
+            <div class="w-full h-full space-y-4 grid place-items-center items-start">
               <FileBrowser/>
-              <AverageChart listOfParsedCTM={activeFiles}/>
+              <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()}/>
               <div class="grid grid-cols-3 gap-2">
                 <BarChart listOfParsedCTM={activeFiles} title="Torque max" analysisExtKey="110" analysisFlexKey="111"/>
                 <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" analysisExtKey="112"

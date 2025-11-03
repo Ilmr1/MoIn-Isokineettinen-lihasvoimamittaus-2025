@@ -29,7 +29,7 @@ export function FileBrowser() {
   const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
   const [sessionFilters, storeSessionFilters] = createStore({})
 
-  const {activeProgram, setActiveProgram, activeFiles} = useParsedFiles();
+  const {activeProgram, setActiveProgram, activeFiles, showErrorBands, setShowErrorBands} = useParsedFiles();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -222,16 +222,18 @@ export function FileBrowser() {
       setFilterByLastName(lastNameInput().trim().toLowerCase());
     });
   }
-  
-  return (
 
-      <dialog id="file-popup">
+  const toggleDataFiltering = () => setDataFiltering((s) => !s);
+
+  return (
+    <>
+      <dialog id="file-popup" class="space-y-4">
         {/* Folder management */}
         <Button
-        variant="info"
-        size="sm"
-        id="file-popup-close"
-        onClick={() => document.querySelector("#file-popup").close()}>
+          variant="info"
+          size="sm"
+          id="file-popup-close"
+          onClick={() => document.querySelector("#file-popup").close()}>
           Close
 
         </Button>
@@ -251,7 +253,22 @@ export function FileBrowser() {
           <ListOfSelectedFiles />
         </div>
       </dialog>
-
+      <Show when={activeFiles().length}>
+        <div class="flex items-center space-x-2">
+          <Checkbox
+            id="dataFiltering"
+            label="Filter data"
+            checked={dataFiltering()}
+            onChange={toggleDataFiltering}
+          />
+          <Checkbox
+            label="Show error bands"
+            checked={showErrorBands()}
+            onChange={() => setShowErrorBands(s => !s)}
+          />
+        </div>
+      </Show>
+    </>
   );
 
   function activeFilesCountInsideSession(sessionId, files) {
@@ -517,7 +534,6 @@ export function FileBrowser() {
   }
 
   function ListOfSelectedFiles() {
-    const toggleDataFiltering = () => setDataFiltering((s) => !s);
     const clearSelectedFiles = () => {
       batch(() => {
         setSelectedFiles([]);
@@ -611,14 +627,6 @@ export function FileBrowser() {
             >
               Clear all
             </Button>
-            <div class="flex items-center space-x-2">
-              <Checkbox
-                id="dataFiltering"
-                label="Filter data"
-                checked={dataFiltering()}
-                onChange={toggleDataFiltering}
-              />
-            </div>
           </div>
         </div>
       </Show>

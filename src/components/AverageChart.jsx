@@ -100,20 +100,22 @@ function Chart(props) {
                 />
                 <ChartXAxisFloor {...borderArea} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} x={lineArea.x} width={lineArea.width} />
                 <ChartYAxisFloor {...borderArea} startValue={combinedValues().maxValue} endValue={combinedValues().minValue} y={lineArea.y} height={lineArea.height} />
-                <g data-error-bands>
-                  <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
-                    <ChartErrorBands
-                      points={parsedData.rawObject.pointCollections[errorAverageKey()].points}
-                      splits={parsedData.rawObject.splitCollections[averageKey()].splits}
-                      startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
-                      endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
-                      fill={`color-mix(in oklab, ${parsedData.baseColor} 15%, transparent)`}
-                      stroke={`color-mix(in oklab, ${parsedData.baseColor} 30%, transparent)`}
-                      {...lineArea}
-                      {...combinedValues()}
-                    ></ChartErrorBands>
-                  )}</For>
-                </g>
+                <Show when={props.errorBands}>
+                  <g data-error-bands>
+                    <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
+                      <ChartErrorBands
+                        points={parsedData.rawObject.pointCollections[errorAverageKey()].points}
+                        splits={parsedData.rawObject.splitCollections[averageKey()].splits}
+                        startIndex={parsedData.rawObject.splitCollections[averageKey()].startIndex}
+                        endIndex={parsedData.rawObject.splitCollections[averageKey()].endIndex}
+                        fill={`color-mix(in oklab, ${parsedData.baseColor} 15%, transparent)`}
+                        stroke={`color-mix(in oklab, ${parsedData.baseColor} 30%, transparent)`}
+                        {...lineArea}
+                        {...combinedValues()}
+                      ></ChartErrorBands>
+                    )}</For>
+                  </g>
+                </Show>
                 <g data-lines>
                   <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
                     <ChartPath
