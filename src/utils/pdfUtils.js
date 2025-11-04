@@ -1,16 +1,16 @@
 import { parsedFileData } from "../signals";
 import { jsPDF } from "jspdf";
-import { symmetryPercent } from "./numberUtils";
 import autoTable from "jspdf-autotable";
-import tickIcon from "../assets/icons/tick.png"
-import crossIcon from "../assets/icons/delete.png"
+import { symmetryPercent } from "./numberUtils";
+import tickIcon from "../assets/icons/tick.png";
+import crossIcon from "../assets/icons/delete.png";
 
-function drawSymmetryBar(pdf, x, y, precentage) {
+function drawSymmetryBar(pdf, x, y, percentage) {
   const barWidth = 50;
   const barHeight = 3;
   const minVal = 50;
   const maxVal = 100;
-  const value = parseFloat(precentage);
+  const val = parseFloat(percentage);
 
   const redWidth = ((90 - minVal) / (maxVal - minVal)) * barWidth;
   pdf.setFillColor(255, 180, 180);
@@ -20,150 +20,129 @@ function drawSymmetryBar(pdf, x, y, precentage) {
   pdf.setFillColor(180, 255, 180);
   pdf.rect(x + redWidth, y, greenWidth, barHeight, "F");
 
-  const adjustedValue = Math.max(value, 50);
-  const posX = x + ((adjustedValue - minVal) / (maxVal - minVal)) * barWidth;
+  const adjustedVal = Math.max(val, 50);
+  const posX = x + ((adjustedVal - minVal) / (maxVal - minVal)) * barWidth;
   pdf.setDrawColor(0);
   pdf.line(posX, y - 1, posX, y + barHeight + 1);
-  
-  const isAbove = value >= 90;
-  const icon = isAbove ? tickIcon : crossIcon
 
-  const iconSize = 5.5;
-  const iconX = x + barWidth + 5;
-  const iconY = y - (iconSize/2) + (barHeight/2);
-
-  pdf.addImage(icon, "PNG", iconX, iconY, iconSize, iconSize)
-}
-
-function groupByMeasurement(files) {
-  const group = {};
-  for (const f of files) {
-    const name = f.rawObject.measurement.name;
-    const side = f.rawObject.configuration.side[1];
-
-    const cleanedName = name
-      .replace(/\boikea\b/gi, "")
-      .replace(/\bvasen\b/gi, "")
-      .replace(/\bpolven\b/gi, "")
-      .trim();
-
-    if (!group[cleanedName]) group[cleanedName] = [];
-
-    const existingLeg = group[cleanedName].findIndex((e) => e.side === side);
-    if (existingLeg !== -1) {
-      group[cleanedName][existingLeg] = { side, file: f.rawObject.analysis };
-    } else {
-      group[cleanedName].push({ side, file: f.rawObject.analysis });
-    }
-  }
-  return group;
+  const icon = val >= 90 ? tickIcon : crossIcon;
+  pdf.addImage(icon, "PNG", x + barWidth + 5, y - 1.5, 5.5, 5.5);
 }
 
 export function generatePDF() {
   const pdf = new jsPDF();
   pdf.setFontSize(11);
   const files = parsedFileData();
-  const grouped = groupByMeasurement(files);
   const patientInfo = files[0].rawObject.session;
 
-  pdf.line(10, 5, 200, 5, "S");
+  const TESTS = [
+    {
+      key: "kons60",
+      title: "Maksimivoima",
+      match: "oj/kouk 500 Nm isokin. ballistinen kons/kons 60/60",
+    },
+    {
+      key: "kons240",
+      title: "Nopeusvoima",
+      match: "oj/kouk 500 Nm isokin. ballistinen kons/kons 240/240",
+    },
+    {
+      key: "eks30",
+      title: "Jarruttava voima",
+      match: "oj/kouk 500 Nm isokin. ballistinen eks/eks 30/30",
+    },
+    {
+      key: "kons180",
+      title: "Kestovoima",
+      match: "oj/kouk 500 Nm isokin. ballistinen kons/kons 180/180",
+    },
+  ];
 
-  pdf.text(`Nimi: ${patientInfo.subjectNameFirst} ${patientInfo.subjectName}`,10,10);
+  const groups = {};
+  for (const f of files) {
+    const name = f.rawObject.measurement.name;
+    const side = f.rawObject.configuration.side[1];
+    const analysis = f.rawObject.analysis;
+
+    for (const { key, match } of TESTS) {
+      if (name.includes(match)) {
+        if (!groups[key]) groups[key] = {};
+        groups[key][side] = analysis;
+      }
+    }
+  }
+
+  pdf.line(10, 5, 200, 5, "S");
+  pdf.text(`Nimi: ${patientInfo.subjectNameFirst} ${patientInfo.subjectName}`, 10, 10);
   pdf.text(`Syntymäpäivä: ${patientInfo.subjectBirth}`, 10, 15);
   pdf.text(`Paino: ${patientInfo.subjectWeight}`, 10, 20);
   pdf.text(`Pituus: ${patientInfo.subjectHeight}`, 10, 25);
-
   pdf.text(`Sukupuoli: ${patientInfo.subjectSex[1]}`, 70, 10);
-  pdf.text(`leikattu jalka: ${patientInfo.involvedSide}`, 70, 15);
-
-  pdf.text(`Testin päivämäärä: ${files[0].rawObject.measurement["date(dd/mm/yyyy)"]}`,140,10);
-  pdf.text(`Loukkaantumiuspäivä: ${patientInfo.injuryDate}`, 140, 15);
-
+  pdf.text(`Leikattu jalka: ${patientInfo.involvedSide}`, 70, 15);
+  pdf.text(
+    `Testin päivämäärä: ${files[0].rawObject.measurement["date(dd/mm/yyyy)"]}`,
+    140,
+    10
+  );
+  pdf.text(`Loukkaantumispäivä: ${patientInfo.injuryDate}`, 140, 15);
   pdf.line(10, 27, 200, 27, "S");
 
   const pageHeight = pdf.internal.pageSize.height;
   const marginBottom = 10;
+  let y = 35;
 
-  let currentY = 35;
-  for (const [name, test] of Object.entries(grouped)) {
-    if (test.length !== 2) continue;
+  const getVal = (data, idx) => (data ? Math.abs(data[idx]).toFixed(2) : "–");
 
-    const rightData = test.find((s) => s.side === "right").file;
-    const leftData = test.find((s) => s.side === "left").file;
+  for (const { key, title } of TESTS) {
+    const test = groups[key];
+    if (!test) continue;
 
-    const torqExtSymm = symmetryPercent(rightData[112], leftData[112]);
-    const workExtSymm = symmetryPercent(rightData[212], leftData[212]);
-    const extWork = symmetryPercent(rightData[203], leftData[203]);
-    const torqFlexSymm = symmetryPercent(rightData[113], leftData[113]);
-    const workFlexSymm = symmetryPercent(rightData[213], leftData[213]);
-    const flexWork = symmetryPercent(rightData[204], leftData[204]);
+    const leftData = test.left;
+    const rightData = test.right;
+    if (!leftData && !rightData) continue;
 
-    const estimatedHeight = 90;
+    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[112], leftData[112]) : "–";
+    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[212], leftData[212]) : "–";
+    const extWork = leftData && rightData ? symmetryPercent(rightData[203], leftData[203]) : "–";
+    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[113], leftData[113]) : "–";
+    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[213], leftData[213]) : "–";
+    const flexWork = leftData && rightData ? symmetryPercent(rightData[204], leftData[204]) : "–";
 
-    if (currentY + estimatedHeight > pageHeight - marginBottom) {
+    if (y + 90 > pageHeight - marginBottom) {
       pdf.addPage();
-      currentY = 10; 
+      y = 10;
     }
-    pdf.setFont('Helvetica', 'bold');
+
+    pdf.setFont("Helvetica", "bold");
     pdf.setFontSize(12);
-    pdf.text(name, 14, currentY);
+    pdf.text(title, 14, y);
 
     const rows = [
       ["Etureisi", "", "", ""],
-      [
-        "Huippuvääntö (Nm)",
-        Math.abs(rightData[112]).toFixed(2),
-        Math.abs(leftData[112]).toFixed(2),
-        torqExtSymm,
-      ],
-      [
-        "Kokonaistyö (J)",
-        Math.abs(rightData[212]).toFixed(2),
-        Math.abs(leftData[212]).toFixed(2),
-        workExtSymm,
-      ],
-      [
-        "Huippuvääntö / BW",
-        Math.abs(rightData[203]).toFixed(2),
-        Math.abs(leftData[203]).toFixed(2),
-        extWork,
-      ],
+      ["Huippuvääntö (Nm)", getVal(rightData, 112), getVal(leftData, 112), torqExtSymm],
+      ["Kokonaistyö (J)", getVal(rightData, 212), getVal(leftData, 212), workExtSymm],
+      ["Huippuvääntö / BW", getVal(rightData, 203), getVal(leftData, 203), extWork],
       ["Takareisi", "", "", ""],
-      [
-        "Huippuvääntö (Nm)",
-        Math.abs(rightData[113]).toFixed(2),
-        Math.abs(leftData[113]).toFixed(2),
-        torqFlexSymm,
-      ],
-      [
-        "Kokonaistyö (J)",
-        Math.abs(rightData[213]).toFixed(2),
-        Math.abs(leftData[213]).toFixed(2),
-        workFlexSymm,
-      ],
-      [
-        "Huippuvääntö / BW",
-        Math.abs(rightData[204]).toFixed(2),
-        Math.abs(leftData[204]).toFixed(2),
-        flexWork,
-      ],
+      ["Huippuvääntö (Nm)", getVal(rightData, 113), getVal(leftData, 113), torqFlexSymm],
+      ["Kokonaistyö (J)", getVal(rightData, 213), getVal(leftData, 213), workFlexSymm],
+      ["Huippuvääntö / BW", getVal(rightData, 204), getVal(leftData, 204), flexWork],
       [
         "HQ-ratio (%)",
-        symmetryPercent(rightData[212], rightData[213]),
-        symmetryPercent(leftData[212], leftData[213]),
+        rightData ? symmetryPercent(rightData[212], rightData[213]) : "–",
+        leftData ? symmetryPercent(leftData[212], leftData[213]) : "–",
         "",
       ],
     ];
 
     autoTable(pdf, {
-      startY: currentY + 5,
+      startY: y + 5,
       head: [["", "Oikea", "Vasen", "Symmetria"]],
       body: rows,
       theme: "striped",
       styles: { fontSize: 9, cellPadding: 1 },
       headStyles: { fillColor: [230, 230, 230], textColor: 0 },
       tableWidth: 110,
-      didParseCell: function (data) {
+      didParseCell: (data) => {
         const cellText = data.cell.text[0]?.toLowerCase();
         if (
           data.section === "body" &&
@@ -173,31 +152,26 @@ export function generatePDF() {
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.halign = "left";
         }
-
         if (data.section === "body" && data.column.index === 3) {
           const val = parseFloat(data.cell.text[0]);
           if (!isNaN(val)) {
-            if (val < 90) {
-              data.cell.styles.textColor = [200, 0, 0];
-            } else {
-              data.cell.styles.textColor = [0, 150, 0];
-            }
+            data.cell.styles.textColor = val < 90 ? [200, 0, 0] : [0, 150, 0];
           }
         }
       },
     });
 
-    let barY = currentY + 18;
+    if (leftData && rightData) {
+      const barY = y + 18;
+      drawSymmetryBar(pdf, 130, barY, torqExtSymm);
+      drawSymmetryBar(pdf, 130, barY + 5.5, workExtSymm);
+      drawSymmetryBar(pdf, 130, barY + 11, extWork);
+      drawSymmetryBar(pdf, 130, barY + 23.5, torqFlexSymm);
+      drawSymmetryBar(pdf, 130, barY + 29, workFlexSymm);
+      drawSymmetryBar(pdf, 130, barY + 35, flexWork);
+    }
 
-    drawSymmetryBar(pdf, 130, barY, torqExtSymm);
-    drawSymmetryBar(pdf, 130, barY + 5.5, workExtSymm);
-    drawSymmetryBar(pdf, 130, barY + 11.05, extWork);
-
-    drawSymmetryBar(pdf, 130, barY + 23.5, torqFlexSymm);
-    drawSymmetryBar(pdf, 130, barY + 29, workFlexSymm);
-    drawSymmetryBar(pdf, 130, barY + 35, flexWork);
-
-    currentY = pdf.lastAutoTable.finalY + 10;
+    y = pdf.lastAutoTable.finalY + 10;
   }
 
   pdf.save("make.pdf");
