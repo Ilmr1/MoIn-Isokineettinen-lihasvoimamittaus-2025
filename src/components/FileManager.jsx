@@ -61,10 +61,10 @@ export function FileManager() {
   }
 
   return (
-    <div class="w-full h-full bg-gray-100 pt-4 overflow-auto">
+    <div class="w-full h-full bg-gray-100 overflow-hidden">
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
-        <Tabs.List class="bg-gray-200 p-4 flex flex-wrap min-h-10 gap-2 w-full">
+        <Tabs.List class="bg-gray-200 shrink-0 p-4 flex flex-wrap min-h-10 gap-2 w-full">
           <Tabs.Trigger value="files" class="tab-trigger">
             Files
           </Tabs.Trigger>
@@ -75,7 +75,7 @@ export function FileManager() {
             Measurement
           </Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-visible">
+        <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
           <ParsedFileContext.Provider value={{activeProgram, setActiveProgram, activeFiles, showErrorBands, setShowErrorBands}}>
             <div class="w-full h-full space-y-4 grid place-items-center items-start">
               <FileBrowser/>

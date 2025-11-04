@@ -1,7 +1,6 @@
 import {FiPrinter, FiLogOut, FiHardDrive } from 'solid-icons/fi'
 import { BiRegularExport } from 'solid-icons/bi';
-import { createSignal, For } from "solid-js";
-import { parsedFileData } from '../signals';
+import { For } from "solid-js";
 import { generatePDF } from '../utils/pdfUtils';
 
 export function Sidebar() {
@@ -10,12 +9,10 @@ export function Sidebar() {
     { icon: BiRegularExport, label: "Export" },
     { icon: FiPrinter, label: "Print", onClick: () => generatePDF() },
     { icon: FiLogOut, label: "Quit", onClick: () => window.close() },
-    
   ];
 
   return (
-    <nav class="flex flex-row md:flex-col items-center justify-around md:justify-start
-                space-x-2 md:space-x-0 md:space-y-4 px-2 md:pt-10 h-full">
+    <nav class="side-navigation">
       <For each={otherTools}>
         {(tool) => (
           <div class="flex flex-col items-center py-2">
