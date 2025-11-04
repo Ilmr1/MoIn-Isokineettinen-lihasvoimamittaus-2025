@@ -5,31 +5,15 @@ import {FiChevronDown} from "solid-icons/fi";
 import {FiChevronRight} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
 import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show, untrack} from "solid-js";
-import {createStore, produce, reconcile, unwrap} from "solid-js/store";
+import {produce, reconcile, unwrap} from "solid-js/store";
 import {fileUtils, indexedDBUtils} from "../utils/utils";
-import {parsedFileData, setParsedFileData} from "../signals";
-import {signals} from "../collections/collections";
-import {useParsedFiles} from "../providers";
+import { $selectedSessionsCounts, dataFiltering, disabledRepetitions, files, filterByFirstName, filterByLastName, firstNameInput, foldersThatHaveAccess, lastNameInput, parsedFileData, recentFolders, safeMode, selectedFiles, sessionFilters, sessions, setDataFiltering, setDisabledRepetitions, setFiles, setFilterByFirstName, setFilterByLastName, setFirstNameInput, setFoldersThatHaveAccess, setLastNameInput, setParsedFileData, setRecentFolders, setSafeMode, setSelectedFiles, setSessions, showErrorBands, storeSelectedSessionsCounts, storeSessionFilters, activeProgram, setActiveProgram, setShowErrorBands } from "../signals";
+import {useGlobalContext} from "../providers";
 import {Button} from "./ui/Button.jsx";
 import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
-  const [files, setFiles] = createSignal([]);
-  const [sessions, setSessions] = createSignal([]);
-  const [recentFolders, setRecentFolders] = createSignal([]);
-  const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
-  const [selectedFiles, setSelectedFiles] = createSignal([]);
-  const [$selectedSessionsCounts, storeSelectedSessionsCounts] = createStore({});
-  const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
-  const [filterByLastName, setFilterByLastName] = createSignal("");
-  const [filterByFirstName, setFilterByFirstName] = createSignal("");
-  const [firstNameInput, setFirstNameInput] = createSignal("");
-  const [lastNameInput, setLastNameInput] = createSignal("");
-  const [safeMode, setSafeMode] = createSignal(true)
-  const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
-  const [sessionFilters, storeSessionFilters] = createStore({})
-
-  const {activeProgram, setActiveProgram, activeFiles, showErrorBands, setShowErrorBands} = useParsedFiles();
+  const { activeFiles } = useGlobalContext();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -66,6 +50,26 @@ export function FileBrowser() {
         }));
       }
     })
+  }
+
+  const sortByDate = (a, b, date) => {
+    const aDate = a.files[0].date.split(".").reverse().join("")
+    const bDate = b.files[0].date.split(".").reverse().join("")
+    if (date === "Old") {
+      return aDate.localeCompare(bDate)
+    } else {
+      return bDate.localeCompare(aDate)
+    }
+  }
+
+  const sortByTime = (a, b, time) => {
+    const aTime = a.files[0].time.split(":").reverse().join("")
+    const bTime = b.files[0].time.split(":").reverse().join("")
+    if (time === "Old") {
+      return aTime.localeCompare(bTime)
+    } else {
+      return bTime.localeCompare(aTime)
+    }
   }
 
   const filteredSessions = createMemo(() => {
@@ -116,26 +120,6 @@ export function FileBrowser() {
 
     return returnArray;
   });
-
-  const sortByDate = (a, b, date) => {
-    const aDate = a.files[0].date.split(".").reverse().join("")
-    const bDate = b.files[0].date.split(".").reverse().join("")
-    if (date === "Old") {
-      return aDate.localeCompare(bDate)
-    } else {
-      return bDate.localeCompare(aDate)
-    }
-  }
-  const sortByTime = (a, b, time) => {
-    const aTime = a.files[0].time.split(":").reverse().join("")
-    const bTime = b.files[0].time.split(":").reverse().join("")
-    if (time === "Old") {
-      return aTime.localeCompare(bTime)
-    } else {
-      return bTime.localeCompare(aTime)
-    }
-  }
-
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
