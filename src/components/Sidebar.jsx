@@ -2,6 +2,7 @@ import {FiPrinter, FiLogOut, FiHardDrive } from 'solid-icons/fi'
 import { BiRegularExport } from 'solid-icons/bi';
 import { For } from "solid-js";
 import { generatePDF } from '../utils/pdfUtils';
+import {ListOfSelectedFiles} from "./ListOfSelectedFiles.jsx";
 
 export function Sidebar() {
   const otherTools = [
@@ -28,6 +29,7 @@ export function Sidebar() {
           </div>
         )}
       </For>
+      <ListOfSelectedFiles />
     </nav>
   );
 }
