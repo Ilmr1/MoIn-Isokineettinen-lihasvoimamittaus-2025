@@ -28,6 +28,15 @@ html {
   @apply bg-white shadow text-gray-900;
 }
 
+.side-navigation {
+  .file-tab-wrapper {
+    &.active {
+      background-color: lime;
+    }
+  }
+}
+
+
 
 .session-table {
   display: grid;
