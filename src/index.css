@@ -33,6 +33,9 @@ html {
   display: grid;
   grid-template-columns: 2fr repeat(7, 1fr) auto;
   gap: 8px;
+  overflow-y: auto;
+  min-height: 300px;
+  align-content: start;
 
   .session-header, .session-body, .session-row, .file-row {
     grid-column: 1/-1;
@@ -45,6 +48,14 @@ html {
       gap: 8px;
       align-items: center;
     }
+  }
+
+  .session-header {
+    position: sticky;
+    top: 0px;
+    background-color: #ffffff;
+    outline: 1px solid white;
+    box-shadow: 0 0 5px #0000007a;
   }
 
   .session-row, .file-row {
@@ -83,6 +94,11 @@ html {
   padding: 16px;
   border-radius: 14px;
   overscroll-behavior: contain;
+  flex-direction: column;
+
+  &:open {
+    display: flex;
+  }
 
   #file-popup-close {
     position: absolute;

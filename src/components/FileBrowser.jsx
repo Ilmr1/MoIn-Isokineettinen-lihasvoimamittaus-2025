@@ -225,6 +225,13 @@ export function FileBrowser() {
 
   const toggleDataFiltering = () => setDataFiltering((s) => !s);
 
+  const clearSelectedFiles = () => {
+    batch(() => {
+      setSelectedFiles([]);
+      storeSelectedSessionsCounts(reconcile({}));
+    });
+  }
+
   return (
     <>
       <dialog id="file-popup" class="space-y-4">
@@ -248,10 +255,7 @@ export function FileBrowser() {
         <ListOfRecentFolders />
         <FileSearchForm />
         <SafeSearchCheckbox />
-        <div class="space-y-4">
-          <SessionsAsATable />
-          <ListOfSelectedFiles />
-        </div>
+        <SessionsAsATable />
       </dialog>
       <Show when={activeFiles().length}>
         <div class="flex items-center space-x-2">
@@ -339,7 +343,7 @@ export function FileBrowser() {
           />
           <Dropdown label="Files" disabled/>
         </div>
-        <div class="session-body pb-8 sm:pb-10 md:pb-12">
+        <div class="session-body">
           <For each={filteredSessions()}>
             {(ses) => {
               const [opened, setOpened] = createSignal(openSessionsMemory[ses.sessionId]);
@@ -528,6 +532,13 @@ export function FileBrowser() {
           }}
         >
           Clear filters
+        </Button>
+        <Button
+          variant={activeFiles().length ? "danger" : "secondary"}
+          size="sm"
+          onClick={clearSelectedFiles}
+        >
+          Unselect all
         </Button>
       </div>
     );
