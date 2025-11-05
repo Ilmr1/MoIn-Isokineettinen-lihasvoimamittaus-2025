@@ -66,7 +66,7 @@ export function generatePDF() {
 
     for (const { key, match } of TESTS) {
       if (name.includes(match)) {
-        if (!groups[key]) groups[key] = {};
+        groups[key] ??= {};
         groups[key][side] = analysis;
       }
     }
