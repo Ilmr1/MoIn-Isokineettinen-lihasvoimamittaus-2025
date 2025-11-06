@@ -72,7 +72,7 @@ export function Dropdown(props) {
 
   // --- Dropdownin pystysijainti ---
   const dropdownOffset = () =>
-    selected() ? "calc(100% - 20px)" : "calc(100% - 34px)";
+    selected() ? "calc(100% + 3px)" : "calc(100% - 10px)";
 
   return (
     <div
@@ -86,7 +86,7 @@ export function Dropdown(props) {
         type="button"
         onClick={handleButtonClick}
         disabled={props.disabled}
-        class="relative flex flex-col items-center justify-start cursor-pointer h-[52px] outline-none"
+        class="relative flex flex-col items-center justify-start cursor-pointer h-[30px] outline-none"
         classList={{
           "cursor-default text-gray-400": props.disabled,
           "hover:text-indigo-600": !props.disabled,

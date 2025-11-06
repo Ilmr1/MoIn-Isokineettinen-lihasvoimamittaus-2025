@@ -15,7 +15,7 @@ export function BarChart(props) {
 function Chart(props) {
   asserts.assertTypeString(props.title, "title");
 
-  const svgArea = { width: 350, height: 300, x: 0, y: 0 };
+  const svgArea = { width: 250, height: 300, x: 0, y: 0 };
 
   return (
     <Show when={props.listOfParsedCTM()?.length}>
@@ -44,7 +44,7 @@ function Chart(props) {
     asserts.assertIsIntegerLike(props.analysisExtKey, "analysisExtKey");
     asserts.assertIsIntegerLike(props.analysisFlexKey, "analysisFlexKey");
 
-    const gap = 50;
+    const gap = 10;
     const groups = createMemo(() => {
       const ext = [];
       const flex = [];

@@ -1,5 +1,4 @@
 import { batch, createMemo, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
-import { SVGChartContext } from "../providers";
 import { arrayUtils, chartUtils, CTMUtils, numberUtils } from "../utils/utils";
 import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
@@ -47,11 +46,9 @@ function Chart(props) {
 
   return (
     <Show when={!error()} fallback="Asserts failed">
-      <SVGChartContext.Provider value={{ parsedCTM: () => props.parsedCTM, min: () => props.min, max: () => props.max, dataIndex: () => props.dataIndex, mouseX, mouseY }}>
-        <svg class="cp-chart" classList={{ left: CTMUtils.isLeftLeg(props.parsedCTM), right: CTMUtils.isRightLeg(props.parsedCTM) }} width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-          <ChartWrapper title={props.title} width={width - paddingLeft - paddingRight} height={height - paddingTop - paddingBottom} x={paddingLeft} y={paddingTop} />
-        </svg>
-      </SVGChartContext.Provider>
+      <svg class="cp-chart" classList={{ left: CTMUtils.isLeftLeg(props.parsedCTM), right: CTMUtils.isRightLeg(props.parsedCTM) }} width={width} height={height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
+        <ChartWrapper title={props.title} width={width - paddingLeft - paddingRight} height={height - paddingTop - paddingBottom} x={paddingLeft} y={paddingTop} />
+      </svg>
     </Show>
   );
 }

@@ -1,35 +1,49 @@
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import {Checkbox} from "./ui/Checkbox.jsx";
-import {FiChevronDown} from "solid-icons/fi";
-import {FiChevronRight} from "solid-icons/fi";
+import {FiChevronDown, FiChevronRight} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
-import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show, untrack} from "solid-js";
-import {createStore, produce, reconcile, unwrap} from "solid-js/store";
+import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show} from "solid-js";
+import {produce, reconcile, unwrap} from "solid-js/store";
 import {fileUtils, indexedDBUtils} from "../utils/utils";
-import {parsedFileData, setParsedFileData} from "../signals";
-import {signals} from "../collections/collections";
-import {useParsedFiles} from "../providers";
+import {
+  $selectedSessionsCounts,
+  dataFiltering,
+  disabledRepetitions,
+  files,
+  filterByFirstName,
+  filterByLastName,
+  firstNameInput,
+  foldersThatHaveAccess,
+  lastNameInput,
+  recentFolders,
+  safeMode,
+  selectedFiles,
+  sessionFilters,
+  sessions,
+  setDataFiltering,
+  setFiles,
+  setFilterByFirstName,
+  setFilterByLastName,
+  setFirstNameInput,
+  setFoldersThatHaveAccess,
+  setLastNameInput,
+  setParsedFileData,
+  setRecentFolders,
+  setSafeMode,
+  setSelectedFiles,
+  setSessions,
+  setShowErrorBands,
+  showErrorBands,
+  storeSelectedSessionsCounts,
+  storeSessionFilters
+} from "../signals";
+import {useGlobalContext} from "../providers";
 import {Button} from "./ui/Button.jsx";
 import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
-  const [files, setFiles] = createSignal([]);
-  const [sessions, setSessions] = createSignal([]);
-  const [recentFolders, setRecentFolders] = createSignal([]);
-  const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
-  const [selectedFiles, setSelectedFiles] = createSignal([]);
-  const [$selectedSessionsCounts, storeSelectedSessionsCounts] = createStore({});
-  const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
-  const [filterByLastName, setFilterByLastName] = createSignal("");
-  const [filterByFirstName, setFilterByFirstName] = createSignal("");
-  const [firstNameInput, setFirstNameInput] = createSignal("");
-  const [lastNameInput, setLastNameInput] = createSignal("");
-  const [safeMode, setSafeMode] = createSignal(true)
-  const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
-  const [sessionFilters, storeSessionFilters] = createStore({})
-
-  const {activeProgram, setActiveProgram, activeFiles, showErrorBands, setShowErrorBands} = useParsedFiles();
+  const { activeFiles } = useGlobalContext();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -66,6 +80,26 @@ export function FileBrowser() {
         }));
       }
     })
+  }
+
+  const sortByDate = (a, b, date) => {
+    const aDate = a.files[0].date.split(".").reverse().join("")
+    const bDate = b.files[0].date.split(".").reverse().join("")
+    if (date === "Old") {
+      return aDate.localeCompare(bDate)
+    } else {
+      return bDate.localeCompare(aDate)
+    }
+  }
+
+  const sortByTime = (a, b, time) => {
+    const aTime = a.files[0].time.split(":").reverse().join("")
+    const bTime = b.files[0].time.split(":").reverse().join("")
+    if (time === "Old") {
+      return aTime.localeCompare(bTime)
+    } else {
+      return bTime.localeCompare(aTime)
+    }
   }
 
   const filteredSessions = createMemo(() => {
@@ -116,26 +150,6 @@ export function FileBrowser() {
 
     return returnArray;
   });
-
-  const sortByDate = (a, b, date) => {
-    const aDate = a.files[0].date.split(".").reverse().join("")
-    const bDate = b.files[0].date.split(".").reverse().join("")
-    if (date === "Old") {
-      return aDate.localeCompare(bDate)
-    } else {
-      return bDate.localeCompare(aDate)
-    }
-  }
-  const sortByTime = (a, b, time) => {
-    const aTime = a.files[0].time.split(":").reverse().join("")
-    const bTime = b.files[0].time.split(":").reverse().join("")
-    if (time === "Old") {
-      return aTime.localeCompare(bTime)
-    } else {
-      return bTime.localeCompare(aTime)
-    }
-  }
-
 
   createRenderEffect(on(recentFolders, async folders => {
     const newFoldersThatHaveAccess = [];
@@ -225,6 +239,13 @@ export function FileBrowser() {
 
   const toggleDataFiltering = () => setDataFiltering((s) => !s);
 
+  const clearSelectedFiles = () => {
+    batch(() => {
+      setSelectedFiles([]);
+      storeSelectedSessionsCounts(reconcile({}));
+    });
+  }
+
   return (
     <>
       <dialog id="file-popup" class="space-y-4">
@@ -248,10 +269,7 @@ export function FileBrowser() {
         <ListOfRecentFolders />
         <FileSearchForm />
         <SafeSearchCheckbox />
-        <div class="space-y-4">
-          <SessionsAsATable />
-          <ListOfSelectedFiles />
-        </div>
+        <SessionsAsATable />
       </dialog>
       <Show when={activeFiles().length}>
         <div class="flex items-center space-x-2">
@@ -339,7 +357,7 @@ export function FileBrowser() {
           />
           <Dropdown label="Files" disabled/>
         </div>
-        <div class="session-body pb-8 sm:pb-10 md:pb-12">
+        <div class="session-body">
           <For each={filteredSessions()}>
             {(ses) => {
               const [opened, setOpened] = createSignal(openSessionsMemory[ses.sessionId]);
@@ -529,107 +547,15 @@ export function FileBrowser() {
         >
           Clear filters
         </Button>
+        <Button
+          variant={activeFiles().length ? "danger" : "secondary"}
+          size="sm"
+          onClick={clearSelectedFiles}
+        >
+          Unselect all
+        </Button>
       </div>
     );
   }
-
-  function ListOfSelectedFiles() {
-    const clearSelectedFiles = () => {
-      batch(() => {
-        setSelectedFiles([]);
-        storeSelectedSessionsCounts(reconcile({}));
-      });
-    }
-
-    const removeFileSelection = (i) => batch(() => {
-      const { fileHandler } = untrack(selectedFiles)[i];
-      batch(() => {
-        setSelectedFiles(files => {
-          files.splice(i, 1);
-          return [...files];
-        });
-        for (const key in $selectedSessionsCounts) {
-          if ($selectedSessionsCounts[key].includes(fileHandler)) {
-            storeSelectedSessionsCounts(produce(store => {
-              const newFiles = store[key].filter(f => f.fileHandler !== fileHandler)
-              if (newFiles.length) {
-                store[key] = newFiles;
-              } else {
-                delete store[key];
-              }
-            }));
-
-            break;
-          }
-        }
-      })
-    });
-
-    const toggleRepetitionDisable = (index, repetition) => {
-      setDisabledRepetitions(reps => {
-        reps[index] ??= {}
-        reps[index][repetition] = !reps[index][repetition];
-        reps[index][repetition + 1] = !reps[index][repetition + 1];
-        return {...reps};
-      });
-    }
-
-    return (
-      <Show when={activeFiles().length}>
-        <div class="bg-gray-50 p-3 rounded-lg space-y-2">
-          <div class="flex justify-center gap-2">
-            <For
-              each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))].sort()}>{programType => (
-              <Button
-                variant={activeProgram() === programType ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => setActiveProgram(programType)}
-              >
-                {programType}
-              </Button>
-
-            )}</For>
-          </div>
-          <ul class="space-y-1">
-            <For each={activeFiles()}>{(fileHandler) => (
-              <li class="text-sm space-x-1">
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => removeFileSelection(fileHandler.index)}
-                >
-                  remove
-                </Button>
-                <span class="font-medium">{fileHandler.name} {fileHandler.legSide} {fileHandler.time}</span>
-                <div class="file-color-dot" style={{"background-color": fileHandler.baseColor}}></div>
-                <ol class="flex flex-col items-center">
-                  <For each={fileHandler.rawObject.splitCollections.angle.splits}>{(data, j) => (
-                    <Show when={j() % 2 === 0}>
-                      <li>
-                        <Checkbox
-                          id={`disableRepetition-${fileHandler.index}-${j()}`}
-                          label={`Repetition ${j() / 2 + 1}`}
-                          checked={!data.disabled}
-                          onChange={() => toggleRepetitionDisable(fileHandler.index, j())}
-                        />
-                      </li>
-                    </Show>
-                  )}</For>
-                </ol>
-              </li>
-            )}</For>
-          </ul>
-          <div class="flex space-x-2">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={clearSelectedFiles}
-            >
-              Clear all
-            </Button>
-          </div>
-        </div>
-      </Show>
-    )
-  }
 }
+

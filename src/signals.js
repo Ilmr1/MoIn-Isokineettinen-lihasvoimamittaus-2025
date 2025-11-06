@@ -1,3 +1,22 @@
 import { createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
+import { signals } from "./collections/collections";
 
 export const [parsedFileData, setParsedFileData] = createSignal([]);
+export const [files, setFiles] = createSignal([]);
+export const [selectedFiles, setSelectedFiles] = createSignal([]);
+export const [$selectedSessionsCounts, storeSelectedSessionsCounts] = createStore({});
+export const [sessions, setSessions] = createSignal([]);
+export const [recentFolders, setRecentFolders] = createSignal([]);
+export const [foldersThatHaveAccess, setFoldersThatHaveAccess] = createSignal([]);
+export const [disabledRepetitions, setDisabledRepetitions] = createSignal({});
+export const [filterByLastName, setFilterByLastName] = createSignal("");
+export const [filterByFirstName, setFilterByFirstName] = createSignal("");
+export const [firstNameInput, setFirstNameInput] = createSignal("");
+export const [lastNameInput, setLastNameInput] = createSignal("");
+export const [safeMode, setSafeMode] = createSignal(true)
+export const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(true);
+export const [sessionFilters, storeSessionFilters] = createStore({})
+export const [activeProgram, setActiveProgram] = createSignal(null);
+export const [showErrorBands, setShowErrorBands] = createSignal(true);
+export const [$hoveredRepetition, storeHoveredRepetition] = createStore({fileIndex: -1, repetitionIndex: -1})
