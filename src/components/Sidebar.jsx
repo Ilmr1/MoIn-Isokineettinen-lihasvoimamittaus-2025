@@ -74,6 +74,10 @@ function ActiveFilesAndRepetitions() {
           break;
         }
       }
+
+      if (i >= untrack(activeFileIndex)) {
+        setActiveFileIndex(v => Math.max(v - 1, 0));
+      }
     })
   });
 
