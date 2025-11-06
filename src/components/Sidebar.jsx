@@ -4,7 +4,7 @@ import { batch, createEffect, createMemo, createSignal, For, untrack } from "sol
 import { generatePDF } from '../utils/pdfUtils';
 import {ListOfSelectedFiles} from "./ListOfSelectedFiles.jsx";
 import { ActiveProgramTypeButtons } from './ActiveProgramTypeButtons.jsx';
-import { $selectedSessionsCounts, activeProgram, selectedFiles, setSelectedFiles, storeSelectedSessionsCounts } from '../signals.js';
+import { $selectedSessionsCounts, activeProgram, selectedFiles, setSelectedFiles, storeHoveredRepetition, storeSelectedSessionsCounts } from '../signals.js';
 import { useGlobalContext } from '../providers.js';
 import { Button } from './ui/Button.jsx';
 import { ListOfFileHandlerRepetitions } from './ListOfFileHandlerRepetitions.jsx';
@@ -14,13 +14,12 @@ import { signals } from '../collections/collections.js';
 export function Sidebar() {
   const otherTools = [
     { icon: FiHardDrive, label: "Files", onClick: () => document.querySelector("#file-popup")?.showModal() },
-    { icon: BiRegularExport, label: "Export" },
-    { icon: FiPrinter, label: "Print", onClick: () => generatePDF() },
-    { icon: FiLogOut, label: "Quit", onClick: () => window.close() },
+    { icon: FiPrinter, label: "Print", onClick: () => generatePDF() }
   ];
 
   return (
     <nav class="side-navigation">
+      <div class="flex justify-center ">
       <For each={otherTools}>
         {(tool) => (
           <div class="flex flex-col items-center py-2">
@@ -36,6 +35,7 @@ export function Sidebar() {
           </div>
         )}
       </For>
+      </div>
       <ActiveProgramTypeButtons />
       <ActiveFilesAndRepetitions />
       {/* <ListOfSelectedFiles /> */}
@@ -90,9 +90,9 @@ function ActiveFilesAndRepetitions() {
     <Show when={activeFiles().length}>
       <div class="flex gap-4">
         <For each={activeFiles()}>{(fileHandler, i) => (
-          <div class="file-tab-wrapper flex gap-1" classList={{active: activeFileIndex() === i()}}>
+          <div class="file-tab-wrapper flex gap-1" classList={{ active: activeFileIndex() === i() }}>
             <button onClick={() => setActiveFileIndex(i())}>
-              <div class="file-color-dot" style={{"background-color": fileHandler.baseColor}}></div>
+              <div class="file-color-dot" style={{ "background-color": fileHandler.baseColor }}></div>
               <span class="font-medium">{fileHandler.legSide}</span>
             </button>
             <button onClick={() => removeFileSelection(fileHandler.index)}>x</button>
@@ -101,7 +101,9 @@ function ActiveFilesAndRepetitions() {
       </div>
       <p>{activeFile().name} {activeFile().time}</p>
       <p>Repetitions</p>
-      <ListOfFileHandlerRepetitions fileHandler={activeFile()} />
+      <ul onMouseLeave={() => storeHoveredRepetition({fileIndex: -1, repetitionIndex: -1})}>
+        <ListOfFileHandlerRepetitions fileHandler={activeFile()} />
+      </ul>
       <Button
         variant="danger"
         size="sm"

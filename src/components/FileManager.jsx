@@ -63,7 +63,7 @@ export function FileManager() {
             </div>
             <For each={activeFiles()}>{parsedData => (
               <>
-                <ThreeCharts parsedCTM={parsedData.rawObject}/>
+                <ThreeCharts parsedCTM={parsedData.rawObject} fileIndex={parsedData.index}/>
                 <div>
                   <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
                   <button class="button_blue"

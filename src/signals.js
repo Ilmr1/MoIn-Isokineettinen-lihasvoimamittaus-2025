@@ -19,3 +19,4 @@ export const [dataFiltering, setDataFiltering] = signals.localStorageBoolean(tru
 export const [sessionFilters, storeSessionFilters] = createStore({})
 export const [activeProgram, setActiveProgram] = createSignal(null);
 export const [showErrorBands, setShowErrorBands] = createSignal(true);
+export const [$hoveredRepetition, storeHoveredRepetition] = createStore({fileIndex: -1, repetitionIndex: -1})
