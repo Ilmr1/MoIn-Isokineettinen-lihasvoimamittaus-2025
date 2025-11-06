@@ -4,7 +4,7 @@ import { batch, createEffect, createMemo, createSignal, For, untrack } from "sol
 import { generatePDF } from '../utils/pdfUtils';
 import {ListOfSelectedFiles} from "./ListOfSelectedFiles.jsx";
 import { ActiveProgramTypeButtons } from './ActiveProgramTypeButtons.jsx';
-import { $selectedSessionsCounts, activeProgram, selectedFiles, setSelectedFiles, storeHoveredRepetition, storeSelectedSessionsCounts } from '../signals.js';
+import { $selectedSessionsCounts, activeProgram, selectedFiles, setDisabledRepetitions, setSelectedFiles, storeHoveredRepetition, storeSelectedSessionsCounts } from '../signals.js';
 import { useGlobalContext } from '../providers.js';
 import { Button } from './ui/Button.jsx';
 import { ListOfFileHandlerRepetitions } from './ListOfFileHandlerRepetitions.jsx';
@@ -47,6 +47,16 @@ function ActiveFilesAndRepetitions() {
         files.splice(i, 1);
         return [...files];
       });
+
+      setDisabledRepetitions(reps => {
+        if (i in reps) {
+          delete reps[i];
+          return {...reps};
+        }
+
+        return reps;
+      });
+
       for (const key in $selectedSessionsCounts) {
         if ($selectedSessionsCounts[key].includes(fileHandler)) {
           storeSelectedSessionsCounts(produce(store => {
