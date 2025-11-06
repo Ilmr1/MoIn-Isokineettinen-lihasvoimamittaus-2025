@@ -10,31 +10,18 @@ import { Button } from './ui/Button.jsx';
 import { ListOfFileHandlerRepetitions } from './ListOfFileHandlerRepetitions.jsx';
 import { produce, reconcile } from 'solid-js/store';
 import { signals } from '../collections/collections.js';
+import { IconButton } from './ui/IconButton.jsx';
 
 export function Sidebar() {
-  const otherTools = [
-    { icon: FiHardDrive, label: "Files", onClick: () => document.querySelector("#file-popup")?.showModal() },
-    { icon: FiPrinter, label: "Print", onClick: () => generatePDF() }
-  ];
+  const {activeFiles} = useGlobalContext();
 
   return (
     <nav class="side-navigation">
       <div class="flex justify-center ">
-      <For each={otherTools}>
-        {(tool) => (
-          <div class="flex flex-col items-center py-2">
-            <button
-              class="flex flex-col items-center justify-center w-14 h-14 hover:bg-gray-200 rounded-xl transition-colors"
-              onClick={tool.onClick}
-            >
-              <tool.icon class="w-6 h-6 text-gray-600" />
-              <span class="mt-1 text-xs text-gray-800 font-medium text-center">
-                {tool.label}
-              </span>
-            </button>
-          </div>
-        )}
-      </For>
+        <IconButton onClick={() => document.querySelector("#file-popup")?.showModal()} icon={FiHardDrive} label="files" />
+        <Show when={activeFiles().length}>
+          <IconButton onClick={generatePDF} icon={FiPrinter} label="Print" />
+        </Show>
       </div>
       <ActiveProgramTypeButtons />
       <ActiveFilesAndRepetitions />
