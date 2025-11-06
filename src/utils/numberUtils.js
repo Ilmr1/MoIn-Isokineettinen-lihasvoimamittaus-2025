@@ -36,7 +36,7 @@ export const symmetryPercent = (value1, value2) => {
   let num2 = Math.abs(parseFloat(value2));
   let smaller = Math.min(num1, num2)
   let larger = Math.max(num1, num2)
-  return ((smaller/larger) * 100).toFixed(2);
+  return padTrucateDecimalsToLength(((smaller/larger) * 100), 3);
 };
 
 export const trueToOneAndFalseToNegativeOne = boolean => !!boolean * 2 - 1;
