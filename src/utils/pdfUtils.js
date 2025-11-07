@@ -1,7 +1,7 @@
 import { parsedFileData } from "../signals";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { symmetryPercent } from "./numberUtils";
+import { symmetryPercent, padTrucateDecimalsToLength } from "./numberUtils";
 import tickIcon from "../assets/icons/tick.png";
 import crossIcon from "../assets/icons/delete.png";
 
@@ -91,7 +91,11 @@ export function generatePDF() {
   const marginBottom = 10;
   let y = 35;
 
-  const getVal = (data, idx) => (data ? Math.abs(data[idx]).toFixed(2) : "–");
+  const getVal = (data, idx) => {
+    if (!data || typeof data[idx] !== "number") return "–";
+    return padTrucateDecimalsToLength(Math.abs(data[idx]), 3);
+  };
+
 
   for (const { key, title } of TESTS) {
     const test = groups[key];
@@ -119,11 +123,11 @@ export function generatePDF() {
 
     const rows = [
       ["Etureisi", "", "", ""],
-      ["Huippuvääntö (Nm)", getVal(rightData, 112), getVal(leftData, 112), torqExtSymm],
+      ["Huippuvääntö (Nm)", getVal(rightData, 110), getVal(leftData, 110), torqExtSymm],
       ["Kokonaistyö (J)", getVal(rightData, 212), getVal(leftData, 212), workExtSymm],
       ["Huippuvääntö / BW", getVal(rightData, 203), getVal(leftData, 203), extWork],
       ["Takareisi", "", "", ""],
-      ["Huippuvääntö (Nm)", getVal(rightData, 113), getVal(leftData, 113), torqFlexSymm],
+      ["Huippuvääntö (Nm)", getVal(rightData, 111), getVal(leftData, 111), torqFlexSymm],
       ["Kokonaistyö (J)", getVal(rightData, 213), getVal(leftData, 213), workFlexSymm],
       ["Huippuvääntö / BW", getVal(rightData, 204), getVal(leftData, 204), flexWork],
       [
