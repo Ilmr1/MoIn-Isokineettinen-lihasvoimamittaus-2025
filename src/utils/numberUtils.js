@@ -1,3 +1,14 @@
+export const roundDecimals = (number, decimals) => {
+  const precision = Math.pow(10, decimals);
+  return Math.round(number * precision) / precision;
+}
+
+export const padRoundDecimalsToLength = (number, charactersCount, maxDecimalsToKeep) => {
+  const decimals = String(Math.trunc(Math.abs(number))).length;
+  const decimalsToKeep = min(Math.max(0, charactersCount - decimals), maxDecimalsToKeep);
+  return roundDecimals(number, decimalsToKeep).toFixed(decimalsToKeep);
+}
+
 export const truncDecimals = (number, decimals) => {
   const precision = Math.pow(10, decimals);
   return Math.trunc(number * precision) / precision;
