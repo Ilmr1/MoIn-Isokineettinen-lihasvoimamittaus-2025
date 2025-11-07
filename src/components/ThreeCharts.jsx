@@ -75,7 +75,7 @@ function Chart(props) {
                 startIndex={props.parsedCTM.splitCollections.angle.startIndex}
                 endIndex={props.parsedCTM.splitCollections.angle.endIndex}
               />
-              <CircleBar
+              <CircleChart
                 {...props}
                 {...controls}
                 mouseArea={mouseArea}
@@ -151,7 +151,7 @@ function Chart(props) {
   }
 }
 
-function CircleBar(props) {
+function CircleChart(props) {
   asserts.assertTruthy(props.parsedCTM, "parsedCTM");
 
   const svgArea = { width: 500, height: 250, x: 0, y: 0 };
@@ -174,11 +174,17 @@ function CircleBar(props) {
       <svg width={svgArea.width} height={svgArea.height}>
         <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
           <>
-            <ChartGrid {...borderArea} />
             <ChartBorder {...borderArea} />
             <ChartTextTop {...borderArea} title="Torque repetitions" />
             <ChartPadding name="lines" {...borderArea} padding={15}>{lineArea => (
               <>
+                <ChartGridAlignedWithFloorYAxisLabels
+                  startValue={props.maxValue}
+                  endValue={props.minValue}
+                  {...lineArea}
+                  x={borderArea.x}
+                  width={borderArea.width}
+                />
                 <ChartHorizontalZeroLine
                   {...lineArea}
                   x={borderArea.x}

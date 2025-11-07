@@ -28,10 +28,9 @@ function Chart(props) {
       <svg width={svgArea.width} height={svgArea.height}>
         <ChartPadding {...svgArea} paddingLeft={1} paddingTop={18} paddingRight={1} paddingBottom={1}>{chartArea => (
           <>
-            <ChartGrid {...chartArea} />
             <ChartBorder {...chartArea} />
             <ChartHeader {...chartArea} title={props.title} />
-            <ChartPadding {...chartArea} paddingInline={25} paddingBlock={25}>{linesArea => (
+            <ChartPadding {...chartArea} padding={25}>{linesArea => (
               <BarGroups {...linesArea} {...props}></BarGroups>
             )}</ChartPadding>
           </>
