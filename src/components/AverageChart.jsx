@@ -1,5 +1,5 @@
 import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
-import { ChartBorder, ChartErrorBands, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLine, ChartHoverToolTip, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartErrorBands, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLine, ChartHoverToolTip, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextBottom, ChartTextTop, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { arrayUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
@@ -27,7 +27,7 @@ function Chart(props) {
   });
 
   const controls = { mouseX, mouseY };
-  const svgArea = { width: 800, height: 220, x: 0, y: 0 };
+  const svgArea = { width: 800, height: 250, x: 0, y: 0 };
 
   return (
     <Show when={props.listOfParsedCTM()?.length}>
@@ -44,7 +44,6 @@ function Chart(props) {
     const averageKey = createMemo(() => `averagePower${props.type}`);
 
     const combinedValues = createMemo(() => {
-      const avgKey = averageKey();
       const files = props.listOfParsedCTM();
       const type = props.type;
       const startAngles = [];
@@ -69,8 +68,6 @@ function Chart(props) {
         maxValue: Math.max(...files.map(parsedData => parsedData.rawObject.pointCollections[errorAverageKey()].maxValue)),
         xStartValue,
         xEndValue,
-        // startIndex: Math.min(...files.map(parsedData => parsedData.rawObject.splitCollections[avgKey].startIndex)),
-        // endIndex: Math.max(...files.map(parsedData => parsedData.rawObject.splitCollections[avgKey].endIndex)),
       }
     });
 
@@ -78,7 +75,7 @@ function Chart(props) {
 
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
-        <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
+        <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={40} paddingTop={22}>{borderArea => (
           <>
             <ChartTextTop {...borderArea} title={props.type + " average"} />
             <ChartBorder {...borderArea} />
@@ -98,11 +95,13 @@ function Chart(props) {
                   x={borderArea.x}
                   width={borderArea.width}
                 />
+                <text x={borderArea.x + borderArea.width} y={borderArea.y} dominant-baseline="ideographic" text-anchor="end">Torque [Nm]</text>
+                <ChartTextBottom {...borderArea} y={borderArea.y + borderArea.height + 20} title="Position [deg]" />
                 <ChartXAxisFloor {...borderArea} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} x={lineArea.x} width={lineArea.width} />
                 <ChartYAxisFloor {...borderArea} startValue={combinedValues().maxValue} endValue={combinedValues().minValue} y={lineArea.y} height={lineArea.height} />
                 <Show when={props.errorBands}>
                   <g data-error-bands>
-                    <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
+                    <For each={props.listOfParsedCTM()}>{parsedData => (
                       <ChartErrorBands
                         points={parsedData.rawObject.pointCollections[errorAverageKey()].points}
                         splits={parsedData.rawObject.splitCollections[averageKey()].splits}
@@ -117,7 +116,7 @@ function Chart(props) {
                   </g>
                 </Show>
                 <g data-lines>
-                  <For each={props.listOfParsedCTM()}>{(parsedData, i) => (
+                  <For each={props.listOfParsedCTM()}>{parsedData => (
                     <ChartPath
                       points={parsedData.rawObject.pointCollections[averageKey()].points}
                       splits={parsedData.rawObject.splitCollections[averageKey()].splits}

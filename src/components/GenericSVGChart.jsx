@@ -1051,7 +1051,7 @@ export function ChartXAxisFloor(props) {
             y={props.y + props.height + props.gap}
             {...local}
           >
-            {numberUtils.truncDecimals(value, 1)}
+            {numberUtils.truncDecimals(value, 1)}{props.unit}
           </text>
         </>
       )}</For>
@@ -1126,7 +1126,7 @@ export function ChartYAxisFloor(props) {
             y={labels().paddingTop + props.y + labels().gap * i()}
             {...local}
           >
-            {numberUtils.truncDecimals(value, 1)}
+            {numberUtils.truncDecimals(value, 1)}{props.unit}
           </text>
         </>
       )}</For>
