@@ -126,7 +126,7 @@ function ActiveFilesAndRepetitions() {
     setActiveFileIndex(0);
   });
 
-  const activeFile = createMemo(() => activeFiles()[activeFileIndex()]);
+  const activeFile = createMemo(() => activeFiles()[activeFileIndex()] ?? activeFiles()[0]);
 
   return (
     <div class="flex flex-col gap-4">
