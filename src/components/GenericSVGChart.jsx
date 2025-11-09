@@ -4,6 +4,7 @@ import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
 
 const debug = false;
+const labelIncrements = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 25, 40, 50, 100];
 
 export function GenericSVGChart(props) {
   return (
@@ -501,7 +502,6 @@ export function ChartGridAlignedWithFloorXAxisLabels(props) {
   }, props);
   const [local, _] = splitProps(props, ["fill", "stroke-width", "stroke-dasharray", "stroke"]);
 
-  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
   const idealSegmentSize = 40;
 
   const grid = createMemo(() => {
@@ -550,7 +550,6 @@ export function ChartGridAlignedWithFloorYAxisLabels(props) {
   }, props);
   const [local, _] = splitProps(props, ["fill", "stroke-width", "stroke-dasharray", "stroke"]);
 
-  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
   const idealSegmentSize = 30;
 
   const grid = createMemo(() => {
@@ -917,15 +916,13 @@ export function ChartXAxisCeil(props) {
 
     const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
 
-    const gapSizes = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
-
     const labels = createMemo(() => {
       const { width, startValue, endValue } = props;
       const delta = endValue - startValue;
       const idealSegmentSize = 40;
       const idealSegment = Math.round(width / idealSegmentSize);
       const axisGap = delta / idealSegment;
-      const gap = arrayUtils.findByMinDelta(gapSizes, axisGap);
+      const gap = arrayUtils.findByMinDelta(labelIncrements, axisGap);
 
       const direction = startValue < endValue;
       const roundedStartValue = (direction ? Math.floor(startValue / gap) : Math.ceil(startValue / gap)) * gap;
@@ -1001,7 +998,6 @@ export function ChartXAxisFloor(props) {
 
   const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
 
-  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
   const idealSegmentSize = 40;
 
   const labels = createMemo(() => {
@@ -1051,7 +1047,7 @@ export function ChartXAxisFloor(props) {
             y={props.y + props.height + props.gap}
             {...local}
           >
-            {numberUtils.truncDecimals(value, 1)}
+            {numberUtils.truncDecimals(value, 1)}{props.unit}
           </text>
         </>
       )}</For>
@@ -1069,6 +1065,7 @@ export function ChartYAxisFloor(props) {
 
   props = mergeProps({
     fill: "black",
+    decimals: 1,
     gap: 3,
     "font-size": 16
   }, props);
@@ -1076,7 +1073,6 @@ export function ChartYAxisFloor(props) {
 
   const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
 
-  const labelIncrements = [0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 40, 50, 100];
   const idealSegmentSize = 30;
 
   const labels = createMemo(() => {
@@ -1126,7 +1122,7 @@ export function ChartYAxisFloor(props) {
             y={labels().paddingTop + props.y + labels().gap * i()}
             {...local}
           >
-            {numberUtils.truncDecimals(value, 1)}
+            {numberUtils.roundDecimals(value, props.decimals)}{props.unit}
           </text>
         </>
       )}</For>
@@ -1135,11 +1131,11 @@ export function ChartYAxisFloor(props) {
 }
 
 export function ChartPadding(props) {
-  asserts.assertTypeNumber(props.x);
-  asserts.assertTypeNumber(props.y);
-  asserts.assertTypeNumber(props.width);
-  asserts.assertTypeNumber(props.height);
-  asserts.assertTypeFunction(props.children);
+  asserts.assertTypeNumber(props.x, "x");
+  asserts.assertTypeNumber(props.y, "y");
+  asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
+  asserts.assertTypeFunction(props.children, "children");
 
   const right = createMemo(() => props.paddingRight ?? props.paddingInline ?? props.padding ?? 0);
   const left = createMemo(() => props.paddingLeft ?? props.paddingInline ?? props.padding ?? 0);

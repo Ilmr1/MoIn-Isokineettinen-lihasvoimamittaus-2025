@@ -50,15 +50,15 @@ export function FileManager() {
           <div className="w-full h-full space-y-4 grid place-items-center items-start">
             <FileBrowser/>
             <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()}/>
-            <div className="grid grid-cols-3 gap-2">
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max" analysisExtKey="110" analysisFlexKey="111"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" analysisExtKey="112"
+            <div class="grid grid-cols-3 gap-2">
+              <BarChart listOfParsedCTM={activeFiles} title="Torque max" unit="[deg/s]" analysisExtKey="110" analysisFlexKey="111"/>
+              <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" unit="[deg/s*kg]" analysisExtKey="112"
                         analysisFlexKey="113"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." analysisExtKey="203"
+              <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." unit="[W]" analysisExtKey="203"
                         analysisFlexKey="204"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" analysisExtKey="116"
+              <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" unit="[J]" analysisExtKey="116"
                         analysisFlexKey="117"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" analysisExtKey="114"
+              <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" unit="[J/kg]" analysisExtKey="114"
                         analysisFlexKey="115"/>
             </div>
             <For each={activeFiles()}>{parsedData => (
