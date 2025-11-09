@@ -72,7 +72,7 @@ export function FileManager() {
                           onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt
                   </button>
                 </div>
-                <Repetitions repetitions={parsedData.rawObject.repetitions}/>
+                {/* <Repetitions repetitions={parsedData.rawObject.repetitions}/> */}
               </>
             )}</For>
           </div>
