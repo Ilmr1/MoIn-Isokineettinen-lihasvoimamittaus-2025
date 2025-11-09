@@ -1,7 +1,7 @@
 import { parsedFileData } from "../signals";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { symmetryPercent, padTrucateDecimalsToLength } from "./numberUtils";
+import { symmetryPercent, padRoundDecimalsToLength } from "./numberUtils";
 import tickIcon from "../assets/icons/tick.png";
 import crossIcon from "../assets/icons/delete.png";
 
@@ -97,7 +97,7 @@ export function generatePDF() {
 
   const getVal = (data, idx) => {
     if (!data || typeof data[idx] !== "number") return "–";
-    return padTrucateDecimalsToLength(Math.abs(data[idx]), 3);
+    return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
   };
 
 
