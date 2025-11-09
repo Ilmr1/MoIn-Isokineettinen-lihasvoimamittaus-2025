@@ -259,13 +259,16 @@ export function FileBrowser() {
           Close
         </Button>
 
-        <Button
-          variant="primary"
-          size="xl"
-          onClick={handleOpenDirectory}
-        >
-          Open Folder
-        </Button>
+        <div class="flex justify-center">
+          <Button
+            variant="primary"
+            size="xl"
+            onClick={handleOpenDirectory}
+          >
+            Open Folder
+          </Button>
+        </div>
+
 
         <ListOfRecentFolders/>
         <FileSearchForm/>
