@@ -4,7 +4,7 @@ import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
 
 const debug = false;
-const labelIncrements = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 25, 40, 50, 100];
+const labelIncrements = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 25, 40, 50, 100, 250, 500];
 
 export function GenericSVGChart(props) {
   return (
