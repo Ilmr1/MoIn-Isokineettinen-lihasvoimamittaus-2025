@@ -259,13 +259,16 @@ export function FileBrowser() {
           Close
         </Button>
 
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={handleOpenDirectory}
-        >
-          Open Folder
-        </Button>
+        <div class="flex justify-center">
+          <Button
+            variant="primary"
+            size="xl"
+            onClick={handleOpenDirectory}
+          >
+            Open Folder
+          </Button>
+        </div>
+
 
         <ListOfRecentFolders/>
         <FileSearchForm/>
@@ -306,7 +309,7 @@ export function FileBrowser() {
     });
 
     return (
-      <div class="session-table">
+      <div class="session-table overflow-y-auto">
         <div class="session-header">
           <Dropdown label="Session / File" disabled/>
           <Dropdown
@@ -487,7 +490,7 @@ export function FileBrowser() {
 
   function FileSearchForm() {
     return (
-      <form onSubmit={handleSubmit} class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <form onSubmit={handleSubmit} class="flex justify-center items-center gap-3 mt-4">
         <input
           type="text"
           placeholder="First name"

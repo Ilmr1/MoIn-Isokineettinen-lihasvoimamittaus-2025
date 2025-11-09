@@ -44,7 +44,7 @@ export function Sidebar() {
 
   return (
     <nav
-      class="flex flex-col bg-gray-50 border-r border-gray-200
+      class="flex flex-col bg-gray-100
         p-4 rounded-none relative z-10
         h-full top-0 overflow-y-auto
         w-[360px] shrink-0"
