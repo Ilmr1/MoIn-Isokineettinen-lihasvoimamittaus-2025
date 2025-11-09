@@ -104,6 +104,10 @@ html {
   overscroll-behavior: contain;
   flex-direction: column;
 
+  &:open {
+    display: flex;
+  }
+
 
   #file-popup-close {
     position: absolute;

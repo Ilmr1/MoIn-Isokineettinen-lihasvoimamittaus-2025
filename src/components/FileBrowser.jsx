@@ -306,7 +306,7 @@ export function FileBrowser() {
     });
 
     return (
-      <div class="session-table">
+      <div class="session-table overflow-y-auto">
         <div class="session-header">
           <Dropdown label="Session / File" disabled/>
           <Dropdown

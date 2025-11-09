@@ -32,7 +32,7 @@ export function FileManager() {
   }
 
   return (
-    <div className="h-screen bg-gray-100 overflow-hidden">
+    <div class="w-full h-full bg-gray-100 overflow-y-auto">
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
         <Tabs.List class="bg-gray-100 shrink-0 p-4 flex flex-wrap min-h-10 gap-2 w-full">
@@ -44,7 +44,7 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
-          <div className="w-full h-full space-y-4 grid place-items-center items-start">
+          <div class="w-full h-full space-y-4 grid place-items-center items-start">
             <FileBrowser/>
             <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()}/>
             <div class="grid grid-cols-3 gap-2">
