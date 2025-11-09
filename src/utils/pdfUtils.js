@@ -20,7 +20,7 @@ function drawSymmetryBar(pdf, x, y, percentage) {
   pdf.setFillColor(180, 255, 180);
   pdf.rect(x + redWidth, y, greenWidth, barHeight, "F");
 
-  const adjustedVal = Math.max(val, 50);
+  const adjustedVal = Math.min(Math.max(val, 50), 100);
   const posX = x + ((adjustedVal - minVal) / (maxVal - minVal)) * barWidth;
   pdf.setDrawColor(0);
   pdf.line(posX, y - 1, posX, y + barHeight + 1);
@@ -57,6 +57,10 @@ export function generatePDF() {
       match: "oj/kouk 500 Nm isokin. ballistinen kons/kons 180/180",
     },
   ];
+
+  const operatedSide = patientInfo.involvedSide?.includes("vasen") ? "vasen" : patientInfo.involvedSide?.includes("oikea") ? "oikea" : null;
+  const rightHeader = operatedSide === "oikea" ? "Oikea (L)" : "Oikea";
+  const leftHeader = operatedSide === "vasen" ? "Vasen (L)" : "Vasen";
 
   const groups = {};
   for (const f of files) {
@@ -105,12 +109,12 @@ export function generatePDF() {
     const rightData = test.right;
     if (!leftData && !rightData) continue;
 
-    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[112], leftData[112]) : "–";
-    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[212], leftData[212]) : "–";
-    const extWork = leftData && rightData ? symmetryPercent(rightData[203], leftData[203]) : "–";
-    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[113], leftData[113]) : "–";
-    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[213], leftData[213]) : "–";
-    const flexWork = leftData && rightData ? symmetryPercent(rightData[204], leftData[204]) : "–";
+    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[110], leftData[110], patientInfo.involvedSide) : "–";
+    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[212], leftData[212], patientInfo.involvedSide) : "–";
+    const extWork = leftData && rightData ? symmetryPercent(rightData[203], leftData[203], patientInfo.involvedSide) : "–";
+    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[111], leftData[111], patientInfo.involvedSide) : "–";
+    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[213], leftData[213], patientInfo.involvedSide) : "–";
+    const flexWork = leftData && rightData ? symmetryPercent(rightData[204], leftData[204], patientInfo.involvedSide) : "–";
 
     if (y + 90 > pageHeight - marginBottom) {
       pdf.addPage();
@@ -140,7 +144,7 @@ export function generatePDF() {
 
     autoTable(pdf, {
       startY: y + 5,
-      head: [["", "Oikea", "Vasen", "Symmetria"]],
+      head: [["", rightHeader, leftHeader, "Symmetria %"]],
       body: rows,
       theme: "striped",
       styles: { fontSize: 9, cellPadding: 1 },

@@ -42,12 +42,22 @@ export const parseIfNumber = value => {
 export const toRad = deg => deg * Math.PI / 180;
 
 
-export const symmetryPercent = (value1, value2) => {
+export const symmetryPercent = (value1, value2, operatedSide = null) => {
   let num1 = Math.abs(parseFloat(value1));
   let num2 = Math.abs(parseFloat(value2));
-  let smaller = Math.min(num1, num2)
-  let larger = Math.max(num1, num2)
-  return padTrucateDecimalsToLength(((smaller/larger) * 100), 3);
+  let percentage;
+
+  if (operatedSide && operatedSide.includes("vasen")){
+    percentage = (num2 / num1) * 100;
+  } else if (operatedSide && operatedSide.includes("oikea")){
+    percentage = (num1 / num2) * 100;
+  } else {
+    const smaller = Math.min(num1, num2)
+    const larger = Math.max(num1, num2)
+    percentage = (smaller/larger) * 100;
+  }
+  
+  return padTrucateDecimalsToLength(percentage, 3);
 };
 
 export const trueToOneAndFalseToNegativeOne = boolean => !!boolean * 2 - 1;
