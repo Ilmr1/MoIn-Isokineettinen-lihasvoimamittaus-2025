@@ -35,11 +35,8 @@ export function FileManager() {
     <div className="h-screen bg-gray-100 overflow-hidden">
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
-        <Tabs.List class="bg-gray-200 shrink-0 p-4 flex flex-wrap min-h-10 gap-2 w-full">
+        <Tabs.List class="bg-gray-100 shrink-0 p-4 flex flex-wrap min-h-10 gap-2 w-full">
           <Tabs.Trigger value="files" class="tab-trigger">
-            Files
-          </Tabs.Trigger>
-          <Tabs.Trigger value="analysis" class="tab-trigger">
             Analysis
           </Tabs.Trigger>
           <Tabs.Trigger value="measurement" class="tab-trigger">
@@ -51,14 +48,17 @@ export function FileManager() {
             <FileBrowser/>
             <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()}/>
             <div class="grid grid-cols-3 gap-2">
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max" unit="[deg/s]" analysisExtKey="110" analysisFlexKey="111"/>
+              <BarChart listOfParsedCTM={activeFiles} title="Torque max" unit="[deg/s]" analysisExtKey="110"
+                        analysisFlexKey="111"/>
               <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" unit="[deg/s*kg]" analysisExtKey="112"
                         analysisFlexKey="113"/>
               <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." unit="[W]" analysisExtKey="203"
                         analysisFlexKey="204"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" unit="[J]" analysisExtKey="116"
+              <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" unit="[J]"
+                        analysisExtKey="116"
                         analysisFlexKey="117"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" unit="[J/kg]" analysisExtKey="114"
+              <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" unit="[J/kg]"
+                        analysisExtKey="114"
                         analysisFlexKey="115"/>
               <BarChart listOfParsedCTM={activeFiles} title="Peak Torque Variation" unit="[Nm]" analysisExtKey="250"
                         analysisFlexKey="251"/>
@@ -77,12 +77,7 @@ export function FileManager() {
             )}</For>
           </div>
         </Tabs.Content>
-
-        <Tabs.Content value="analysis" class="bg-white rounded-lg p-6 shadow-sm">
-          <p class="text-sm text-gray-600">Analysis view placeholder.</p>
-        </Tabs.Content>
-
-        <Tabs.Content value="measurement" class="bg-white rounded-lg p-6 shadow-sm">
+        <Tabs.Content value="measurement" class="bg-white max-w-[905px] rounded-lg p-6 shadow-sm">
           <p class="text-sm text-gray-600">Measurement view placeholder.</p>
         </Tabs.Content>
       </Tabs.Root>

@@ -38,7 +38,7 @@ function App() {
   return (
     <GlobalContext.Provider value={{activeFiles}}>
       <div class="w-full h-full inset-0 absolute">
-        <div class="grid gap-2 grid-cols-[360px_1fr] w-full h-full max-w-7xl mx-auto p-4">
+        <div class="grid grid-cols-[360px_1fr] w-full h-full max-w-7xl mx-auto">
           <Sidebar/>
           <FileManager/>
         </div>

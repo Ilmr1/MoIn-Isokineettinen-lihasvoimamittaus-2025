@@ -11,7 +11,7 @@ html {
 .tab-trigger {
   @apply min-w-[8rem] px-6 py-2   /* pienennä py-3 → py-2 */
   text-center font-medium text-gray-800 text-lg
-  rounded-full transition w-fit
+  rounded-lg transition w-fit
   lg:flex-1;
 
   @apply bg-transparent shadow-none;
@@ -19,7 +19,7 @@ html {
 }
 
 .tab-trigger:hover {
-  @apply bg-white/50;
+  @apply bg-gray-200;
 }
 
 .tab-trigger[data-state="active"],
@@ -35,7 +35,6 @@ html {
     }
   }
 }
-
 
 
 .session-table {
@@ -105,9 +104,6 @@ html {
   overscroll-behavior: contain;
   flex-direction: column;
 
-  &:open {
-    display: flex;
-  }
 
   #file-popup-close {
     position: absolute;

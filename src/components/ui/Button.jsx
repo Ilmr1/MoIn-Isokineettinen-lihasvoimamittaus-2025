@@ -29,8 +29,11 @@ export function Button(props) {
       local.size === "sm"
         ? "px-3 py-1 text-sm"
         : local.size === "lg"
-          ? "px-5 py-2 text-base w-full max-w-xs"
-          : "px-4 py-2 text-base";
+          ? "px-5 py-2 text-base"
+          : local.size === "xl"
+            ? "px-6 py-3 text-lg w-full max-w-xs"
+            : "px-4 py-2 text-base";
+
 
     return [base, color, size, local.class || ""].join(" ").trim();
   });
