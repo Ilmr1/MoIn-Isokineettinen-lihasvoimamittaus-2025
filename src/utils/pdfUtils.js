@@ -108,13 +108,17 @@ export function generatePDF() {
     const leftData = test.left;
     const rightData = test.right;
     if (!leftData && !rightData) continue;
+    const isEks30 = key === "eks30";
+    const extIdx = isEks30 ? 111 : 110;
+    const flexIdx = isEks30 ? 110 : 111;
 
-    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[110], leftData[110], patientInfo.involvedSide) : "–";
-    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[212], leftData[212], patientInfo.involvedSide) : "–";
-    const extWork = leftData && rightData ? symmetryPercent(rightData[203], leftData[203], patientInfo.involvedSide) : "–";
-    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[111], leftData[111], patientInfo.involvedSide) : "–";
-    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[213], leftData[213], patientInfo.involvedSide) : "–";
-    const flexWork = leftData && rightData ? symmetryPercent(rightData[204], leftData[204], patientInfo.involvedSide) : "–";
+    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[extIdx], leftData[extIdx], patientInfo.involvedSide) : "–";
+    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 213 : 212], leftData[isEks30 ? 213 : 212], operatedSide) : "–";
+    const extWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 204 : 203], leftData[isEks30 ? 204 : 203], operatedSide) : "–";
+
+    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[flexIdx], leftData[flexIdx], operatedSide) : "–";
+    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 212 : 213], leftData[isEks30 ? 212 : 213], operatedSide) : "–";
+    const flexWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 203 : 204], leftData[isEks30 ? 203 : 204], operatedSide) : "–";
 
     if (y + 90 > pageHeight - marginBottom) {
       pdf.addPage();
@@ -127,13 +131,13 @@ export function generatePDF() {
 
     const rows = [
       ["Etureisi", "", "", ""],
-      ["Huippuvääntö (Nm)", getVal(rightData, 110), getVal(leftData, 110), torqExtSymm],
-      ["Kokonaistyö (J)", getVal(rightData, 212), getVal(leftData, 212), workExtSymm],
-      ["Huippuvääntö / BW", getVal(rightData, 203), getVal(leftData, 203), extWork],
+      ["Huippuvääntö (Nm)", getVal(rightData, extIdx), getVal(leftData, extIdx), torqExtSymm],
+      ["Kokonaistyö (J)", getVal(rightData, isEks30 ? 213 : 212), getVal(leftData, isEks30 ? 213 : 212), workExtSymm],
+      ["Huippuvääntö / BW", getVal(rightData, isEks30 ? 204 : 203), getVal(leftData, isEks30 ? 204 : 203), extWork],
       ["Takareisi", "", "", ""],
-      ["Huippuvääntö (Nm)", getVal(rightData, 111), getVal(leftData, 111), torqFlexSymm],
-      ["Kokonaistyö (J)", getVal(rightData, 213), getVal(leftData, 213), workFlexSymm],
-      ["Huippuvääntö / BW", getVal(rightData, 204), getVal(leftData, 204), flexWork],
+      ["Huippuvääntö (Nm)", getVal(rightData, flexIdx), getVal(leftData, flexIdx), torqFlexSymm],
+      ["Kokonaistyö (J)", getVal(rightData, isEks30 ? 212 : 213), getVal(leftData, isEks30 ? 212 : 213), workFlexSymm],
+      ["Huippuvääntö / BW", getVal(rightData, isEks30 ? 203 : 204), getVal(leftData, isEks30 ? 203 : 204), flexWork],
       [
         "HQ-ratio (%)",
         rightData ? symmetryPercent(rightData[212], rightData[213]) : "–",
