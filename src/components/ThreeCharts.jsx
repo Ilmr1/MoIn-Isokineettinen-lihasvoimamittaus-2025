@@ -1,5 +1,5 @@
 import { batch, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
-import { ChartBorder, ChartGrid, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLineWithLabel, ChartHorizontalSplitLineWithLabel, ChartHorizontalZeroLine, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextTop, ChartVecticalLinePercentageToRelativeIndex, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartGrid, ChartGridAlignedWithFloorXAxisLabels, ChartGridAlignedWithFloorYAxisLabels, ChartHorizontalPointLineWithLabel, ChartHorizontalSplitLineWithLabel, ChartHorizontalZeroLine, ChartMousePositionInPercentage, ChartPadding, ChartPath, ChartPercentageVerticalLine, ChartTextBottom, ChartTextTop, ChartVecticalLinePercentageToRelativeIndex, ChartXAxisFloor, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { asserts } from "../collections/collections.js";
 import { $hoveredRepetition } from "../signals.js";
@@ -16,7 +16,7 @@ function Chart(props) {
   const [mouseX, setMouseX] = createSignal(-1);
   const [mouseY, setMouseY] = createSignal(-1);
 
-  const svgArea = { width: 800, height: 200, x: 0, y: 0 };
+  const svgArea = { width: 800, height: 220, x: 0, y: 0 };
 
   const updateHoverCoords = e => batch(() => {
     setMouseX(e.offsetX);
@@ -32,7 +32,7 @@ function Chart(props) {
 
   return (
     <>
-      <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
+      <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={40} paddingTop={22}>{borderArea => (
         <ChartPadding name="lines" {...borderArea} padding={15}>{lineArea => (
           <ChartMousePositionInPercentage {...controls} {...lineArea} y={borderArea.y} height={borderArea.height}>{mouseArea => (
             <>
@@ -42,6 +42,7 @@ function Chart(props) {
                 lineArea={lineArea}
                 mouseArea={mouseArea}
                 title="Torque"
+                yUnit="[Nm]"
                 points={props.parsedCTM.pointCollections.power.points}
                 maxValue={props.parsedCTM.pointCollections.power.maxValue}
                 minValue={props.parsedCTM.pointCollections.power.minValue}
@@ -55,6 +56,7 @@ function Chart(props) {
                 lineArea={lineArea}
                 mouseArea={mouseArea}
                 title="Speed"
+                yUnit="[deg/s]"
                 points={props.parsedCTM.pointCollections.speed.points}
                 maxValue={props.parsedCTM.pointCollections.speed.maxValue}
                 minValue={props.parsedCTM.pointCollections.speed.minValue}
@@ -68,6 +70,7 @@ function Chart(props) {
                 lineArea={lineArea}
                 mouseArea={mouseArea}
                 title="Angle"
+                yUnit="[deg]"
                 points={props.parsedCTM.pointCollections.angle.points}
                 maxValue={props.parsedCTM.pointCollections.angle.maxValue}
                 minValue={props.parsedCTM.pointCollections.angle.minValue}
@@ -97,6 +100,7 @@ function Chart(props) {
     return (
       <svg width={svgArea.width} height={svgArea.height} onMouseLeave={clearHoverCoors} onMouseMove={updateHoverCoords}>
         <ChartTextTop {...props.borderArea} title={props.title} />
+        <text x={props.borderArea.x + props.borderArea.width} y={props.borderArea.y} dominant-baseline="ideographic" text-anchor="end">{props.yUnit}</text>
         <ChartBorder {...props.borderArea} />
         <ChartGridAlignedWithFloorXAxisLabels
           startValue={props.startIndex / 256}
@@ -105,6 +109,7 @@ function Chart(props) {
           y={props.borderArea.y}
           height={props.borderArea.height}
         />
+        <ChartTextBottom {...props.borderArea} y={props.borderArea.y + props.borderArea.height + 20} title="Time [s]" />
         <ChartGridAlignedWithFloorYAxisLabels
           startValue={props.maxValue}
           endValue={props.minValue}
@@ -175,6 +180,7 @@ function CircleChart(props) {
         <ChartPadding name="border" {...svgArea} paddingLeft={80} paddingRight={50} paddingBottom={22} paddingTop={22}>{borderArea => (
           <>
             <ChartBorder {...borderArea} />
+            <text x={borderArea.x + borderArea.width} y={borderArea.y} dominant-baseline="ideographic" text-anchor="end">[Nm]</text>
             <ChartTextTop {...borderArea} title="Torque repetitions" />
             <ChartPadding name="lines" {...borderArea} padding={15}>{lineArea => (
               <>
