@@ -251,13 +251,14 @@ export function FileBrowser() {
       <dialog id="file-popup" class="space-y-4">
         {/* Folder management */}
         <Button
-          variant="info"
+          variant="danger"
           size="sm"
           id="file-popup-close"
+          class="mt-4 mr-4"
           onClick={() => document.querySelector("#file-popup").close()}>
           Close
-
         </Button>
+
         <Button
           variant="primary"
           size="lg"
