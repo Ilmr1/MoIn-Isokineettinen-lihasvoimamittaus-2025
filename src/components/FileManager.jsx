@@ -60,6 +60,8 @@ export function FileManager() {
                         analysisFlexKey="117"/>
               <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" unit="[J/kg]" analysisExtKey="114"
                         analysisFlexKey="115"/>
+              <BarChart listOfParsedCTM={activeFiles} title="Peak Torque Variation" unit="[Nm]" analysisExtKey="250"
+                        analysisFlexKey="251"/>
             </div>
             <For each={activeFiles()}>{parsedData => (
               <>
