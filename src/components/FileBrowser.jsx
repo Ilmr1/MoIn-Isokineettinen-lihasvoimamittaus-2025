@@ -43,7 +43,7 @@ import {Button} from "./ui/Button.jsx";
 import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
-  const { activeFiles } = useGlobalContext();
+  const {activeFiles} = useGlobalContext();
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -266,26 +266,11 @@ export function FileBrowser() {
           Open Folder
         </Button>
 
-        <ListOfRecentFolders />
-        <FileSearchForm />
-        <SafeSearchCheckbox />
-        <SessionsAsATable />
+        <ListOfRecentFolders/>
+        <FileSearchForm/>
+        <SafeSearchCheckbox/>
+        <SessionsAsATable/>
       </dialog>
-      <Show when={activeFiles().length}>
-        <div class="flex items-center space-x-2">
-          <Checkbox
-            id="dataFiltering"
-            label="Filter data"
-            checked={dataFiltering()}
-            onChange={toggleDataFiltering}
-          />
-          <Checkbox
-            label="Show error bands"
-            checked={showErrorBands()}
-            onChange={() => setShowErrorBands(s => !s)}
-          />
-        </div>
-      </Show>
     </>
   );
 

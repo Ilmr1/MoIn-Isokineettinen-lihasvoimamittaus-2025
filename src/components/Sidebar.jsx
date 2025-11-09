@@ -18,15 +18,29 @@ import {
   setSelectedFiles,
   storeHoveredRepetition,
   storeSelectedSessionsCounts,
+  dataFiltering,
+  setDataFiltering,
+  showErrorBands,
+  setShowErrorBands,
 } from "../signals.js";
 import {useGlobalContext} from "../providers.js";
 import {Button} from "./ui/Button.jsx";
 import {ListOfFileHandlerRepetitions} from "./ListOfFileHandlerRepetitions.jsx";
 import {produce, reconcile} from "solid-js/store";
 import {IconButton} from "./ui/IconButton.jsx";
+import {Checkbox} from "./ui/Checkbox.jsx";
 
 export function Sidebar() {
   const {activeFiles} = useGlobalContext();
+
+  const toggleDataFiltering = () => setDataFiltering((s) => !s);
+
+  const clearSelectedFiles = () => {
+    batch(() => {
+      setSelectedFiles([]);
+      storeSelectedSessionsCounts(reconcile({}));
+    });
+  };
 
   return (
     <nav
@@ -56,6 +70,36 @@ export function Sidebar() {
           </Show>
         </div>
 
+        {/* Data Filter + Clear all laatikko */}
+        <Show when={activeFiles().length}>
+          <div class="flex flex-col gap-3 border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-2">
+                <Checkbox
+                  id="dataFiltering"
+                  label="Filter data"
+                  checked={dataFiltering()}
+                  onChange={toggleDataFiltering}
+                />
+                <Checkbox
+                  label="Show error bands"
+                  checked={showErrorBands()}
+                  onChange={() => setShowErrorBands((s) => !s)}
+                />
+              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={clearSelectedFiles}
+                class="self-center"
+              >
+                Clear all
+              </Button>
+            </div>
+          </div>
+        </Show>
+
+
         {/* Ohjelmatyypit */}
         <Show when={activeFiles().length}>
           <div class="flex flex-wrap justify-center gap-2 border border-gray-200 rounded-lg p-3">
@@ -75,13 +119,6 @@ export function Sidebar() {
 function ActiveFilesAndRepetitions() {
   const {activeFiles} = useGlobalContext();
   const [activeFileIndex, setActiveFileIndex] = createSignal(0);
-
-  const clearSelectedFiles = () => {
-    batch(() => {
-      setSelectedFiles([]);
-      storeSelectedSessionsCounts(reconcile({}));
-    });
-  };
 
   const removeFileSelection = (i) =>
     batch(() => {
@@ -126,7 +163,9 @@ function ActiveFilesAndRepetitions() {
     setActiveFileIndex(0);
   });
 
-  const activeFile = createMemo(() => activeFiles()[activeFileIndex()] ?? activeFiles()[0]);
+  const activeFile = createMemo(
+    () => activeFiles()[activeFileIndex()] ?? activeFiles()[0]
+  );
 
   return (
     <div class="flex flex-col gap-4">
@@ -140,7 +179,7 @@ function ActiveFilesAndRepetitions() {
                   {side}
                 </p>
                 <div class="flex flex-col gap-2">
-                  <For each={activeFiles().filter(f => f.legSide?.toLowerCase() === side)}>
+                  <For each={activeFiles().filter((f) => f.legSide?.toLowerCase() === side)}>
                     {(fileHandler) => {
                       const originalIndex = activeFiles().findIndex(
                         (f) => f.index === fileHandler.index
@@ -203,17 +242,6 @@ function ActiveFilesAndRepetitions() {
           >
             <ListOfFileHandlerRepetitions fileHandler={activeFile()}/>
           </ul>
-        </div>
-
-        <div class="flex justify-center mt-4">
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={clearSelectedFiles}
-            class="w-fit"
-          >
-            Clear all
-          </Button>
         </div>
       </div>
     </div>
