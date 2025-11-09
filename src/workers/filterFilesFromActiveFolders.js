@@ -19,6 +19,8 @@ onmessage = async (message) => {
     }
   }
 
+  filteredFiles.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
   await indexedDBUtils.setValue("file-handlers", "filtered-files", filteredFiles);
 
   postMessage("success");
