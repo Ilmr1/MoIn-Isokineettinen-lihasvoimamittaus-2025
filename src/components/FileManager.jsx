@@ -7,10 +7,10 @@ import {ThreeCharts} from "./ThreeCharts.jsx"; // keep eager if light; otherwise
 import {Repetitions} from "./Repetitions.jsx";
 import {useGlobalContext} from "../providers.js";
 import {BarChart} from "./BarChart.jsx";
-import {parsedFileData, activeProgram, setActiveProgram, showErrorBands, setShowErrorBands } from "../signals.js";
+import {parsedFileData, activeProgram, setActiveProgram, showErrorBands, setShowErrorBands} from "../signals.js";
 
 export function FileManager() {
-  const { activeFiles } = useGlobalContext();
+  const {activeFiles} = useGlobalContext();
 
   createEffect(on(parsedFileData, files => {
     const type = activeProgram();
@@ -32,7 +32,7 @@ export function FileManager() {
   }
 
   return (
-    <div class="w-full h-full bg-gray-100 overflow-hidden">
+    <div className="h-screen bg-gray-100 overflow-hidden">
       <Tabs.Root defaultValue="files" class="w-full h-full flex flex-col">
 
         <Tabs.List class="bg-gray-200 shrink-0 p-4 flex flex-wrap min-h-10 gap-2 w-full">
@@ -47,19 +47,19 @@ export function FileManager() {
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
-          <div class="w-full h-full space-y-4 grid place-items-center items-start">
+          <div className="w-full h-full space-y-4 grid place-items-center items-start">
             <FileBrowser/>
             <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()}/>
-            <div class="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <BarChart listOfParsedCTM={activeFiles} title="Torque max" analysisExtKey="110" analysisFlexKey="111"/>
               <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" analysisExtKey="112"
-                analysisFlexKey="113"/>
+                        analysisFlexKey="113"/>
               <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." analysisExtKey="203"
-                analysisFlexKey="204"/>
+                        analysisFlexKey="204"/>
               <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" analysisExtKey="116"
-                analysisFlexKey="117"/>
+                        analysisFlexKey="117"/>
               <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" analysisExtKey="114"
-                analysisFlexKey="115"/>
+                        analysisFlexKey="115"/>
             </div>
             <For each={activeFiles()}>{parsedData => (
               <>
@@ -67,7 +67,7 @@ export function FileManager() {
                 <div>
                   <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
                   <button class="button_blue"
-                    onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt
+                          onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt
                   </button>
                 </div>
                 <Repetitions repetitions={parsedData.rawObject.repetitions}/>
