@@ -3,18 +3,14 @@ import {
   batch,
   createEffect,
   createMemo,
-  createSignal,
   For,
   Show,
-  untrack,
 } from "solid-js";
 import {generatePDF} from "../utils/pdfUtils";
 import {ActiveProgramTypeButtons} from "./ActiveProgramTypeButtons.jsx";
 import {
-  $selectedSessionsCounts,
   activeProgram,
   selectedFiles,
-  setDisabledRepetitions,
   setSelectedFiles,
   storeHoveredRepetition,
   storeSelectedSessionsCounts,
@@ -22,11 +18,14 @@ import {
   setDataFiltering,
   showErrorBands,
   setShowErrorBands,
+  activeFileIndex,
+  setActiveFileIndex,
+  toggleSelectedFile
 } from "../signals.js";
 import {useGlobalContext} from "../providers.js";
 import {Button} from "./ui/Button.jsx";
 import {ListOfFileHandlerRepetitions} from "./ListOfFileHandlerRepetitions.jsx";
-import {produce, reconcile} from "solid-js/store";
+import {reconcile} from "solid-js/store";
 import {IconButton} from "./ui/IconButton.jsx";
 import {Checkbox} from "./ui/Checkbox.jsx";
 
@@ -105,10 +104,7 @@ export function Sidebar() {
           <div class="flex flex-wrap justify-center gap-2 border border-gray-200 rounded-lg p-3">
             <ActiveProgramTypeButtons/>
           </div>
-        </Show>
-
-        {/* Aktiiviset tiedostot ja toistot */}
-        <Show when={activeFiles().length}>
+          {/* Aktiiviset tiedostot ja toistot */}
           <ActiveFilesAndRepetitions/>
         </Show>
       </div>
@@ -118,45 +114,6 @@ export function Sidebar() {
 
 function ActiveFilesAndRepetitions() {
   const {activeFiles} = useGlobalContext();
-  const [activeFileIndex, setActiveFileIndex] = createSignal(0);
-
-  const removeFileSelection = (i) =>
-    batch(() => {
-      const {fileHandler} = untrack(selectedFiles)[i];
-      batch(() => {
-        setSelectedFiles((files) => {
-          files.splice(i, 1);
-          return [...files];
-        });
-
-        setDisabledRepetitions((reps) => {
-          if (i in reps) {
-            delete reps[i];
-            return {...reps};
-          }
-          return reps;
-        });
-
-        for (const key in $selectedSessionsCounts) {
-          if ($selectedSessionsCounts[key].includes(fileHandler)) {
-            storeSelectedSessionsCounts(
-              produce((store) => {
-                const newFiles = store[key].filter(
-                  (f) => f.fileHandler !== fileHandler
-                );
-                if (newFiles.length) store[key] = newFiles;
-                else delete store[key];
-              })
-            );
-            break;
-          }
-        }
-
-        if (i >= untrack(activeFileIndex)) {
-          setActiveFileIndex((v) => Math.max(v - 1, 0));
-        }
-      });
-    });
 
   createEffect(() => {
     activeProgram();
@@ -209,7 +166,7 @@ function ActiveFilesAndRepetitions() {
                             variant="danger"
                             label="×"
                             onClick={() =>
-                              removeFileSelection(fileHandler.index)
+                              toggleSelectedFile(fileHandler.sessionId, selectedFiles()[fileHandler.index])
                             }
                           />
                         </div>

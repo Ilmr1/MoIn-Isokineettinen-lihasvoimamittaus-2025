@@ -39,7 +39,7 @@ html {
 
 .session-table {
   display: grid;
-  grid-template-columns: 2fr repeat(7, 1fr) auto;
+  grid-template-columns: 4fr repeat(7, 2fr) 1fr;
   gap: 8px;
   overflow-y: auto;
   min-height: 300px;
@@ -63,7 +63,7 @@ html {
     top: 0px;
     background-color: #ffffff;
     outline: 1px solid white;
-    box-shadow: 0 0 5px #0000007a;
+    box-shadow: 0 9px 6px -10px #0000007a;
   }
 
   .session-row, .file-row {

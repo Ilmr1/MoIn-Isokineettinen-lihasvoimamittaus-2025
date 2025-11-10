@@ -4,7 +4,7 @@ import {Checkbox} from "./ui/Checkbox.jsx";
 import {FiChevronDown, FiChevronRight} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
 import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show} from "solid-js";
-import {produce, reconcile, unwrap} from "solid-js/store";
+import {reconcile, unwrap} from "solid-js/store";
 import {fileUtils, indexedDBUtils} from "../utils/utils";
 import {
   $selectedSessionsCounts,
@@ -21,7 +21,6 @@ import {
   selectedFiles,
   sessionFilters,
   sessions,
-  setDataFiltering,
   setFiles,
   setFilterByFirstName,
   setFilterByLastName,
@@ -33,10 +32,10 @@ import {
   setSafeMode,
   setSelectedFiles,
   setSessions,
-  setShowErrorBands,
-  showErrorBands,
   storeSelectedSessionsCounts,
-  storeSessionFilters
+  storeSessionFilters,
+  openSessionsMemory,
+  toggleSelectedFile
 } from "../signals";
 import {useGlobalContext} from "../providers";
 import {Button} from "./ui/Button.jsx";
@@ -57,29 +56,6 @@ export function FileBrowser() {
       sessionId,
       files: sessionFiles,
     }))
-  }
-
-  const toggleSelectedFile = (sessionId, selectedFile) => {
-    const alreadySelected = selectedFiles().some(file => file.fileHandler === selectedFile.fileHandler);
-    batch(() => {
-      if (alreadySelected) {
-        setSelectedFiles(files => files.filter(selection => selection.fileHandler !== selectedFile.fileHandler));
-        storeSelectedSessionsCounts(produce(store => {
-          const newFiles = store[sessionId].filter(file => file !== selectedFile.fileHandler);
-          if (newFiles.length === 0) {
-            delete store[sessionId];
-          } else {
-            store[sessionId] = newFiles;
-          }
-        }));
-      } else {
-        setSelectedFiles((prev) => [...prev, selectedFile]);
-        storeSelectedSessionsCounts(produce(store => {
-          store[sessionId] ??= [];
-          store[sessionId].push(selectedFile.fileHandler);
-        }));
-      }
-    })
   }
 
   const sortByDate = (a, b, date) => {
@@ -237,8 +213,6 @@ export function FileBrowser() {
     });
   }
 
-  const toggleDataFiltering = () => setDataFiltering((s) => !s);
-
   const clearSelectedFiles = () => {
     batch(() => {
       setSelectedFiles([]);
@@ -295,7 +269,6 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
-    const openSessionsMemory = {};
     const collectedValues = createMemo(() => {
       const speedValues = new Set();
       const programValues = new Set();
