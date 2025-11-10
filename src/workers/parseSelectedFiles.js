@@ -10,10 +10,10 @@ onmessage = async (message) => {
 
   for (let i = 0; i < filesToParse.length; i++) {
     const { fileHandler } = filesToParse[i];
-    const disabledList = disabledRepetitions[i] || {};
     if (fileHandler.kind === "file") {
       const file = await fileHandler.getFile();
       const text = await file.text();
+      const disabledList = disabledRepetitions[file.name] || {};
       const rawObject = CTMUtils.parseTextToObject(text, dataFiltering, disabledList);
       files.push({
         ...filesToParse[i],

@@ -40,8 +40,8 @@ export const toggleSelectedFile = (sessionId, selectedFile) => {
       }));
 
       setDisabledRepetitions((reps) => {
-        if (selectedFile.index in reps) {
-          delete reps[selectedFile.index];
+        if (selectedFile.fileHandler.name in reps) {
+          delete reps[selectedFile.fileHandler.name];
           return {...reps};
         }
 
