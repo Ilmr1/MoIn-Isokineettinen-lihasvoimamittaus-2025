@@ -3,11 +3,11 @@ import {For, Show} from "solid-js";
 import {Checkbox} from "./ui/index.js";
 
 export function ListOfFileHandlerRepetitions(props) {
-  const toggleRepetitionDisable = (index, repetition) => {
+  const toggleRepetitionDisable = (fileName, repetition) => {
     setDisabledRepetitions(reps => {
-      reps[index] ??= {}
-      reps[index][repetition] = !reps[index][repetition];
-      reps[index][repetition + 1] = !reps[index][repetition + 1];
+      reps[fileName] ??= {}
+      reps[fileName][repetition] = !reps[fileName][repetition];
+      reps[fileName][repetition + 1] = !reps[fileName][repetition + 1];
       return {...reps};
     });
   }
@@ -20,7 +20,7 @@ export function ListOfFileHandlerRepetitions(props) {
             id={`disableRepetition-${props.fileHandler.index}-${j()}`}
             label={`${j() / 2 + 1}`}
             checked={!data.disabled}
-            onChange={() => toggleRepetitionDisable(props.fileHandler.index, j())}/>
+            onChange={() => toggleRepetitionDisable(props.fileHandler.name, j())}/>
         </li>
       </Show>
     )}</For>
