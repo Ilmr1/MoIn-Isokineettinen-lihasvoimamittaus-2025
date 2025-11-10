@@ -128,7 +128,7 @@ function ActiveFilesAndRepetitions() {
     <div class="flex flex-col gap-4">
       {/* Left / Right laatikko */}
       <div class="border border-gray-200 rounded-lg p-4">
-        <div class="flex justify-center gap-2">
+        <div class="grid grid-cols-2 gap-2">
           <For each={["left", "right"]}>
             {(side) => (
               <div class="flex-1 flex flex-col bg-gray-50 border border-gray-100 rounded-lg p-3">
