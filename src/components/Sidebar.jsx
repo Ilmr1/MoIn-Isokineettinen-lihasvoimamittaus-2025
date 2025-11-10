@@ -138,18 +138,15 @@ function ActiveFilesAndRepetitions() {
                 <div class="flex flex-col gap-2">
                   <For each={activeFiles().filter((f) => f.legSide?.toLowerCase() === side)}>
                     {(fileHandler) => {
-                      const originalIndex = activeFiles().findIndex(
-                        (f) => f.index === fileHandler.index
-                      );
-                      const isActive = () =>
-                        activeFileIndex() === originalIndex;
+                      const originalIndex = () => activeFiles().findIndex(f => f === fileHandler);
+                      const isActive = () => activeFile() === fileHandler
 
                       return (
                         <div class="flex items-center gap-1">
                           <Button
                             size="sm"
                             variant={isActive() ? "primary" : "default"}
-                            onClick={() => setActiveFileIndex(originalIndex)}
+                            onClick={() => setActiveFileIndex(originalIndex())}
                             class="flex items-center justify-between gap-2 w-full"
                           >
                             {fileHandler.legSide}
