@@ -15,7 +15,7 @@ export function BarChart(props) {
 function Chart(props) {
   asserts.assertTypeString(props.title, "title");
 
-  const svgArea = { width: 300, height: 300, x: 0, y: 0 };
+  const svgArea = { width: 275, height: 300, x: 0, y: 0 };
 
   return (
     <Show when={props.listOfParsedCTM()?.length}>
