@@ -235,8 +235,8 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
   // }
   const averageSprints = dataFiltering ? torqueSplitCollection : goodAnglesSplitCollection;
 
-  const averagePowerFlexCollection = createAveragePointCollection("blue", torquePointCollection.points, averageSprints.splits);
-  const averagePowerExtCollection = createAveragePointCollection("red", torquePointCollection.points, averageSprints.splits);
+  const averagePowerFlexCollection = createAveragePointCollection("blue", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
+  const averagePowerExtCollection = createAveragePointCollection("red", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
 
   const pointCollections = {
     power: torquePointCollection,
@@ -244,8 +244,8 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
     angle: anglePointCollection,
     averagePowerFlex: averagePowerFlexCollection,
     averagePowerExt: averagePowerExtCollection,
-    averagePowerFlexError: createAverageErrorPointCollection(averageSprints.splits, "blue", torquePointCollection.points, averagePowerFlexCollection.points, 1),
-    averagePowerExtError: createAverageErrorPointCollection(averageSprints.splits, "red", torquePointCollection.points, averagePowerExtCollection.points, 1),
+    averagePowerFlexError: createAverageErrorPointCollection(averageSprints.splits, "blue", torquePointCollection.points, anglePointCollection.points, averagePowerFlexCollection.points, .9),
+    averagePowerExtError: createAverageErrorPointCollection(averageSprints.splits, "red", torquePointCollection.points, anglePointCollection.points, averagePowerExtCollection.points, .9),
   };
 
   // ========================= SPLITS =============================
@@ -502,7 +502,7 @@ const createPointCollection = (markersByIndex, points) => {
   return pointCollection;
 }
 
-const createAveragePointCollection = (color, torquePoints, angleSplits) => {
+const createAveragePointCollection = (color, torquePoints, angleSplits, anglePoints) => {
   const averages = [];
   const collection = { points: averages };
   let count = 0;
@@ -513,9 +513,15 @@ const createAveragePointCollection = (color, torquePoints, angleSplits) => {
     }
 
     count++;
+    const reverse = anglePoints[split.startIndex] > anglePoints[split.endIndex];
     for (let i = split.startIndex; i <= split.endIndex; i++) {
       averages[i - split.startIndex] ??= 0;
-      averages[i - split.startIndex] += torquePoints[i];
+      // Reverse order
+      if (reverse) {
+        averages[i - split.startIndex] += torquePoints[split.endIndex - (i - split.startIndex)];
+      } else {
+        averages[i - split.startIndex] += torquePoints[i];
+      }
     }
   });
 
@@ -541,7 +547,7 @@ const createAveragePointCollection = (color, torquePoints, angleSplits) => {
   return collection;
 }
 
-const createAverageErrorPointCollection = (splits, color, points, averagePoints, errorPercentage) => {
+const createAverageErrorPointCollection = (splits, color, points, anglePoints, averagePoints, errorPercentage) => {
   const highs = Array(averagePoints.length).fill(0);
   const lows = Array(averagePoints.length).fill(0);
   let minValue, maxValue;
@@ -552,8 +558,15 @@ const createAverageErrorPointCollection = (splits, color, points, averagePoints,
       return;
     }
 
+    const reverse = anglePoints[split.startIndex] > anglePoints[split.endIndex];
     for (let i = split.startIndex; i < split.endIndex; i++) {
-      const delta = numberUtils.delta(points[i], averagePoints[i - split.startIndex]);
+
+      if (reverse) {
+        var delta = numberUtils.delta(points[split.endIndex - (i - split.startIndex)], averagePoints[i - split.startIndex]);
+      } else {
+        var delta = numberUtils.delta(points[i], averagePoints[i - split.startIndex]);
+      }
+
       if (delta < 0) {
         lows[i - split.startIndex] = Math.min(lows[i - split.startIndex], delta);
       } else {

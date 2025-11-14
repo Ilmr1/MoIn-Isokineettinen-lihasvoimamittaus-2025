@@ -54,8 +54,10 @@ function Chart(props) {
             continue;
           }
           if ((type === "Flex" && split.color === "blue") || (type === "Ext" && split.color === "red")) {
-            startAngles.push(rawObject.pointCollections.angle.points[split.startIndex]);
-            endAngles.push(rawObject.pointCollections.angle.points[split.endIndex]);
+            const start = rawObject.pointCollections.angle.points[split.startIndex];
+            const end = rawObject.pointCollections.angle.points[split.endIndex];
+            startAngles.push(Math.max(start, end));
+            endAngles.push(Math.min(start, end));
           }
         }
       }
