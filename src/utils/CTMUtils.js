@@ -532,6 +532,11 @@ const createAveragePointCollection = (color, torquePoints, angleSplits) => {
     }
   }
 
+  if (collection.minValue < 0 && collection.maxValue <= 0) {
+    collection.points = collection.points.map(Math.abs);
+    collection.maxValue = Math.abs(collection.minValue);
+    collection.minValue = Math.abs(collection.maxValue);
+  }
 
   return collection;
 }
