@@ -8,17 +8,43 @@ onmessage = async (message) => {
 
   console.log("worker", message);
   const filteredFiles = [];
+  const batchPromises = [];
+  const batchResolvers = [];
 
+  const batchSize = 500;
+  let currentBatch = 0;
+  let filesStartedReading = 0
+  let filesFinishedReading = 0;
+
+  const { promise: allFilesPromise, resolve: allFilesResolve } = Promise.withResolvers()
   for (const folderHandler of activeFolders) {
     for await (const fileHandler of getFilesRecursively(folderHandler)) {
       if (fileHandler.name.endsWith(".CTM") || fileHandler.name.endsWith(".cxp")) {
-        const file = await fileHandler.getFile();
-        const text = await file.text();
-        filteredFiles.push(parseCTMForFiltering(text, fileHandler));
+        filesStartedReading++;
+        if (filesStartedReading % batchSize === 0) {
+          const { promise, resolve } = Promise.withResolvers();
+          batchPromises[Math.round(filesStartedReading / batchSize)] = promise;
+          batchResolvers[Math.round(filesStartedReading / batchSize)] = resolve;
+        }
+        fileHandler.getFile().then(async file => {
+          const batchIndex = Math.floor(currentBatch++ / batchSize)
+          if (batchIndex > 0) {
+            await batchPromises[batchIndex]
+          }
+          file.text().then(text => {
+            if (++filesFinishedReading === filesStartedReading) {
+              allFilesResolve()
+            }
+            if (filesFinishedReading % batchSize === 0) {
+              batchResolvers[Math.round(filesFinishedReading / batchSize)]();
+            }
+            filteredFiles.push(parseCTMForFiltering(text, fileHandler));
+          })
+        });
       }
     }
   }
-
+  await allFilesPromise;
   filteredFiles.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
   await indexedDBUtils.setValue("file-handlers", "filtered-files", filteredFiles);
@@ -47,22 +73,22 @@ function parseCTMForFiltering(text, fileHandler) {
     const header = sections[i];
     const data = sections[i + 1];
 
-    if (header === "Configuration"){
+    if (header === "Configuration") {
       parsedFile.legSide = extractDataFromString(data, "side");
       parsedFile.speed = extractDataFromString(data, "speed");
       parsedFile.program = extractDataFromString(data, "program");
     }
 
-    if (header === "Measurement" || header === "session"){
+    if (header === "Measurement" || header === "session") {
       const rows = data.replaceAll("\r", "").trim().split("\n").map(row => row.trim().split("\t"));
       parsedFile[header] = Object.fromEntries(rows.filter(row => row.length > 1))
     }
   }
-  
-  const { Measurement: measurement, session } = parsedFile;
-  const date = measurement["date (dd/mm/yyyy)"];
-  const subjectFirstName = session["subject name first"];
-  const subjectLastName = session["subject name"];
+
+  const { Measurement: measurement = {}, session = {} } = parsedFile;
+  const date = measurement["date (dd/mm/yyyy)"] || "00.00.0000";
+  const subjectFirstName = session["subject name first"] || "-";
+  const subjectLastName = session["subject name"] || "-";
   const sessionKey = date + subjectFirstName + subjectLastName;
 
   if (!parseCTMForFiltering.sessionMap[sessionKey]) {

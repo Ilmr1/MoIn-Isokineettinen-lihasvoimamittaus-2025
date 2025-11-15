@@ -45,6 +45,10 @@ html {
   min-height: 300px;
   align-content: start;
 
+  .session-body{
+    grid-auto-rows: 24px;
+  }
+
   .session-header, .session-body, .session-row, .file-row {
     grid-column: 1/-1;
     display: grid;
@@ -69,6 +73,7 @@ html {
   .session-row, .file-row {
     cursor: pointer;
     padding-inline: 8px;
+
 
     &:hover {
       @apply bg-gray-50;
