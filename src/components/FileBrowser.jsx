@@ -204,6 +204,12 @@ export function FileBrowser() {
     setRecentFolders(folders);
   }
 
+  createEffect(() => {
+    if (!selectedFiles().length) {
+      document.querySelector("#file-popup").showModal();
+    }
+  })
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
