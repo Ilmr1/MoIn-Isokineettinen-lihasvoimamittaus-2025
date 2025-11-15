@@ -4,7 +4,7 @@ import {Checkbox} from "./ui/Checkbox.jsx";
 import {FiChevronDown, FiChevronRight} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
 import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show} from "solid-js";
-import {reconcile, unwrap} from "solid-js/store";
+import {createStore, reconcile, unwrap} from "solid-js/store";
 import {fileUtils, indexedDBUtils} from "../utils/utils";
 import {
   $selectedSessionsCounts,
@@ -269,6 +269,23 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
+    const [ visibility, storeVisibility ] = createStore([]);
+
+    const callback = entries => {
+      for (const entry of entries) {
+        storeVisibility(entry.target.dataset.index, entry.isIntersecting)
+      }
+    }
+
+    const options = {
+      scrollMargin: "800px"
+    };
+    const intersectionObserver = new IntersectionObserver(callback, options);
+
+    const observe = (elem) => {
+      intersectionObserver.observe(elem);
+    }
+
     const collectedValues = createMemo(() => {
       const speedValues = new Set();
       const programValues = new Set();
@@ -321,7 +338,7 @@ export function FileBrowser() {
         </div>
         <div class="session-body">
           <For each={filteredSessions()}>
-            {(ses) => {
+            {(ses, i) => {
               const [opened, setOpened] = createSignal(openSessionsMemory[ses.sessionId]);
               const toggleOpen = () => {
                 setOpened(s => {
@@ -329,9 +346,12 @@ export function FileBrowser() {
                   return !s
                 });
               }
+
               return (
                 <>
-                  <div class="session-row" classList={{opened: opened()}} onClick={toggleOpen}>
+                  <div attr:data-index={i()} use:observe class="session-row" classList={{opened: opened()}} onClick={toggleOpen}>
+                    <Show when={visibility[i()]}>
+
                     <p class="identifier">
                       <input
                         type="checkbox"
@@ -377,6 +397,7 @@ export function FileBrowser() {
                     <p>-</p>
                     <p>-</p>
                     <p>{ses.files.length}</p>
+                    </Show>
                   </div>
                   <Show when={opened()}>
                     <For each={ses.files}>
