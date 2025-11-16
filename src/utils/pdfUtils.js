@@ -30,9 +30,9 @@ function drawSymmetryBar(pdf, x, y, percentage) {
 }
 
 const getVal = (data, idx) => {
-    if (!data || typeof data[idx] !== "number") return "–";
-    return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
-  };
+  if (!data || typeof data[idx] !== "number") return "–";
+  return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
+};
 
 export function generatePDF() {
   const pdf = new jsPDF();
@@ -189,16 +189,16 @@ export function generatePDF() {
 
     const mixedSymm = hasLeft && hasRight? symmetryPercent(mixedRight, mixedLeft, operatedSide): "–";
 
-    
+
     pdf.setFont("Helvetica", "bold");
     pdf.setFontSize(12);
 
     const mixedRows = [
-    ["Mixed Ratio (%)      ", 
-    hasRight ? padRoundDecimalsToLength(mixedRight, 3): "–", 
-    hasLeft ? padRoundDecimalsToLength(mixedLeft, 3) : "–", 
-    mixedSymm],
-  ];
+      ["Mixed Ratio (%)      ",
+        hasRight ? padRoundDecimalsToLength(mixedRight, 3): "–",
+        hasLeft ? padRoundDecimalsToLength(mixedLeft, 3) : "–",
+        mixedSymm],
+    ];
 
 
     autoTable(pdf, {
