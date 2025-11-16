@@ -29,6 +29,11 @@ function drawSymmetryBar(pdf, x, y, percentage) {
   pdf.addImage(icon, "PNG", x + barWidth + 5, y - 1.5, 5.5, 5.5);
 }
 
+const getVal = (data, idx) => {
+    if (!data || typeof data[idx] !== "number") return "–";
+    return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
+  };
+
 export function generatePDF() {
   const pdf = new jsPDF();
   pdf.setFontSize(11);
@@ -91,15 +96,7 @@ export function generatePDF() {
   pdf.text(`Loukkaantumispäivä: ${patientInfo.injuryDate}`, 140, 15);
   pdf.line(10, 27, 200, 27, "S");
 
-  const pageHeight = pdf.internal.pageSize.height;
-  const marginBottom = 10;
-  let y = 35;
-
-  const getVal = (data, idx) => {
-    if (!data || typeof data[idx] !== "number") return "–";
-    return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
-  };
-
+  let y = 32;
 
   for (const { key, title } of TESTS) {
     const test = groups[key];
@@ -119,11 +116,6 @@ export function generatePDF() {
     const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[flexIdx], leftData[flexIdx], operatedSide) : "–";
     const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 212 : 213], leftData[isEks30 ? 212 : 213], operatedSide) : "–";
     const flexWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 203 : 204], leftData[isEks30 ? 203 : 204], operatedSide) : "–";
-
-    if (y + 90 > pageHeight - marginBottom) {
-      pdf.addPage();
-      y = 10;
-    }
 
     pdf.setFont("Helvetica", "bold");
     pdf.setFontSize(12);
@@ -147,23 +139,14 @@ export function generatePDF() {
     ];
 
     autoTable(pdf, {
-      startY: y + 5,
+      startY: y +2,
       head: [["", rightHeader, leftHeader, "Symmetria %"]],
       body: rows,
       theme: "striped",
-      styles: { fontSize: 9, cellPadding: 1 },
-      headStyles: { fillColor: [230, 230, 230], textColor: 0 },
+      styles: { fontSize: 8.5, cellPadding: 0.6, minCellHeight: 4.5 },
+      headStyles: { fillColor: [230, 230, 230], textColor: 0 ,fontSize: 8.5,},
       tableWidth: 110,
       didParseCell: (data) => {
-        const cellText = data.cell.text[0]?.toLowerCase();
-        if (
-          data.section === "body" &&
-          (cellText === "etureisi" || cellText === "takareisi")
-        ) {
-          data.cell.styles.fontSize = 10.5;
-          data.cell.styles.fontStyle = "bold";
-          data.cell.styles.halign = "left";
-        }
         if (data.section === "body" && data.column.index === 3) {
           const val = parseFloat(data.cell.text[0]);
           if (!isNaN(val)) {
@@ -174,17 +157,71 @@ export function generatePDF() {
     });
 
     if (leftData && rightData) {
-      const barY = y + 18;
+      const barY = y + 12.2;
       drawSymmetryBar(pdf, 130, barY, torqExtSymm);
-      drawSymmetryBar(pdf, 130, barY + 5.5, workExtSymm);
-      drawSymmetryBar(pdf, 130, barY + 11, extWork);
-      drawSymmetryBar(pdf, 130, barY + 23.5, torqFlexSymm);
-      drawSymmetryBar(pdf, 130, barY + 29, workFlexSymm);
-      drawSymmetryBar(pdf, 130, barY + 35, flexWork);
+      drawSymmetryBar(pdf, 130, barY + 4.8, workExtSymm);
+      drawSymmetryBar(pdf, 130, barY + 9.6, extWork);
+      drawSymmetryBar(pdf, 130, barY + 18.8, torqFlexSymm);
+      drawSymmetryBar(pdf, 130, barY + 23.6, workFlexSymm);
+      drawSymmetryBar(pdf, 130, barY + 28.5, flexWork);
     }
 
-    y = pdf.lastAutoTable.finalY + 10;
+    y = pdf.lastAutoTable.finalY + 5;
   }
+  const kons240 = groups["kons240"];
+  const eks30 = groups["eks30"];
+  if (kons240 && eks30){
 
+    const leftData = {
+      ext240: kons240.left?.[110],
+      flex30: eks30.left?.[111],
+    };
+    const rightData = {
+      ext240: kons240.right?.[110],
+      flex30: eks30.right?.[111],
+    };
+
+    const hasLeft = leftData.ext240 != null && leftData.flex30 != null;
+    const hasRight = rightData.ext240 != null && rightData.flex30 != null;
+
+    const mixedLeft  = hasLeft  ? (leftData.flex30  / leftData.ext240)  * 100 : "–";
+    const mixedRight = hasRight ? (rightData.flex30 / rightData.ext240) * 100 : "–";
+
+    const mixedSymm = hasLeft && hasRight? symmetryPercent(mixedRight, mixedLeft, operatedSide): "–";
+
+    
+    pdf.setFont("Helvetica", "bold");
+    pdf.setFontSize(12);
+
+    const mixedRows = [
+    ["Mixed Ratio (%)      ", 
+    hasRight ? padRoundDecimalsToLength(mixedRight, 3): "–", 
+    hasLeft ? padRoundDecimalsToLength(mixedLeft, 3) : "–", 
+    mixedSymm],
+  ];
+
+
+    autoTable(pdf, {
+      startY: y + 5,
+      head: [["", rightHeader, leftHeader, "Symmetria %"]],
+      body: mixedRows,
+      theme: "striped",
+      styles: { fontSize: 9, cellPadding: 1 },
+      headStyles: { fillColor: [230, 230, 230], textColor: 0 },
+      tableWidth: 110,
+      didParseCell: (data) => {
+        if (data.section === "body" && data.column.index === 3){
+          const val = parseFloat(data.cell.text[0]);
+          if (!isNaN(val)){
+            data.cell.styles.textColor = val < 90 ? [200, 0, 0] : [0, 150, 0];
+          }
+        }
+      },
+    });
+    const barY = pdf.lastAutoTable.finalY - 5;
+    if (!isNaN(parseFloat(mixedSymm))) {
+      drawSymmetryBar(pdf, 130, barY, mixedSymm);
+    }
+  }
   pdf.save("make.pdf");
 }
