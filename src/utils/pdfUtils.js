@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 import { symmetryPercent, padRoundDecimalsToLength } from "./numberUtils";
 import tickIcon from "../assets/icons/tick.png";
 import crossIcon from "../assets/icons/delete.png";
+import { numberUtils } from "./utils";
 
 function drawSymmetryBar(pdf, x, y, percentage) {
   const barWidth = 50;
@@ -72,6 +73,13 @@ export function generatePDF() {
     const name = f.rawObject.measurement.name;
     const side = f.rawObject.configuration.side[1];
     const analysis = f.rawObject.analysis;
+
+    // Test a random analysis value to check that there are no NaN
+    // If all repetitions are disabled the analysis will contain undefined valued
+    // Early exit if NaN was found
+    if (!numberUtils.isNumber(analysis[110])) {
+      continue;
+    }
 
     for (const { key, match } of TESTS) {
       if (name.includes(match)) {
