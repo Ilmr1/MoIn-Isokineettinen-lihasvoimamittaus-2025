@@ -74,8 +74,8 @@ export function generatePDF() {
     const side = f.rawObject.configuration.side[1];
     const analysis = f.rawObject.analysis;
 
-    // Test a random analysis value to check that there are no NaN
-    // If all repetitions are disabled the analysis will contain undefined valued
+    // Test a random analysis value to check that there are no NaN values
+    // If all repetitions are disabled the analysis will contain undefined values
     // Early exit if NaN was found
     if (!numberUtils.isNumber(analysis[110])) {
       continue;
