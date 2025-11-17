@@ -7,7 +7,8 @@ import {ThreeCharts} from "./ThreeCharts.jsx"; // keep eager if light; otherwise
 import {Repetitions} from "./Repetitions.jsx";
 import {useGlobalContext} from "../providers.js";
 import {BarChart} from "./BarChart.jsx";
-import {parsedFileData, activeProgram, setActiveProgram, showErrorBands, setShowErrorBands} from "../signals.js";
+import {Button} from "./ui/Button.jsx";
+import {parsedFileData, activeProgram, setActiveProgram, showErrorBands, setShowErrorBands, activeFileIndex} from "../signals.js";
 
 export function FileManager() {
   const {activeFiles} = useGlobalContext();
@@ -64,18 +65,27 @@ export function FileManager() {
                         analysisExtKey="250"
                         analysisFlexKey="251"/>
             </div>
-            <For each={activeFiles()}>{parsedData => (
+            <Show when={activeFiles()[activeFileIndex()]}>{activeFile => (
               <>
-                <ThreeCharts parsedCTM={parsedData.rawObject} fileIndex={parsedData.index}/>
-                <div>
-                  <button onClick={() => saveDataAsCSV(parsedData.rawObject.data)}>CSV</button>
-                  <button class="button_blue"
-                          onClick={() => printDataAsTextToConsole(parsedData.rawObject.data)}>txt
-                  </button>
+                <ThreeCharts parsedCTM={activeFile().rawObject} fileIndex={activeFile().index}/>
+                <div class="flex gap-2 pb-6">
+                  <Button
+                    variant="info"
+                    size="sm"
+                    onClick={() => saveDataAsCSV(activeFile().rawObject.data)}>
+                    Download as CSV
+                  </Button>
+                  <Show when={location.href.includes("localhost")}>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => printDataAsTextToConsole(activeFile().rawObject.data)}>
+                      Print to console [DEBUG]
+                    </Button>
+                  </Show>
                 </div>
-                {/* <Repetitions repetitions={parsedData.rawObject.repetitions}/> */}
               </>
-            )}</For>
+            )}</Show>
           </div>
         </Tabs.Content>
         <Tabs.Content value="measurement" class="bg-white max-w-[905px] rounded-lg p-6 shadow-sm">
