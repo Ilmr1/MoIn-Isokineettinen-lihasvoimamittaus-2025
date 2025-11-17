@@ -6,7 +6,7 @@ import { asserts } from "../collections/collections.js";
 export function BarChart(props) {
 
   return (
-    <ErrorBoundary fallback="Three chart rendering failed">
+    <ErrorBoundary fallback="Barchart rendering failed">
       <Chart {...props} />
     </ErrorBoundary>
   );
@@ -50,8 +50,23 @@ function Chart(props) {
       const ext = [];
       const flex = [];
       for (const { rawObject: { analysis } } of props.listOfParsedCTM()) {
-        ext.push(Math.abs(analysis[props.analysisExtKey]));
-        flex.push(Math.abs(analysis[props.analysisFlexKey]));
+        const extValue = Math.abs(analysis[props.analysisExtKey]);
+        const flexValue = Math.abs(analysis[props.analysisFlexKey]);
+
+        if (!numberUtils.isNumber(extValue) || !numberUtils.isNumber(flexValue)) {
+          continue;
+        }
+
+        if (extValue + flexValue === 0) {
+          continue;
+        }
+
+        ext.push(extValue);
+        flex.push(flexValue);
+      }
+
+      if (!ext.length) {
+        return [];
       }
 
       return [ext, flex];
