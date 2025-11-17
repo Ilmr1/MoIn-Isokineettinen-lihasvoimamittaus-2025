@@ -20,7 +20,8 @@ import {
   setShowErrorBands,
   activeFileIndex,
   setActiveFileIndex,
-  toggleSelectedFile
+  toggleSelectedFile,
+  setDisabledRepetitions
 } from "../signals.js";
 import {useGlobalContext} from "../providers.js";
 import {Button} from "./ui/Button.jsx";
@@ -37,6 +38,7 @@ export function Sidebar() {
   const clearSelectedFiles = () => {
     batch(() => {
       setSelectedFiles([]);
+      setDisabledRepetitions([]);
       storeSelectedSessionsCounts(reconcile({}));
     });
   };
@@ -187,12 +189,7 @@ function ActiveFilesAndRepetitions() {
         <div class="overflow-y-auto max-h-[200px]">
           <ul
             class="flex flex-col items-center gap-1"
-            onMouseLeave={() =>
-              storeHoveredRepetition({
-                fileIndex: -1,
-                repetitionIndex: -1,
-              })
-            }
+            onMouseLeave={clearRepetitionHover}
           >
             <ListOfFileHandlerRepetitions fileHandler={activeFile()}/>
           </ul>
@@ -200,4 +197,8 @@ function ActiveFilesAndRepetitions() {
       </div>
     </div>
   );
+}
+
+function clearRepetitionHover() {
+  storeHoveredRepetition({ fileIndex: -1, repetitionIndex: -1 })
 }

@@ -35,7 +35,8 @@ import {
   storeSelectedSessionsCounts,
   storeSessionFilters,
   openSessionsMemory,
-  toggleSelectedFile
+  toggleSelectedFile,
+  setDisabledRepetitions
 } from "../signals";
 import {useGlobalContext} from "../providers";
 import {Button} from "./ui/Button.jsx";
@@ -222,6 +223,7 @@ export function FileBrowser() {
   const clearSelectedFiles = () => {
     batch(() => {
       setSelectedFiles([]);
+      setDisabledRepetitions([]);
       storeSelectedSessionsCounts(reconcile({}));
     });
   }
