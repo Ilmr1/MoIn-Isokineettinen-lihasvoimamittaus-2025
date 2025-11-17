@@ -187,12 +187,7 @@ function ActiveFilesAndRepetitions() {
         <div class="overflow-y-auto max-h-[200px]">
           <ul
             class="flex flex-col items-center gap-1"
-            onMouseLeave={() =>
-              storeHoveredRepetition({
-                fileIndex: -1,
-                repetitionIndex: -1,
-              })
-            }
+            onMouseLeave={clearRepetitionHover}
           >
             <ListOfFileHandlerRepetitions fileHandler={activeFile()}/>
           </ul>
@@ -200,4 +195,8 @@ function ActiveFilesAndRepetitions() {
       </div>
     </div>
   );
+}
+
+function clearRepetitionHover() {
+  storeHoveredRepetition({ fileIndex: -1, repetitionIndex: -1 })
 }
