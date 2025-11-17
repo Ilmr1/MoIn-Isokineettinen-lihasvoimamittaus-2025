@@ -75,12 +75,14 @@ export function FileManager() {
                     onClick={() => saveDataAsCSV(activeFile().rawObject.data)}>
                     Download as CSV
                   </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => printDataAsTextToConsole(activeFile().rawObject.data)}>
-                    Print to console [DEBUG]
-                  </Button>
+                  <Show when={location.href.includes("localhost")}>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => printDataAsTextToConsole(activeFile().rawObject.data)}>
+                      Print to console [DEBUG]
+                    </Button>
+                  </Show>
                 </div>
               </>
             )}</Show>
