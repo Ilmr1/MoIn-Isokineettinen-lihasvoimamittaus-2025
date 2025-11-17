@@ -20,7 +20,8 @@ import {
   setShowErrorBands,
   activeFileIndex,
   setActiveFileIndex,
-  toggleSelectedFile
+  toggleSelectedFile,
+  setDisabledRepetitions
 } from "../signals.js";
 import {useGlobalContext} from "../providers.js";
 import {Button} from "./ui/Button.jsx";
@@ -37,6 +38,7 @@ export function Sidebar() {
   const clearSelectedFiles = () => {
     batch(() => {
       setSelectedFiles([]);
+      setDisabledRepetitions([]);
       storeSelectedSessionsCounts(reconcile({}));
     });
   };
