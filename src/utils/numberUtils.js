@@ -63,3 +63,7 @@ export const symmetryPercent = (value1, value2, operatedSide = null) => {
 export const trueToOneAndFalseToNegativeOne = boolean => !!boolean * 2 - 1;
 export const ceilFurthestFromValue = (num, val = 0) => num > val ? Math.ceil(num) : Math.floor(num);
 export const floorClosestToValue = (num, val = 0) => num > val ? Math.floor(num) : Math.ceil(num);
+
+export const isNumber = num => {
+  return typeof num === "number" && !isNaN(num);
+}

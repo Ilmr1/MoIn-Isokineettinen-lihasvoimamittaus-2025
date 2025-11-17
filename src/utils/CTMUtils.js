@@ -291,7 +291,11 @@ const createRepetitionsSection = (points, splits, sampleRate) => {
   const dt = 1 / samplerate;
   const resultsByColor = { red: [], blue: [] };
 
-  splits.forEach(({ startIndex, endIndex, color }) => {
+  splits.forEach(({ startIndex, endIndex, color, disabled }) => {
+    if (disabled) {
+      return;
+    }
+
     let torqueExtreme = 0;
     let speedExtreme = 0;
     let work = 0;
@@ -303,8 +307,6 @@ const createRepetitionsSection = (points, splits, sampleRate) => {
     let torquePeakIndex = startIndex;
     let speedPeakIndex = startIndex;
     let count = 0;
-
-    const isRed = color === 'red';
 
     for (let i = startIndex; i < endIndex; i++) {
       const torque = points.power.points[i];
