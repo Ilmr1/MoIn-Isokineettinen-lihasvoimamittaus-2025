@@ -237,6 +237,9 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
 
   const averagePowerFlexCollection = createAveragePointCollection("blue", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
   const averagePowerExtCollection = createAveragePointCollection("red", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
+  const angleSpecificHQRatioPointCollection = createAngleSpecificHQRatioPointCollection(torquePointCollection.points, averagePowerFlexCollection.points, averagePowerExtCollection.points, averageSprints.splits, anglePointCollection.points, .9);
+
+
 
   const pointCollections = {
     power: torquePointCollection,
@@ -262,6 +265,100 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
       goodAngles: goodAnglesSplitCollection,
     }
   }
+}
+function createAngleSpecificHQRatioPointCollection(torquePoints, flexPoints, extPoints, splits, anglePoints, errorPercentage) {
+  const pointsCollection = {
+    maxValue: 0,
+    minValue: 0,
+    points: [],
+  }
+  const errorBandCollection = {
+    maxValue: 0,
+    minValue: 0,
+    points: [],
+  }
+
+  const returnValue = [pointsCollection, errorBandCollection];
+
+  let minAngle, maxAngle;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return;
+    }
+
+    minAngle = numberUtils.max(minAngle, Math.min(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+    maxAngle = numberUtils.min(maxAngle, Math.max(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+  });
+
+  if (minAngle == null) {
+    return returnValue;
+  }
+
+  let sampleSize;
+  for (let i = 0; i < splits.length; i += 2) {
+    const splitA = splits[i];
+    const splitB = splits[i + 1];
+    if (splitA.disabled) {
+      continue;
+    }
+
+    const [extSplit, flexSplit] = splitA.color === "red" ? [splitA, splitB] : [splitA, splitB];
+    const flexStartIndex = arrayUtils.findIndex(anglePoints, angle => angle < maxAngle, flexSplit.startIndex);
+    const flexEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle > minAngle, flexSplit.endIndex);
+    const extStartIndex = arrayUtils.findIndex(anglePoints, angle => angle > minAngle, extSplit.startIndex);
+    const extEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle < maxAngle, extSplit.endIndex);
+
+    asserts.assertTruthy(flexStartIndex < flexEndIndex, "Flex index is out of bounds");
+    asserts.assertTruthy(extStartIndex < extEndIndex, "Ext index is out of bounds");
+
+
+    const extSampleSize = extEndIndex - extStartIndex;
+    const flexSampleSize = flexEndIndex - flexStartIndex;
+    // Flex and ext are not same size so early exit
+    if (numberUtils.absDelta(extSampleSize, flexSampleSize) > 15) {
+      return returnValue;
+    }
+
+    sampleSize = Math.min(extSampleSize, flexSampleSize);
+  }
+
+  asserts.assertTypeNumber(sampleSize);
+
+  const lowest = [], sum = [], highest = [];
+  let repetitions = 0;
+  for (let i = 0; i < splits.length; i += 2) {
+    const splitA = splits[i];
+    const splitB = splits[i + 1];
+    if (splitA.disabled) {
+      continue;
+    }
+
+    const [extSplit, flexSplit] = splitA.color === "red" ? [splitA, splitB] : [splitA, splitB];
+    const flexEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle > minAngle, flexSplit.endIndex);
+    const extStartIndex = arrayUtils.findIndex(anglePoints, angle => angle > minAngle, extSplit.startIndex);
+    repetitions++;
+
+
+    for (let i = 0; i < sampleSize; i++) {
+      const hqValue = torquePoints[flexEndIndex - i] / torquePoints[extStartIndex + i];
+      sum[i] ??= 0;
+      sum[i] += hqValue;
+      lowest[i] = numberUtils.min(hqValue, lowest[i]);
+      highest[i] = numberUtils.max(hqValue, highest[i]);
+    }
+  }
+
+  asserts.assertTruthy(repetitions);
+
+  pointsCollection.points = sum.map(s => s / repetitions);
+  pointsCollection.minValue = arrayUtils.minValue(pointsCollection.points, 0);
+  pointsCollection.maxValue = arrayUtils.maxValue(pointsCollection.points, 0);
+
+  errorBandCollection.maxValue = arrayUtils.maxValue(highest, 0);
+  errorBandCollection.minValue = arrayUtils.minValue(lowest, 0);
+  errorBandCollection.points.push(lowest, highest);
+
+  return returnValue;
 }
 
 
