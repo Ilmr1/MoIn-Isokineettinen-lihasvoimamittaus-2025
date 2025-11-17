@@ -151,6 +151,7 @@ function Chart(props) {
                       {...mouseArea}
                       {...lineArea}
                       x={borderArea.x}
+                      xWithPadding={lineArea.x}
                       listOfPoints={props.listOfParsedCTM().map(v => v.rawObject.pointCollections[averageKey()].points)}
                       listOfSplits={props.listOfParsedCTM().map(v => v.rawObject.splitCollections[averageKey()])}
                       maxValue={combinedValues().maxValue}

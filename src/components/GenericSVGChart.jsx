@@ -1,7 +1,8 @@
-import { batch, createMemo, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
+import { batch, createMemo, createRenderEffect, createSignal, ErrorBoundary, mergeProps, splitProps } from "solid-js";
 import { arrayUtils, chartUtils, CTMUtils, numberUtils } from "../utils/utils";
 import { asserts, signals } from "../collections/collections";
 import "./GenericSVGChart.css";
+import { createStore, produce } from "solid-js/store";
 
 const debug = false;
 const labelIncrements = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 25, 40, 50, 100, 250, 500];
@@ -787,15 +788,20 @@ export function ChartHoverToolTip(props) {
 
   props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
 
-  const hoverPoints = createMemo(() => {
+  const [$labels, storeLabels] = createStore([]);
+
+  createRenderEffect(() => {
     const { listOfPoints, listOfSplits, mouseXPercentage, colors = [], height, maxValue, minValue } = props;
     if (mouseXPercentage === -1) {
-      return [];
+      storeLabels(produce(labels => {
+        labels.length = 0;
+      }));
+      return;
     }
 
     const delta = maxValue - minValue;
 
-    const hovers = [];
+    const hoverPoints = [];
     for (let i = 0; i < listOfPoints.length; i++) {
       const points = listOfPoints[i];
       const splits = listOfSplits[i];
@@ -809,37 +815,76 @@ export function ChartHoverToolTip(props) {
       }
       const y = chartUtils.flipYAxes((value - minValue) / delta * height, height);
 
-      hovers.push({ y: y + props.y, value, color: arrayUtils.atWithWrapping(colors, i) || "black"});
+      hoverPoints.push({ y: y + props.y, value, color: arrayUtils.atWithWrapping(colors, i) || "black"});
     }
 
-    hovers.sort((a, b) => (a.value - b.value));
+    hoverPoints.sort((a, b) => (a.value - b.value));
+
     const stepSize = 15;
-    const minHeight = props.y + (stepSize * (hovers.length - 1));
-    const maxHeight = props.y + height;
-    let floor = maxHeight;
-    return hovers.map((label, i) => {
-      const step = i * stepSize;
-      const y = Math.max(minHeight - step, Math.min(label.y, floor));
-      floor = y - stepSize;
-      return {
-        ...label,
-        y: y,
+    const minHeight = props.y + (stepSize * (hoverPoints.length - 1));
+    const maxHeight = props.y + props.height;
+    let valueFloor = maxHeight;
+    let deltaFloor = maxHeight;
+    storeLabels(produce(labels => {
+      labels.length = hoverPoints.length;
+
+      for (let i = 0; i < hoverPoints.length; i++) {
+        const hover = hoverPoints[i];
+        const storeLabel = labels[i] ??= {};
+        const step = i * stepSize;
+        const y = Math.max(minHeight - step, Math.min(hover.y, valueFloor));
+        valueFloor = y - stepSize;
+
+        storeLabel.value = hover.value;
+        storeLabel.color = hover.color;
+        storeLabel.y = y;
+
+        if (i !== hoverPoints.length - 1) {
+          const nextHover = hoverPoints[i + 1];
+          const deltaValue = nextHover.value - hover.value;
+          const deltaPercentage = (deltaValue / nextHover.value) * 100;
+          asserts.assertTruthy(nextHover.value >= hover.value);
+
+          const deltaY = Math.max(minHeight - stepSize - step, Math.min(hover.y + (nextHover.y - hover.y) / 2, deltaFloor));
+          deltaFloor = deltaY - stepSize;
+
+          storeLabel.deltaValue = deltaValue;
+          storeLabel.deltaPercentage = deltaPercentage;
+          storeLabel.deltaY = deltaY;
+        } else {
+          delete storeLabel.deltaValue;
+          delete storeLabel.deltaPercentage;
+          delete storeLabel.deltaY;
+        }
       }
-    });
+    }));
   });
 
   return (
     <g data-chart-tool-tip>
-      <For each={props.listOfPoints}>{(_, i) => (
+      <For each={$labels}>{label => (
         <>
-          <circle cx={props.x - 0} cy={hoverPoints()[i()]?.y ?? -100} r="3" fill={hoverPoints()[i()]?.color} />
-          {/* You sometimes have to do beautiful things for performance :D */}
-          <text dominant-baseline="middle" text-anchor="end" x={props.x - 5} y={hoverPoints()[i()]?.y}>{hoverPoints()[i()]?.value.toFixed(3)}</text>
+          <circle cx={props.x} cy={label.y ?? -100} r="3" fill={label.color} />
+          <text dominant-baseline="middle" text-anchor="end" x={props.x - 5} y={label.y + 1}>{label.value.toFixed(3)}</text>
+          <Show when={label.deltaPercentage}>
+            <text
+              stroke="white"
+              stroke-width="3"
+              paint-order="stroke"
+              fill="black"
+              font-size="14"
+              dominant-baseline="middle"
+              text-anchor={props.mouseXPercentage > 0.5 ? "end" : "start"}
+              x={props.xWithPadding + props.width * props.mouseXPercentage + (-5 * numberUtils.trueToOneAndFalseToNegativeOne(props.mouseXPercentage > 0.5))}
+              y={label?.deltaY + 1}>{label.deltaValue.toFixed(1)} Nm ({label.deltaPercentage.toFixed(1)}%)
+            </text>
+          </Show>
         </>
       )}</For>
     </g>
   );
 }
+
 
 export function ChartErrorBands(props) {
   asserts.assert2DArray(props.points, "points");
