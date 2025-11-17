@@ -3,7 +3,7 @@ import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import {Checkbox} from "./ui/Checkbox.jsx";
 import {FiChevronDown, FiChevronRight} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
-import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show} from "solid-js";
+import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, onCleanup, onMount, Show} from "solid-js";
 import {createStore, reconcile, unwrap} from "solid-js/store";
 import {fileUtils, indexedDBUtils} from "../utils/utils";
 import {
@@ -290,9 +290,9 @@ export function FileBrowser() {
     };
     const intersectionObserver = new IntersectionObserver(callback, options);
 
-    const observe = (elem) => {
-      intersectionObserver.observe(elem);
-    }
+    onCleanup(() => {
+      intersectionObserver.disconnect();
+    })
 
     const collectedValues = createMemo(() => {
       const speedValues = new Set();
@@ -355,9 +355,18 @@ export function FileBrowser() {
                 });
               }
 
+              let ref;
+              onMount(() => {
+                intersectionObserver.observe(ref);
+              });
+
+              onCleanup(() => {
+                intersectionObserver.unobserve(ref);
+              });
+
               return (
                 <>
-                  <div attr:data-index={i()} use:observe class="session-row" classList={{opened: opened()}} onClick={toggleOpen}>
+                  <div attr:data-index={i()} ref={ref} class="session-row" classList={{opened: opened()}} onClick={toggleOpen}>
                     <Show when={visibility[i()]}>
 
                     <p class="identifier">
