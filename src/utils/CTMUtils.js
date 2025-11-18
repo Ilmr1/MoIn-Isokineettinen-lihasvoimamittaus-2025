@@ -240,8 +240,8 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
   const dynamicAngleSplitCollection = dataFiltering ? torqueSplitCollection : goodAnglesSplitCollection;
 
   const unifiedAngleSplitsCollection = createSmallestAngleSampleSizePointCollection(dynamicAngleSplitCollection.splits, anglePointCollection.points);
-  const averagePowerFlexCollection = createAveragePointCollection2("blue", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering);
-  const averagePowerExtCollection = createAveragePointCollection2("red", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering);
+  const [averagePowerFlexCollection, errorFlex] = createAveragePointCollection2("blue", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
+  const [averagePowerExtCollection, errorExt] = createAveragePointCollection2("red", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
   // const angleSpecificHQRatioPointCollection = createAngleSpecificHQRatioPointCollection(torquePointCollection.points, averagePowerFlexCollection.points, averagePowerExtCollection.points, dynamicAngleSplitCollection.splits, anglePointCollection.points, .9);
 
 
@@ -252,8 +252,10 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
     angle: anglePointCollection,
     averagePowerFlex: averagePowerFlexCollection,
     averagePowerExt: averagePowerExtCollection,
-    averagePowerFlexError: createAverageErrorPointCollection2("blue", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerFlexCollection.points, .9),
-    averagePowerExtError: createAverageErrorPointCollection2("red", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerExtCollection.points, .9),
+    // averagePowerFlexError: createAverageErrorPointCollection2("blue", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerFlexCollection.points, .9),
+    // averagePowerExtError: createAverageErrorPointCollection2("red", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerExtCollection.points, .9),
+    averagePowerFlexError: errorFlex,
+    averagePowerExtError: errorExt,
   };
 
   // ========================= SPLITS =============================
@@ -651,9 +653,10 @@ const createAveragePointCollection = (color, torquePoints, angleSplits, anglePoi
   return collection;
 }
 
-const createAveragePointCollection2 = (color, torquePoints, splits, dataFiltering) => {
-  const averages = [];
-  const collection = { points: averages };
+const createAveragePointCollection2 = (color, torquePoints, splits, dataFiltering, errorPercentage) => {
+  const averages = [], highest = [], lowest = [];
+  const averageCollection = { points: averages };
+  const errorBandCollection = { points: [lowest, highest] };
   let count = 0;
 
   splits.forEach(split => {
@@ -663,37 +666,31 @@ const createAveragePointCollection2 = (color, torquePoints, splits, dataFilterin
 
     count++;
     const reverse = split.color === "red";
-    for (let i = split.startIndex; i <= split.endIndex; i++) {
-      averages[i - split.startIndex] ??= 0;
-      // Reverse order
-      if (reverse) {
-        averages[i - split.startIndex] += torquePoints[split.endIndex - (i - split.startIndex)];
-      } else {
-        averages[i - split.startIndex] += torquePoints[i];
-      }
+    const length = split.endIndex - split.startIndex;
+    const valueFromMiddleOfSplit = torquePoints[split.startIndex + Math.floor(length / 2)];
+    const t = numberUtils.trueToOneAndFalseToNegativeOne(valueFromMiddleOfSplit > 0);
+    for (let i = 0; i <= length; i++) {
+      const val = Math.max(torquePoints[reverse ? split.endIndex - i : split.startIndex + i] * t, 0);
+      averages[i] ??= 0;
+
+      averages[i] += val;
+      highest[i] = numberUtils.max(highest[i], val);
+      lowest[i] = numberUtils.min(lowest[i], val);
     }
   });
 
   for (let i = 0; i < averages.length; i++) {
     const average = numberUtils.truncDecimals(averages[i] / count, 3);
     averages[i] = average;
-    collection.maxValue ??= average;
-    collection.minValue ??= average;
-
-    if (collection.maxValue < average) {
-      collection.maxValue = average
-    } else if (collection.minValue > average) {
-      collection.minValue = average
-    }
+    highest[i] = average + (highest[i] - average) * errorPercentage;
+    lowest[i] = average + (lowest[i] - average) * errorPercentage;
+    averageCollection.maxValue = numberUtils.max(average, averageCollection.maxValue);
+    averageCollection.minValue = numberUtils.min(average, averageCollection.minValue);
+    errorBandCollection.maxValue = numberUtils.max(highest[i], errorBandCollection.maxValue);
+    errorBandCollection.minValue = numberUtils.min(lowest[i], errorBandCollection.minValue);
   }
 
-  if (collection.minValue < 0 && collection.maxValue <= 0) {
-    collection.points = collection.points.map(Math.abs);
-    collection.maxValue = Math.abs(collection.minValue);
-    collection.minValue = Math.abs(collection.maxValue);
-  }
-
-  return collection;
+  return [averageCollection, errorBandCollection];
 }
 
 // If a sample contains for example three flex repetitions the repetitions should be mostly the same size
