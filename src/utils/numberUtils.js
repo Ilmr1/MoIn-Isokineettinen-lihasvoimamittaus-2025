@@ -9,7 +9,7 @@ export const padRoundDecimalsToLength = (number, charactersCount, maxDecimalsToK
   return roundDecimals(number, decimalsToKeep).toFixed(decimalsToKeep);
 }
 
-export const truncDecimals = (number, decimals) => {
+export const truncDecimals = (number, decimals = 3) => {
   const precision = Math.pow(10, decimals);
   return Math.trunc(number * precision) / precision;
 }

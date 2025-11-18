@@ -186,7 +186,7 @@ const createGoodAnglesSplitCollection = (markersByIndex, anglePoints, speeds, di
 const createFilteredTorquePointCollection = (goodAngleSplits, torquePoints) => {
   const points = Array(torquePoints.length).fill(0);
 
-  const filter = createLowpass11Hz(256);
+  const filter = createLowpass11HzRoundToZero(256);
   goodAngleSplits.forEach(split => {
     let highestValueIndex;
     let max;
@@ -369,7 +369,7 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, flexPoints, ext
 }
 
 
-const createLowpass11Hz = (sampleRate) => {
+const createLowpass11HzRoundToZero = (sampleRate) => {
   asserts.assertFalsy(!sampleRate || sampleRate <= 0, "sampleRate must be > 0");
 
   const fc = 11.0;
@@ -380,6 +380,31 @@ const createLowpass11Hz = (sampleRate) => {
   return {
     process(x) {
       y = y + alpha * (x - y);
+      return y;
+    },
+
+    reset(value = 0.0) {
+      y = value;
+    },
+  };
+}
+
+const createLowpass11Hz = (sampleRate) => {
+  asserts.assertFalsy(!sampleRate || sampleRate <= 0, "sampleRate must be > 0");
+
+  const fc = 11.0;
+  const omega = 2 * Math.PI * fc;
+  const alpha = omega / (sampleRate + omega);
+
+  let y = 0.0;
+  return {
+    process(x) {
+      if (y === 0) {
+        y = x;
+      } else {
+        y = y + alpha * (x - y);
+      }
+
       return y;
     },
 
@@ -557,7 +582,7 @@ const createAnalysis = (repetitions, weight) => {
 }
 
 const filterByStartEndAndPoints = (start, end, points) => {
-  const filter = createLowpass11Hz(256);
+  const filter = createLowpass11HzRoundToZero(256);
   let highestPoint = Math.floor(start + (end - start) / 2);
   let max;
   for (let i = start; i < end; i++) {
@@ -679,16 +704,29 @@ const createAveragePointCollection2 = (color, torquePoints, splits, dataFilterin
     }
   });
 
-  for (let i = 0; i < averages.length; i++) {
-    const average = numberUtils.truncDecimals(averages[i] / count, 3);
-    averages[i] = average;
-    highest[i] = average + (highest[i] - average) * errorPercentage;
-    lowest[i] = average + (lowest[i] - average) * errorPercentage;
-    averageCollection.maxValue = numberUtils.max(average, averageCollection.maxValue);
-    averageCollection.minValue = numberUtils.min(average, averageCollection.minValue);
-    errorBandCollection.maxValue = numberUtils.max(highest[i], errorBandCollection.maxValue);
-    errorBandCollection.minValue = numberUtils.min(lowest[i], errorBandCollection.minValue);
+  if (dataFiltering) {
+    const averageFilter = createLowpass11Hz(256);
+    const lowestFilter = createLowpass11Hz(256);
+    const highestFilter = createLowpass11Hz(256);
+    for (let i = 0; i < averages.length; i++) {
+      const average = numberUtils.truncDecimals(averageFilter.process(averages[i] / count), 3);
+      averages[i] = average;
+      highest[i] = lowestFilter.process(average + (highest[i] - average) * errorPercentage);
+      lowest[i] = highestFilter.process(average + (lowest[i] - average) * errorPercentage);
+    }
+  } else {
+    for (let i = 0; i < averages.length; i++) {
+      const average = numberUtils.truncDecimals(averages[i] / count, 3);
+      averages[i] = average;
+      highest[i] = average + (highest[i] - average) * errorPercentage;
+      lowest[i] = average + (lowest[i] - average) * errorPercentage;
+    }
   }
+
+  averageCollection.maxValue = arrayUtils.maxValue(averages);
+  averageCollection.minValue = arrayUtils.minValue(averages)
+  errorBandCollection.maxValue = arrayUtils.maxValue(highest);
+  errorBandCollection.minValue = arrayUtils.minValue(lowest);
 
   return [averageCollection, errorBandCollection];
 }
