@@ -22,8 +22,12 @@ export const average = (array, precision) => {
   return avg;
 }
 export const findByMinDelta = (array, value) => {
+  return array?.[findIndexByMinDelta(array, value)];
+}
+
+export const findIndexByMinDelta = (array, value) => {
   if (!isArray(array) || array.length === 0) {
-    return undefined
+    return -1;
   }
 
   let min, index = 0;
@@ -36,12 +40,16 @@ export const findByMinDelta = (array, value) => {
     }
   }
 
-  return array[index];
+  return index;
 }
 
 export const findByMaxDelta = (array, value) => {
+  return array?.[findIndexByMaxDelta(array, value)];
+}
+
+export const findIndexByMaxDelta = (array, value) => {
   if (!isArray(array) || array.length === 0) {
-    return undefined
+    return -1;
   }
 
   let max, index = 0;
@@ -54,7 +62,7 @@ export const findByMaxDelta = (array, value) => {
     }
   }
 
-  return array[index];
+  return index;
 }
 export const coeffVar = array => {
   if (!isArray(array) || array.length === 0) {
