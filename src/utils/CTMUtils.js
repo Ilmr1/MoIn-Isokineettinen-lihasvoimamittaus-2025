@@ -242,12 +242,9 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
   const unifiedAngleSplitsCollection = createSmallestAngleSampleSizePointCollection(dynamicAngleSplitCollection.splits, anglePointCollection.points);
   const [averagePowerFlexCollection, errorFlex] = createAveragePointCollection2("blue", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
   const [averagePowerExtCollection, errorExt] = createAveragePointCollection2("red", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
-  const angleSpecificHQRatioPointCollection = createAngleSpecificHQRatioPointCollection(torquePoints, anglePointCollection.points, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
+  const [angleSpecificHQRatioPointCollection, errorHQRatio] = createAngleSpecificHQRatioPointCollection(torquePoints, anglePointCollection.points, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
 
   const angleSpecificHQRatioSplitCollection = createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection);
-
-  // console.log(unifiedAngleSplitsCollection);
-  // console.log(angleSpecificHQRatioSplitCollection);
 
   const pointCollections = {
     power: torquePointCollection,
@@ -255,9 +252,8 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
     angle: anglePointCollection,
     averagePowerFlex: averagePowerFlexCollection,
     averagePowerExt: averagePowerExtCollection,
-    // averagePowerFlexError: createAverageErrorPointCollection2("blue", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerFlexCollection.points, .9),
-    // averagePowerExtError: createAverageErrorPointCollection2("red", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerExtCollection.points, .9),
     angleSpecificHQRatio: angleSpecificHQRatioPointCollection,
+    angleSpecificHQRatioError: errorHQRatio,
     averagePowerFlexError: errorFlex,
     averagePowerExtError: errorExt,
   };
@@ -280,7 +276,7 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
 }
 
 function createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection) {
-  const firstNotDisabledUnifiedAngle = unifiedAngleSplitsCollection.splits.find(split => split.disabled);
+  const firstNotDisabledUnifiedAngle = unifiedAngleSplitsCollection.splits.find(split => !split.disabled);
   const splitCollection = {
     splits: [],
   }
@@ -305,6 +301,8 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
   const pointsCollection = {
     maxValue: 0,
     minValue: 0,
+    minAngle: 0,
+    maxAngle: 0,
     points: averages,
   }
   const errorBandCollection = {
@@ -335,6 +333,8 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
     }
     const maxAngle = Math.min(extSplit.maxAngle, flexSplit.maxAngle);
     const minAngle = Math.max(extSplit.minAngle, flexSplit.minAngle);
+    pointsCollection.minAngle = minAngle;
+    pointsCollection.maxAngle = maxAngle;
     // Flex and ext sample size is same, but the angles are not matching so early return
     if (extSplit.maxAngle < minAngle || extSplit.minAngle > maxAngle || flexSplit.maxAngle < minAngle || flexSplit.minAngle > maxAngle) {
       return returnValue;
@@ -368,28 +368,25 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
   asserts.assertTruthy(averagesExt.length === averagesFlex.length, "Average lengths mis match");
   asserts.assert1DArrayOfNumbersOrEmptyArray(averagesExt);
   asserts.assert1DArrayOfNumbersOrEmptyArray(averagesFlex);
-  console.log(lowestFlex, lowestExt);
 
   if (dataFiltering) {
     const averageFilter = createLowpass11Hz(256);
     const lowestFilter = createLowpass11Hz(256);
     const highestFilter = createLowpass11Hz(256);
     for (let i = 0; i < averagesExt.length; i++) {
-      const average = numberUtils.truncDecimals((averagesFlex[i] / averagesExt[i]) / repetitions, 3);
+      const average = numberUtils.truncDecimals(((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
       averages[i] = average;
-      highest[i] = average + (highestFlex[i] / highestExt[i] - average) * errorPercentage;
-      lowest[i] = average + (lowestFlex[i] / lowestExt[i] - average) * errorPercentage;
+      highest[i] = average + (highestFlex[i] / lowestExt[i] - average) * errorPercentage;
+      lowest[i] = average + (lowestFlex[i] / highestExt[i] - average) * errorPercentage;
     }
   } else {
     for (let i = 0; i < averagesExt.length; i++) {
-      const average = numberUtils.truncDecimals((averagesFlex[i] / averagesExt[i]) / repetitions, 3);
+      const average = numberUtils.truncDecimals(((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
       averages[i] = average;
-      highest[i] = average + (highestFlex[i] / highestExt[i] - average) * errorPercentage;
-      lowest[i] = average + (lowestFlex[i] / lowestExt[i] - average) * errorPercentage;
+      highest[i] = average + (highestFlex[i] / lowestExt[i] - average) * errorPercentage;
+      lowest[i] = average + (lowestFlex[i] / highestExt[i] - average) * errorPercentage;
     }
   }
-
-  console.log(returnValue)
 
   pointsCollection.maxValue = arrayUtils.maxValue(averages) || 0;
   pointsCollection.minValue = arrayUtils.minValue(averages) || 0;
