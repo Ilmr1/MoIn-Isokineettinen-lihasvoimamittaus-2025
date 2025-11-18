@@ -237,6 +237,7 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
 
   const averagePowerFlexCollection = createAveragePointCollection("blue", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
   const averagePowerExtCollection = createAveragePointCollection("red", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
+  const unifiedAngleSplitsCollection = createSmallestAngleSampleSizePointCollection(averageSprints.splits, anglePointCollection.points);
   const angleSpecificHQRatioPointCollection = createAngleSpecificHQRatioPointCollection(torquePointCollection.points, averagePowerFlexCollection.points, averagePowerExtCollection.points, averageSprints.splits, anglePointCollection.points, .9);
 
 
@@ -644,6 +645,91 @@ const createAveragePointCollection = (color, torquePoints, angleSplits, anglePoi
   }
 
   return collection;
+}
+
+// If a sample contains for example three flex repetitions the repetitions should be mostly the same size
+// They will usually differ a couple indecies of each other and because of this will also have a differing sample size
+// This function will go through all specified repetitions and give you the smallest found sample size
+// These values are then used to ensure that average calculating are using the same angle degree values and sample sizes
+const createSmallestAngleSampleSizePointCollection = (splits, anglePoints) => {
+  const splitCollection = {
+    splits: [],
+  }
+
+  let minExtAngle, maxExtAngle, minFlexAngle, maxFlexAngle;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return;
+    }
+
+    // minAngle is the highest low value found
+    // maxAngle is the lowest high value found
+    if (split.color === "red") {
+      minExtAngle = numberUtils.max(minExtAngle, Math.min(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+      maxExtAngle = numberUtils.min(maxExtAngle, Math.max(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+    } else {
+      minFlexAngle = numberUtils.max(minFlexAngle, Math.min(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+      maxFlexAngle = numberUtils.min(maxFlexAngle, Math.max(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+    }
+  });
+
+  if (minExtAngle == null) {
+    return splitCollection;
+  }
+
+  asserts.assertTypeNumber(minExtAngle);
+  asserts.assertTypeNumber(maxExtAngle);
+  asserts.assertTypeNumber(minFlexAngle);
+  asserts.assertTypeNumber(maxFlexAngle);
+
+  let minExtSampleSize, minFlexSampleSize;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return;
+    }
+
+    if (split.color === "red") {
+      const extStartIndex = arrayUtils.findIndex(anglePoints, angle => angle > minExtAngle, split.startIndex);
+      const extEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle < maxExtAngle, split.endIndex);
+      asserts.assertTruthy(extStartIndex < extEndIndex, "Ext index is out of bounds");
+      minExtSampleSize = numberUtils.min(minExtSampleSize, extEndIndex - extStartIndex);
+    } else {
+      const flexStartIndex = arrayUtils.findIndex(anglePoints, angle => angle < maxFlexAngle, split.startIndex);
+      const flexEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle > minFlexAngle, split.endIndex);
+      asserts.assertTruthy(flexStartIndex < flexEndIndex, "Flex index is out of bounds");
+      minFlexSampleSize = numberUtils.min(minFlexSampleSize, flexEndIndex - flexStartIndex);
+    }
+  });
+
+  asserts.assertTypeNumber(minExtSampleSize);
+  asserts.assertTypeNumber(minFlexSampleSize);
+
+  splits.forEach(split => {
+    if (split.color === "red") {
+      var startIndex = arrayUtils.findIndex(anglePoints, angle => angle > minExtAngle, split.startIndex);
+      var endIndex = arrayUtils.findLastIndex(anglePoints, angle => angle < maxExtAngle, split.endIndex);
+    } else {
+      var startIndex = arrayUtils.findIndex(anglePoints, angle => angle < maxFlexAngle, split.startIndex);
+      var endIndex = arrayUtils.findLastIndex(anglePoints, angle => angle > minFlexAngle, split.endIndex);
+    }
+
+    const sampleSize = endIndex - startIndex;
+    const minSampleSize = split.color === "red" ? minExtSampleSize : minFlexSampleSize;
+    const sampleSizeDelta = sampleSize - minSampleSize;
+    asserts.assertFalsy(sampleSizeDelta < 0, "Sample size is out of bounds");
+
+    splitCollection.startIndex = numberUtils.min(startIndex, splitCollection.startIndex);
+    splitCollection.endIndex = numberUtils.max(endIndex, splitCollection.endIndex);;
+
+    splitCollection.splits.push({
+      startIndex: startIndex + Math.ceil(sampleSizeDelta / 2),
+      endIndex: endIndex + Math.floor(sampleSizeDelta / 2),
+      color: split.color,
+      disabled: split.disabled ?? false
+    });
+  });
+
+  return splitCollection;
 }
 
 const createAverageErrorPointCollection = (splits, color, points, anglePoints, averagePoints, errorPercentage) => {
