@@ -242,9 +242,12 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
   const unifiedAngleSplitsCollection = createSmallestAngleSampleSizePointCollection(dynamicAngleSplitCollection.splits, anglePointCollection.points);
   const [averagePowerFlexCollection, errorFlex] = createAveragePointCollection2("blue", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
   const [averagePowerExtCollection, errorExt] = createAveragePointCollection2("red", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
-  // const angleSpecificHQRatioPointCollection = createAngleSpecificHQRatioPointCollection(torquePointCollection.points, averagePowerFlexCollection.points, averagePowerExtCollection.points, dynamicAngleSplitCollection.splits, anglePointCollection.points, .9);
+  const angleSpecificHQRatioPointCollection = createAngleSpecificHQRatioPointCollection(torquePoints, anglePointCollection.points, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
 
+  const angleSpecificHQRatioSplitCollection = createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection);
 
+  // console.log(unifiedAngleSplitsCollection);
+  // console.log(angleSpecificHQRatioSplitCollection);
 
   const pointCollections = {
     power: torquePointCollection,
@@ -254,6 +257,7 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
     averagePowerExt: averagePowerExtCollection,
     // averagePowerFlexError: createAverageErrorPointCollection2("blue", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerFlexCollection.points, .9),
     // averagePowerExtError: createAverageErrorPointCollection2("red", unifiedAngleSplitsCollection.splits, torquePoints, averagePowerExtCollection.points, .9),
+    angleSpecificHQRatio: angleSpecificHQRatioPointCollection,
     averagePowerFlexError: errorFlex,
     averagePowerExtError: errorExt,
   };
@@ -270,68 +274,49 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
       averagePowerFlex: createAverageSplitCollection(unifiedAngleSplitsCollection.splits, "blue", disabledList),
       averagePowerExt: createAverageSplitCollection(unifiedAngleSplitsCollection.splits, "red", disabledList),
       goodAngles: goodAnglesSplitCollection,
+      angleSpecificHQRatio: angleSpecificHQRatioSplitCollection,
     }
   }
 }
-function createAngleSpecificHQRatioPointCollection(torquePoints, flexPoints, extPoints, splits, anglePoints, errorPercentage) {
+
+function createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection) {
+  const firstNotDisabledUnifiedAngle = unifiedAngleSplitsCollection.splits.find(split => split.disabled);
+  const splitCollection = {
+    splits: [],
+  }
+
+  if (!firstNotDisabledUnifiedAngle) {
+    return splitCollection;
+  }
+
+  splitCollection.startIndex = 0;
+  splitCollection.endIndex = firstNotDisabledUnifiedAngle.endIndex - firstNotDisabledUnifiedAngle.startIndex;
+  splitCollection.splits.push({
+    startIndex: 0,
+    endIndex: splitCollection.endIndex
+  });
+
+  return splitCollection;
+}
+
+
+function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, splits, dataFiltering, errorPercentage) {
+  const averages = [], lowest = [], highest = [];
   const pointsCollection = {
     maxValue: 0,
     minValue: 0,
-    points: [],
+    points: averages,
   }
   const errorBandCollection = {
     maxValue: 0,
     minValue: 0,
-    points: [],
+    points: [lowest, highest],
   }
 
   const returnValue = [pointsCollection, errorBandCollection];
 
-  let minAngle, maxAngle;
-  splits.forEach(split => {
-    if (split.disabled) {
-      return;
-    }
-
-    minAngle = numberUtils.max(minAngle, Math.min(anglePoints[split.startIndex], anglePoints[split.endIndex]));
-    maxAngle = numberUtils.min(maxAngle, Math.max(anglePoints[split.startIndex], anglePoints[split.endIndex]));
-  });
-
-  if (minAngle == null) {
-    return returnValue;
-  }
-
-  let sampleSize;
-  for (let i = 0; i < splits.length; i += 2) {
-    const splitA = splits[i];
-    const splitB = splits[i + 1];
-    if (splitA.disabled) {
-      continue;
-    }
-
-    const [extSplit, flexSplit] = splitA.color === "red" ? [splitA, splitB] : [splitA, splitB];
-    const flexStartIndex = arrayUtils.findIndex(anglePoints, angle => angle <= maxAngle, flexSplit.startIndex);
-    const flexEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle >= minAngle, flexSplit.endIndex);
-    const extStartIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, extSplit.startIndex);
-    const extEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, extSplit.endIndex);
-
-    asserts.assertTruthy(flexStartIndex < flexEndIndex, "Flex index is out of bounds");
-    asserts.assertTruthy(extStartIndex < extEndIndex, "Ext index is out of bounds");
-
-
-    const extSampleSize = extEndIndex - extStartIndex;
-    const flexSampleSize = flexEndIndex - flexStartIndex;
-    // Flex and ext are not same size so early exit
-    if (numberUtils.absDelta(extSampleSize, flexSampleSize) > 15) {
-      return returnValue;
-    }
-
-    sampleSize = Math.min(extSampleSize, flexSampleSize);
-  }
-
-  asserts.assertTypeNumber(sampleSize);
-
-  const lowest = [], sum = [], highest = [];
+  const averagesExt = [], lowestExt = [], highestExt = [];
+  const averagesFlex = [], lowestFlex = [], highestFlex = [];
   let repetitions = 0;
   for (let i = 0; i < splits.length; i += 2) {
     const splitA = splits[i];
@@ -341,29 +326,75 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, flexPoints, ext
     }
 
     const [extSplit, flexSplit] = splitA.color === "red" ? [splitA, splitB] : [splitA, splitB];
-    const flexEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle >= minAngle, flexSplit.endIndex);
-    const extStartIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, extSplit.startIndex);
+
+    const extSampleSize = extSplit.endIndex - extSplit.startIndex;
+    const flexSampleSize = flexSplit.endIndex - flexSplit.startIndex;
+    // Flex and ext are not same size so early exit
+    if (numberUtils.absDelta(extSampleSize, flexSampleSize) > 15) {
+      return returnValue;
+    }
+    const maxAngle = Math.min(extSplit.maxAngle, flexSplit.maxAngle);
+    const minAngle = Math.max(extSplit.minAngle, flexSplit.minAngle);
+    // Flex and ext sample size is same, but the angles are not matching so early return
+    if (extSplit.maxAngle < minAngle || extSplit.minAngle > maxAngle || flexSplit.maxAngle < minAngle || flexSplit.minAngle > maxAngle) {
+      return returnValue;
+    }
+    const extEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, extSplit.endIndex);
+    const flexStartIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, flexSplit.startIndex);
+    const sampleSize = Math.min(extSampleSize, flexSampleSize);
     repetitions++;
 
+    const valueFromMiddleOfSplit = torquePoints[flexStartIndex + Math.floor(sampleSize / 2)];
+    const t = numberUtils.trueToOneAndFalseToNegativeOne(valueFromMiddleOfSplit < 0);
+    for (let i = 0; i <= sampleSize; i++) {
+      const extValue = Math.max(torquePoints[extEndIndex - i] * t, 0);
+      averagesExt[i] ??= 0;
+      averagesExt[i] += extValue;
+      lowestExt[i] = numberUtils.min(lowestExt[i], extValue);
+      highestExt[i] = numberUtils.max(highestExt[i], extValue);
 
-    for (let i = 0; i < sampleSize; i++) {
-      const hqValue = torquePoints[flexEndIndex - i] / torquePoints[extStartIndex + i];
-      sum[i] ??= 0;
-      sum[i] += hqValue;
-      lowest[i] = numberUtils.min(hqValue, lowest[i]);
-      highest[i] = numberUtils.max(hqValue, highest[i]);
+      const flexValue = Math.max(torquePoints[flexStartIndex + i] * -t, 0);
+      averagesFlex[i] ??= 0;
+      averagesFlex[i] += flexValue;
+      lowestFlex[i] = numberUtils.min(lowestFlex[i], flexValue);
+      highestFlex[i] = numberUtils.max(highestFlex[i], flexValue);
     }
   }
 
-  asserts.assertTruthy(repetitions);
+  if (repetitions === 0) {
+    return returnValue;
+  }
 
-  pointsCollection.points = sum.map(s => s / repetitions);
-  pointsCollection.minValue = arrayUtils.minValue(pointsCollection.points, 0);
-  pointsCollection.maxValue = arrayUtils.maxValue(pointsCollection.points, 0);
+  asserts.assertTruthy(averagesExt.length === averagesFlex.length, "Average lengths mis match");
+  asserts.assert1DArrayOfNumbersOrEmptyArray(averagesExt);
+  asserts.assert1DArrayOfNumbersOrEmptyArray(averagesFlex);
+  console.log(lowestFlex, lowestExt);
 
-  errorBandCollection.maxValue = arrayUtils.maxValue(highest, 0);
-  errorBandCollection.minValue = arrayUtils.minValue(lowest, 0);
-  errorBandCollection.points.push(lowest, highest);
+  if (dataFiltering) {
+    const averageFilter = createLowpass11Hz(256);
+    const lowestFilter = createLowpass11Hz(256);
+    const highestFilter = createLowpass11Hz(256);
+    for (let i = 0; i < averagesExt.length; i++) {
+      const average = numberUtils.truncDecimals((averagesFlex[i] / averagesExt[i]) / repetitions, 3);
+      averages[i] = average;
+      highest[i] = average + (highestFlex[i] / highestExt[i] - average) * errorPercentage;
+      lowest[i] = average + (lowestFlex[i] / lowestExt[i] - average) * errorPercentage;
+    }
+  } else {
+    for (let i = 0; i < averagesExt.length; i++) {
+      const average = numberUtils.truncDecimals((averagesFlex[i] / averagesExt[i]) / repetitions, 3);
+      averages[i] = average;
+      highest[i] = average + (highestFlex[i] / highestExt[i] - average) * errorPercentage;
+      lowest[i] = average + (lowestFlex[i] / lowestExt[i] - average) * errorPercentage;
+    }
+  }
+
+  console.log(returnValue)
+
+  pointsCollection.maxValue = arrayUtils.maxValue(averages) || 0;
+  pointsCollection.minValue = arrayUtils.minValue(averages) || 0;
+  errorBandCollection.maxValue = arrayUtils.maxValue(highest) || 0;
+  errorBandCollection.minValue = arrayUtils.minValue(lowest) || 0;
 
   return returnValue;
 }
@@ -723,10 +754,10 @@ const createAveragePointCollection2 = (color, torquePoints, splits, dataFilterin
     }
   }
 
-  averageCollection.maxValue = arrayUtils.maxValue(averages);
-  averageCollection.minValue = arrayUtils.minValue(averages)
-  errorBandCollection.maxValue = arrayUtils.maxValue(highest);
-  errorBandCollection.minValue = arrayUtils.minValue(lowest);
+  averageCollection.maxValue = arrayUtils.maxValue(averages) || 0;
+  averageCollection.minValue = arrayUtils.minValue(averages) || 0;
+  errorBandCollection.maxValue = arrayUtils.maxValue(highest) || 0;
+  errorBandCollection.minValue = arrayUtils.minValue(lowest) || 0;
 
   return [averageCollection, errorBandCollection];
 }
@@ -794,7 +825,8 @@ const createSmallestAngleSampleSizePointCollection = (splits, anglePoints) => {
       return;
     }
 
-    if (split.color === "red") {
+    const isExt = split.color === "red";
+    if (isExt) {
       var startIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minExtAngle, split.startIndex);
       var endIndex = arrayUtils.findLastIndex(anglePoints, angle => angle <= maxExtAngle, split.endIndex);
     } else {
@@ -803,16 +835,18 @@ const createSmallestAngleSampleSizePointCollection = (splits, anglePoints) => {
     }
 
     const sampleSize = endIndex - startIndex;
-    const minSampleSize = split.color === "red" ? minExtSampleSize : minFlexSampleSize;
+    const minSampleSize = isExt ? minExtSampleSize : minFlexSampleSize;
     const sampleSizeDelta = sampleSize - minSampleSize;
     asserts.assertFalsy(sampleSizeDelta < 0, "Sample size is out of bounds");
 
     splitCollection.startIndex = numberUtils.min(startIndex, splitCollection.startIndex);
-    splitCollection.endIndex = numberUtils.max(endIndex, splitCollection.endIndex);;
+    splitCollection.endIndex = numberUtils.max(endIndex, splitCollection.endIndex);
 
     splitCollection.splits.push({
       startIndex: startIndex + Math.ceil(sampleSizeDelta / 2),
       endIndex: endIndex + Math.floor(sampleSizeDelta / 2),
+      minAngle: isExt ? minExtAngle : minFlexAngle,
+      maxAngle: isExt ? maxExtAngle : maxFlexAngle,
       color: split.color,
       disabled: split.disabled ?? false
     });
