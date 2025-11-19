@@ -89,7 +89,7 @@ export function Sidebar() {
                 />
               </div>
               <Button
-                variant="danger"
+                variant="dangerAlt"
                 size="sm"
                 onClick={clearSelectedFiles}
                 class="self-center"
@@ -147,7 +147,7 @@ function ActiveFilesAndRepetitions() {
                         <div class="flex items-center gap-1">
                           <Button
                             size="sm"
-                            variant={isActive() ? "primary" : "default"}
+                            variant={isActive() ? "primaryAlt" : "default"}
                             onClick={() => setActiveFileIndex(originalIndex())}
                             class="flex items-center justify-between gap-2 w-full"
                           >
@@ -162,8 +162,8 @@ function ActiveFilesAndRepetitions() {
 
                           <Button
                             size="sm"
-                            variant="danger"
-                            label="×"
+                            variant="dangerAlt"
+                            label="︎×"
                             onClick={() =>
                               toggleSelectedFile(fileHandler.sessionId, selectedFiles()[fileHandler.index])
                             }
@@ -200,5 +200,5 @@ function ActiveFilesAndRepetitions() {
 }
 
 function clearRepetitionHover() {
-  storeHoveredRepetition({ fileIndex: -1, repetitionIndex: -1 })
+  storeHoveredRepetition({fileIndex: -1, repetitionIndex: -1})
 }

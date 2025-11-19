@@ -17,13 +17,17 @@ export function Button(props) {
       "font-medium rounded-lg transition-colors duration-150 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed";
 
     const color =
-      local.variant === "danger"
-        ? "bg-red-500 hover:bg-red-400 text-white focus-visible:ring-red-300"
-        : local.variant === "primary"
-          ? "bg-green-600 hover:bg-green-500 text-white focus-visible:ring-green-300"
-          : local.variant === "info"
-            ? "bg-sky-500 hover:bg-sky-400 text-white focus-visible:ring-blue-300"
-            : "bg-gray-200 hover:bg-gray-300 text-gray-800 focus-visible:ring-gray-300";
+      local.variant === "dangerAlt"
+        ? "bg-gray-200 hover:bg-red-500 text-gray-800 hover:text-white focus-visible:ring-red-400 text-base"
+        : local.variant === "danger"
+          ? "bg-red-500 hover:bg-red-400 text-white focus-visible:ring-red-300"
+          : local.variant === "primaryAlt"
+            ? "bg-gray-700 hover:bg-gray-600 text-white focus-visible:ring-gray-400"
+            : local.variant === "primary"
+              ? "bg-green-600 hover:bg-green-500 text-white focus-visible:ring-green-300"
+              : local.variant === "info"
+                ? "bg-sky-500 hover:bg-sky-400 text-white focus-visible:ring-blue-300"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-800 focus-visible:ring-gray-300";
 
     const size =
       local.size === "sm"
