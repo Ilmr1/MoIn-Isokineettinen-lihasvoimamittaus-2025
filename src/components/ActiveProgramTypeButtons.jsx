@@ -7,7 +7,7 @@ export function ActiveProgramTypeButtons() {
     <For
       each={[...new Set(parsedFileData().map(({rawObject}) => rawObject.programType))].sort()}>{programType => (
       <Button
-        variant={activeProgram() === programType ? "primary" : "secondary"}
+        variant={activeProgram() === programType ? "primaryAlt" : "secondary"}
         size="sm"
         onClick={() => setActiveProgram(programType)}
       >

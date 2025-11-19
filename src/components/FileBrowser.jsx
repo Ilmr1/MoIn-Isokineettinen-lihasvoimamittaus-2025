@@ -3,7 +3,18 @@ import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import {Checkbox} from "./ui/Checkbox.jsx";
 import {FiChevronDown, FiChevronRight} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
-import {batch, createEffect, createMemo, createRenderEffect, createSignal, For, on, onCleanup, onMount, Show} from "solid-js";
+import {
+  batch,
+  createEffect,
+  createMemo,
+  createRenderEffect,
+  createSignal,
+  For,
+  on,
+  onCleanup,
+  onMount,
+  Show
+} from "solid-js";
 import {createStore, reconcile, unwrap} from "solid-js/store";
 import {fileUtils, indexedDBUtils} from "../utils/utils";
 import {
@@ -233,12 +244,12 @@ export function FileBrowser() {
       <dialog id="file-popup" class="space-y-4">
         {/* Folder management */}
         <Button
-          variant="danger"
+          variant="dangerAlt"
           size="sm"
           id="file-popup-close"
           class="mt-4 mr-4"
           onClick={() => document.querySelector("#file-popup").close()}>
-          Close
+          ✖︎
         </Button>
 
         <div class="flex justify-center">
@@ -277,7 +288,7 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
-    const [ visibility, storeVisibility ] = createStore([]);
+    const [visibility, storeVisibility] = createStore([]);
 
     const callback = entries => {
       for (const entry of entries) {
@@ -366,54 +377,55 @@ export function FileBrowser() {
 
               return (
                 <>
-                  <div attr:data-index={i()} ref={ref} class="session-row" classList={{opened: opened()}} onClick={toggleOpen}>
+                  <div attr:data-index={i()} ref={ref} class="session-row" classList={{opened: opened()}}
+                       onClick={toggleOpen}>
                     <Show when={visibility[i()]}>
 
-                    <p class="identifier">
-                      <input
-                        type="checkbox"
-                        checked={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          batch(() => {
-                            const count = activeFilesCountInsideSession(ses.sessionId, ses.files);
-                            if (count > 0) {
-                              const files = unwrap($selectedSessionsCounts[ses.sessionId]);
-                              ses.files.forEach(file => {
-                                if (files.includes(file.fileHandler)) {
+                      <p class="identifier">
+                        <input
+                          type="checkbox"
+                          checked={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            batch(() => {
+                              const count = activeFilesCountInsideSession(ses.sessionId, ses.files);
+                              if (count > 0) {
+                                const files = unwrap($selectedSessionsCounts[ses.sessionId]);
+                                ses.files.forEach(file => {
+                                  if (files.includes(file.fileHandler)) {
+                                    toggleSelectedFile(ses.sessionId, file);
+                                  }
+                                });
+                              } else {
+                                ses.files.forEach(file => {
                                   toggleSelectedFile(ses.sessionId, file);
-                                }
-                              });
-                            } else {
-                              ses.files.forEach(file => {
-                                toggleSelectedFile(ses.sessionId, file);
-                              });
-                            }
-                          })
-                        }}
-                        indeterminate={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0 && activeFilesCountInsideSession(ses.sessionId, ses.files) < ses.files.length}
-                      />
-                      <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500"/>}>
-                        <FiChevronDown class="w-4 h-4 text-gray-500"/>
+                                });
+                              }
+                            })
+                          }}
+                          indeterminate={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0 && activeFilesCountInsideSession(ses.sessionId, ses.files) < ses.files.length}
+                        />
+                        <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500"/>}>
+                          <FiChevronDown class="w-4 h-4 text-gray-500"/>
+                        </Show>
+                        <IoFolderOutline class="text-xl text-orange-400"/>
+                        {ses.sessionId}
+                      </p>
+                      <p>{ses.files[0]?.date}</p>
+                      <p>{ses.files[0]?.time}</p>
+                      <Show when={!safeMode()} fallback={
+                        <>
+                          <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
+                          <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
+                        </>
+                      }>
+                        <p>{ses.files[0]?.subjectFirstName}</p>
+                        <p>{ses.files[0]?.subjectLastName}</p>
                       </Show>
-                      <IoFolderOutline class="text-xl text-orange-400"/>
-                      {ses.sessionId}
-                    </p>
-                    <p>{ses.files[0]?.date}</p>
-                    <p>{ses.files[0]?.time}</p>
-                    <Show when={!safeMode()} fallback={
-                      <>
-                        <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
-                        <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
-                      </>
-                    }>
-                      <p>{ses.files[0]?.subjectFirstName}</p>
-                      <p>{ses.files[0]?.subjectLastName}</p>
-                    </Show>
-                    <p>-</p>
-                    <p>-</p>
-                    <p>-</p>
-                    <p>{ses.files.length}</p>
+                      <p>-</p>
+                      <p>-</p>
+                      <p>-</p>
+                      <p>{ses.files.length}</p>
                     </Show>
                   </div>
                   <Show when={opened()}>
