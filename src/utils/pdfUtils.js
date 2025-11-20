@@ -150,7 +150,6 @@ export async function generatePDF() {
   const pdf = new jsPDF();
   pdf.setFontSize(11);
   const files = parsedFileData();
-  console.log(files)
   const patientInfo = files[0].rawObject.session;
 
   const TESTS = [

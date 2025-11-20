@@ -22,11 +22,14 @@ export function HiddenCharts() {
     const files = parsedFileData();
     return TESTS.map((testKey) => ({
       key: testKey,
-      files: files.filter((f) => f.measurementType.includes(testKey)).map(f => 
-      {
-        return {...f, baseColor: f.legSide === "right" ? colors.right[0] : colors.left[0]};
-      }
-      ),
+      files: files
+        .filter((f) => f.measurementType.includes(testKey))
+        .map((f) => {
+          return {
+            ...f,
+            baseColor: f.legSide === "right" ? colors.right[0] : colors.left[0],
+          };
+        }),
     }));
   });
 
