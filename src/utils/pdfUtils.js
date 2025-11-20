@@ -6,6 +6,49 @@ import tickIcon from "../assets/icons/tick.png";
 import crossIcon from "../assets/icons/delete.png";
 import { numberUtils } from "./utils";
 
+
+function addPatientInfo(pdf, patientInfo, files){
+  pdf.setFontSize(11);
+  pdf.setFont("Helvetica", "normal");
+  pdf.line(10, 5, 200, 5, "S");
+  pdf.text(`Nimi: ${patientInfo.subjectNameFirst} ${patientInfo.subjectName}`, 10, 10);
+  pdf.text(`Syntymäpäivä: ${patientInfo.subjectBirth}`, 10, 15);
+  pdf.text(`Paino: ${patientInfo.subjectWeight}`, 10, 20);
+  pdf.text(`Pituus: ${patientInfo.subjectHeight}`, 10, 25);
+  pdf.text(`Sukupuoli: ${patientInfo.subjectSex[1]}`, 70, 10);
+  pdf.text(`Leikattu jalka: ${patientInfo.involvedSide}`, 70, 15);
+  pdf.text(`Testin päivämäärä: ${files[0].rawObject.measurement["date(dd/mm/yyyy)"]}`,140,10);
+  pdf.text(`Loukkaantumispäivä: ${patientInfo.injuryDate}`, 140, 15);
+  pdf.line(10, 27, 200, 27, "S");
+}
+
+const METRICS = [
+  { idx: 110, label: "Huippuvääntö ojennus", unit: "Nm" },
+  { idx: 111, label: "Huippuvääntö koukistus", unit: "Nm" },
+  { idx: 112, label: "Huippuvääntö keskiarvo ojennus", unit: "Nm" },
+  { idx: 113, label: "Huippuvääntö keskiarvo koukistus", unit: "Nm" },
+
+  { idx: 122, label: "Työ keskiarvo ojennus", unit: "J" },
+  { idx: 123, label: "Työ keskiarvo koukistus", unit: "J" },
+
+  { idx: 124, label: "Teho keskiarvo ojennus", unit: "W" },
+  { idx: 125, label: "Teho keskiarvo koukistus", unit: "W" },
+  { idx: 130, label: "Työ väsymys ojennus", unit: "J/s" },
+  { idx: 131, label: "Työ väsymys koukistus", unit: "J/s" },
+
+  { idx: 250, label: "Huippuväännön vaihtelu ojennus", unit: "Nm" },
+  { idx: 251, label: "Huippuväännön vaihtelu koukistus", unit: "Nm" },
+
+  { idx: 146, label: "Huipputeho keskiarvo ojennus", unit: "W" },
+  { idx: 147, label: "Huipputeho keskiarvo koukistus", unit: "W" },
+
+  { idx: 148, label: "Huipputeho keskiarvo ojennus", unit: "W" },
+  { idx: 149, label: "Huipputeho keskiarvo koukistus", unit: "W" },
+  { idx: 150, label: "Huipputeho keskiarvo ojennus / kg", unit: "W/kg" },
+  { idx: 151, label: "Huipputeho keskiarvo koukistus / kg", unit: "W/kg" },
+];
+
+
 function drawSymmetryBar(pdf, x, y, percentage) {
   const barWidth = 50;
   const barHeight = 3;
@@ -35,10 +78,79 @@ const getVal = (data, idx) => {
   return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
 };
 
-export function generatePDF() {
+function svgToPng(svgElement) {
+  return new Promise(resolve => {
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const width = parseFloat(svgElement.getAttribute("width")) || svgElement.clientWidth;
+    const height = parseFloat(svgElement.getAttribute("height")) || svgElement.clientHeight;
+    const scale = 3; 
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d");
+
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+
+    img.onload = () => {
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve({ dataUrl: canvas.toDataURL("image/png"), width, height });
+    };
+    img.src = url;
+  });
+}
+
+function addAnalysisTable(pdf, group, patientInfo) {
+
+  const operatedSide = patientInfo.involvedSide?.includes("vasen")
+    ? "vasen"
+    : patientInfo.involvedSide?.includes("oikea")
+      ? "oikea"
+      : null;
+
+  const rightHeader = operatedSide === "oikea" ? "Oikea (L)" : "Oikea";
+  const leftHeader = operatedSide === "vasen" ? "Vasen (L)" : "Vasen";
+
+  const rows = METRICS.map(metric => {
+    const rightAnalysis = group?.right ?? null;
+    const leftAnalysis = group?.left ?? null;
+
+    const rightVal = rightAnalysis ? rightAnalysis[metric.idx] : undefined;
+    const leftVal = leftAnalysis ? leftAnalysis[metric.idx] : undefined;
+
+    const rightText = getVal(rightAnalysis, metric.idx);
+    const leftText = getVal(leftAnalysis, metric.idx);
+
+    const symm = (rightAnalysis && leftAnalysis)
+      ? symmetryPercent(rightVal, leftVal, patientInfo.involvedSide)
+      : "–";
+
+    return [metric.label, metric.unit, rightText, leftText, symm];
+  });
+
+  autoTable(pdf, {
+    startY: 130,
+    head: [["Kuvaus", "Yksikkö", rightHeader, leftHeader, "Symmetria"]],
+    body: rows,
+    theme: "grid",
+    styles: { fontSize: 11, cellPadding: 1 },
+    headStyles: {
+      fillColor: [230, 230, 230],
+      textColor: 0,
+      fontSize: 11,
+    },
+  });
+}
+
+
+export async function generatePDF() {
   const pdf = new jsPDF();
   pdf.setFontSize(11);
   const files = parsedFileData();
+  console.log(files)
   const patientInfo = files[0].rawObject.session;
 
   const TESTS = [
@@ -74,9 +186,6 @@ export function generatePDF() {
     const side = f.rawObject.configuration.side[1];
     const analysis = f.rawObject.analysis;
 
-    // Test a random analysis value to check that there are no NaN values
-    // If all repetitions are disabled the analysis will contain undefined values
-    // Early exit if NaN was found
     if (!numberUtils.isNumber(analysis[110])) {
       continue;
     }
@@ -89,20 +198,7 @@ export function generatePDF() {
     }
   }
 
-  pdf.line(10, 5, 200, 5, "S");
-  pdf.text(`Nimi: ${patientInfo.subjectNameFirst} ${patientInfo.subjectName}`, 10, 10);
-  pdf.text(`Syntymäpäivä: ${patientInfo.subjectBirth}`, 10, 15);
-  pdf.text(`Paino: ${patientInfo.subjectWeight}`, 10, 20);
-  pdf.text(`Pituus: ${patientInfo.subjectHeight}`, 10, 25);
-  pdf.text(`Sukupuoli: ${patientInfo.subjectSex[1]}`, 70, 10);
-  pdf.text(`Leikattu jalka: ${patientInfo.involvedSide}`, 70, 15);
-  pdf.text(
-    `Testin päivämäärä: ${files[0].rawObject.measurement["date(dd/mm/yyyy)"]}`,
-    140,
-    10
-  );
-  pdf.text(`Loukkaantumispäivä: ${patientInfo.injuryDate}`, 140, 15);
-  pdf.line(10, 27, 200, 27, "S");
+  addPatientInfo(pdf,patientInfo,files);
 
   let y = 32;
 
@@ -230,6 +326,42 @@ export function generatePDF() {
     if (!isNaN(parseFloat(mixedSymm))) {
       drawSymmetryBar(pdf, 130, barY, mixedSymm);
     }
+  }
+
+  for (const testDef of TESTS) {
+    const group = groups[testDef.key];
+
+    if (!group || (!group.left && !group.right)) continue;
+
+    const container = document.querySelector(`#all-charts-export .test-charts[data-test-key="${testDef.key}"]`);
+
+    const pngs = [];
+    if (container) {
+      const svgs = container.querySelectorAll("svg");
+      for (const svg of svgs) {
+        const { dataUrl, width, height } = await svgToPng(svg);
+        pngs.push({ dataUrl, width, height });
+      }
+    }
+
+    pdf.addPage();
+    addPatientInfo(pdf, patientInfo, files);
+
+    pdf.setFont("Helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text(testDef.title, 85, 35);
+    pdf.setFont("Helvetica", "normal");
+    pdf.setFontSize(11);
+
+    let x = -11;
+    for (const { dataUrl, width, height } of pngs) {
+      const pdfWidth = width * 0.2646;
+      const pdfHeight = height * 0.2646;
+      pdf.addImage(dataUrl, "PNG", x, 40, pdfWidth, pdfHeight);
+      x += 100;
+    }
+
+    addAnalysisTable(pdf, group, patientInfo);
   }
   pdf.save("make.pdf");
 }

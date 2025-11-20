@@ -25,10 +25,11 @@ function Chart(props) {
     setMouseX(-1);
     setMouseY(-1);
   });
+  const svgWidth = props.svgWidth ?? 800;
+  const svgHeight = props.svgHeight ?? 250;
 
   const controls = { mouseX, mouseY };
-  const svgArea = { width: 800, height: 250, x: 0, y: 0 };
-
+  const svgArea = { width: svgWidth, height: svgHeight, x: 0, y: 0 };
   return (
     <Show when={props.listOfParsedCTM()?.length}>
       <AverageErrorChartForTorque type="Ext" {...props} />
