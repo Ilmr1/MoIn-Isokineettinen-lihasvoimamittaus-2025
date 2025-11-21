@@ -1,3 +1,4 @@
+import { asserts } from "../collections/collections";
 import { numberUtils } from "./utils";
 
 const isArray = value => Array.isArray(value);
@@ -21,8 +22,12 @@ export const average = (array, precision) => {
   return avg;
 }
 export const findByMinDelta = (array, value) => {
+  return array?.[findIndexByMinDelta(array, value)];
+}
+
+export const findIndexByMinDelta = (array, value) => {
   if (!isArray(array) || array.length === 0) {
-    return undefined
+    return -1;
   }
 
   let min, index = 0;
@@ -35,12 +40,16 @@ export const findByMinDelta = (array, value) => {
     }
   }
 
-  return array[index];
+  return index;
 }
 
 export const findByMaxDelta = (array, value) => {
+  return array?.[findIndexByMaxDelta(array, value)];
+}
+
+export const findIndexByMaxDelta = (array, value) => {
   if (!isArray(array) || array.length === 0) {
-    return undefined
+    return -1;
   }
 
   let max, index = 0;
@@ -53,7 +62,7 @@ export const findByMaxDelta = (array, value) => {
     }
   }
 
-  return array[index];
+  return index;
 }
 export const coeffVar = array => {
   if (!isArray(array) || array.length === 0) {
@@ -100,4 +109,37 @@ export const linearSlope = (x,y) => {
   const sumX2 = x.reduce((a, b) => a + b * b, 0);
 
   return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+}
+
+export const findIndex = (array, callback, startIndex = 0) => {
+  if (!isArray(array) || !array.length) {
+    return -1;
+  }
+
+  asserts.assertFalsy(startIndex >= array.length, "Starting index is out of bounds");
+
+  for (let i = startIndex; i < array.length; i++) {
+    if (callback(array[i], i, array)) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+export const findLastIndex = (array, callback, startIndex) => {
+  if (!isArray(array) || !array.length) {
+    return -1;
+  }
+
+  startIndex ??= array.length - 1;
+  asserts.assertFalsy(startIndex >= array.length, "Starting index is out of bounds");
+
+  for (let i = startIndex; i >= 0; i--) {
+    if (callback(array[i], i, array)) {
+      return i;
+    }
+  }
+
+  return -1;
 }

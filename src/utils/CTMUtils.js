@@ -123,20 +123,24 @@ const createMovingAverage = (size, initialValue = 0) => {
   }
 }
 
-const createGoodAnglesSplitCollection = (markersByIndex, anglePoints, disabledList) => {
+const createGoodAnglesSplitCollection = (markersByIndex, anglePoints, speeds, disabledList) => {
+  asserts.assert1DArrayOfNumbersOrEmptyArray(speeds, "Speeds");
   const splitCollection = {
     splits: [],
   }
 
   for (let i = 0; i < markersByIndex.move1.length - 1; i++) {
-    pushIndecies(markersByIndex.move1[i], markersByIndex.move2[i], "red");
-    pushIndecies(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue");
+    // 600 is just a magic number that seems to work
+    // From testing I found that diff value of 0.1 seems to work well for speed of 60
+    // 60 / 600 = 0.1
+    // If the speed is someting like 240 0.1 is way too small of diff
+    pushIndecies(markersByIndex.move1[i], markersByIndex.move2[i], "red", speeds[0] / 600);
+    pushIndecies(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue", speeds[1] / 600);
   }
 
-  function pushIndecies(startIndex, endIndex, color) {
+  function pushIndecies(startIndex, endIndex, color, diff) {
     const middleIndex = Math.floor(numberUtils.middle(startIndex, endIndex));
     const middleDelta = numberUtils.absDelta(anglePoints[middleIndex + 5], anglePoints[middleIndex - 5]) / 10;
-    const diff = 0.1;
 
     const movingAverage = createMovingAverage(5, middleDelta);
 
@@ -182,7 +186,7 @@ const createGoodAnglesSplitCollection = (markersByIndex, anglePoints, disabledLi
 const createFilteredTorquePointCollection = (goodAngleSplits, torquePoints) => {
   const points = Array(torquePoints.length).fill(0);
 
-  const filter = createLowpass11Hz(256);
+  const filter = createLowpass11HzRoundToZero(256);
   goodAngleSplits.forEach(split => {
     let highestValueIndex;
     let max;
@@ -215,11 +219,11 @@ const createFilteredTorquePointCollection = (goodAngleSplits, torquePoints) => {
   }
 }
 
-const createCollections = (markersByIndex, data, dataFiltering, disabledList) => {
+const createCollections = (markersByIndex, data, speeds, dataFiltering, disabledList) => {
   // ========================= POINTS =============================
   const anglePointCollection = createPointCollection(markersByIndex, data.map(row => row[2]));
   const torquePoints = data.map(row => row[0]);
-  const goodAnglesSplitCollection = createGoodAnglesSplitCollection(markersByIndex, anglePointCollection.points, disabledList);
+  const goodAnglesSplitCollection = createGoodAnglesSplitCollection(markersByIndex, anglePointCollection.points, speeds, disabledList);
   let torquePointCollection;
   if (dataFiltering) {
     // torquePointCollection = createPointCollection(lowpass11Hz(markersByIndex, fillZerosToPower(markersByIndex, torquePoints, anglePointCollection.points)));
@@ -233,10 +237,14 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
   //   goodAnglesSplitCollection.endIndex = torqueSplitCollection.endIndex;
   //   goodAnglesSplitCollection.startIndex = torqueSplitCollection.startIndex;
   // }
-  const averageSprints = dataFiltering ? torqueSplitCollection : goodAnglesSplitCollection;
+  const dynamicAngleSplitCollection = dataFiltering ? torqueSplitCollection : goodAnglesSplitCollection;
 
-  const averagePowerFlexCollection = createAveragePointCollection("blue", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
-  const averagePowerExtCollection = createAveragePointCollection("red", torquePointCollection.points, averageSprints.splits, anglePointCollection.points);
+  const unifiedAngleSplitsCollection = createSmallestAngleSampleSizePointCollection(dynamicAngleSplitCollection.splits, anglePointCollection.points);
+  const [averagePowerFlexCollection, errorFlex] = createAveragePointCollection2("blue", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
+  const [averagePowerExtCollection, errorExt] = createAveragePointCollection2("red", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
+  const [angleSpecificHQRatioPointCollection, errorHQRatio] = createAngleSpecificHQRatioPointCollection(torquePoints, anglePointCollection.points, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
+
+  const angleSpecificHQRatioSplitCollection = createAngleSpecificHQRatioSplitCollection(angleSpecificHQRatioPointCollection);
 
   const pointCollections = {
     power: torquePointCollection,
@@ -244,8 +252,10 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
     angle: anglePointCollection,
     averagePowerFlex: averagePowerFlexCollection,
     averagePowerExt: averagePowerExtCollection,
-    averagePowerFlexError: createAverageErrorPointCollection(averageSprints.splits, "blue", torquePointCollection.points, anglePointCollection.points, averagePowerFlexCollection.points, .9),
-    averagePowerExtError: createAverageErrorPointCollection(averageSprints.splits, "red", torquePointCollection.points, anglePointCollection.points, averagePowerExtCollection.points, .9),
+    angleSpecificHQRatio: angleSpecificHQRatioPointCollection,
+    angleSpecificHQRatioError: errorHQRatio,
+    averagePowerFlexError: errorFlex,
+    averagePowerExtError: errorExt,
   };
 
   // ========================= SPLITS =============================
@@ -257,13 +267,183 @@ const createCollections = (markersByIndex, data, dataFiltering, disabledList) =>
       power: torqueSplitCollection,
       speed: createSplitCollection(markersByIndex, pointCollections.speed.points, false, disabledList),
       angle: createSplitCollection(markersByIndex, pointCollections.angle.points, false, disabledList),
-      averagePowerFlex: createAverageSplitCollection(goodAnglesSplitCollection.splits, "blue", disabledList),
-      averagePowerExt: createAverageSplitCollection(goodAnglesSplitCollection.splits, "red", disabledList),
+      averagePowerFlex: createAverageSplitCollection(unifiedAngleSplitsCollection.splits, "blue", disabledList),
+      averagePowerExt: createAverageSplitCollection(unifiedAngleSplitsCollection.splits, "red", disabledList),
       goodAngles: goodAnglesSplitCollection,
+      angleSpecificHQRatio: angleSpecificHQRatioSplitCollection,
     }
   }
 }
 
+function createAngleSpecificHQRatioSplitCollection(angleSpecificPointCollection) {
+  const splitCollection = {
+    splits: [],
+    startIndex: angleSpecificPointCollection.startIndex,
+    endIndex: angleSpecificPointCollection.endIndex,
+  }
+
+  if (splitCollection.endIndex) {
+    splitCollection.splits.push({
+      startIndex: 0,
+      endIndex: splitCollection.endIndex
+    });
+  }
+
+  return splitCollection;
+}
+
+
+function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, splits, dataFiltering, errorPercentage) {
+  const averages = [], lowest = [], highest = [];
+  const pointsCollection = {
+    maxValue: 0,
+    minValue: 0,
+    minAngle: 0,
+    maxAngle: 0,
+    endIndex: 0,
+    startIndex: 0,
+    points: averages,
+  }
+  const errorBandCollection = {
+    maxValue: 0,
+    minValue: 0,
+    points: [lowest, highest],
+  }
+
+  const returnValue = [pointsCollection, errorBandCollection];
+
+  let minAngle, maxAngle;
+  for (const split of splits) {
+    if (split.disabled) {
+      continue;
+    }
+
+    minAngle = numberUtils.min(split.minAngle, minAngle);
+    maxAngle = numberUtils.max(split.maxAngle, maxAngle);
+
+    // Flex and ext sample size is same, but the angles are not matching so early return
+    if (split.maxAngle < minAngle || split.minAngle > maxAngle) {
+      return returnValue;
+    }
+  }
+
+  if (minAngle == null) {
+    return returnValue;
+  }
+
+  asserts.assertTypeNumber(minAngle, "minAngle");
+  asserts.assertTypeNumber(minAngle, "minAngle");
+  pointsCollection.minAngle = minAngle;
+  pointsCollection.maxAngle = maxAngle;
+
+  let sampleSize;
+  for (const split of splits) {
+    if (split.disabled) {
+      continue;
+    }
+
+    const isExt = split.color === "red";
+
+    const startIndex = isExt ? arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, split.startIndex) : arrayUtils.findIndex(anglePoints, angle => angle <= maxAngle, split.startIndex);
+    const endIndex = isExt ? arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, split.endIndex) : arrayUtils.findLastIndex(anglePoints, angle => angle >= minAngle, split.endIndex);
+    const currentSampleSize = endIndex - startIndex;
+
+    asserts.assertTruthy(startIndex >= split.startIndex);
+    asserts.assertTruthy(endIndex <= split.endIndex);
+
+    // Flex and ext are not same size so early exit
+    if (sampleSize && numberUtils.absDelta(currentSampleSize, sampleSize) > 100) {
+      return returnValue;
+    }
+
+    sampleSize = numberUtils.min(currentSampleSize, sampleSize);
+  }
+
+  asserts.assertTypeNumber(sampleSize, "sampleSize");
+  pointsCollection.endIndex = Math.max(sampleSize - 1, 0);
+
+
+  const averagesExt = [], lowestExt = [], highestExt = [];
+  const averagesFlex = [], lowestFlex = [], highestFlex = [];
+  let repetitions = 0;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return
+    }
+
+    const isExt = split.color === "red";
+    const currentAverages = isExt ? averagesExt : averagesFlex;
+    const currentLowest = isExt ? lowestExt : lowestFlex;
+    const currentHighest = isExt ? highestExt : highestFlex;
+
+    const indexOffset = isExt ? arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, split.endIndex) : arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, split.startIndex);
+    const extFactor = numberUtils.trueToOneAndFalseToNegativeOne(!isExt);
+    repetitions++;
+
+    const middleValue = torquePoints[indexOffset + Math.floor(sampleSize / 2) * extFactor];
+    const t = numberUtils.trueToOneAndFalseToNegativeOne(middleValue > 0);
+    for (let i = 0; i <= sampleSize; i++) {
+      const value = Math.max(torquePoints[indexOffset + i * extFactor] * t, 0);
+
+      currentAverages[i] ??= 0;
+      currentAverages[i] += value;
+      currentLowest[i] = numberUtils.min(currentLowest[i], value);
+      currentHighest[i] = numberUtils.max(currentHighest[i], value);
+    }
+  });
+
+  asserts.assertTruthy(repetitions > 0, "Repetitions cant be zero");
+  asserts.assertTruthy(averagesExt.length === averagesFlex.length, "Average lengths mis match");
+  asserts.assert1DArrayOfNumbersOrEmptyArray(averagesExt);
+  asserts.assert1DArrayOfNumbersOrEmptyArray(averagesFlex);
+
+  if (dataFiltering) {
+    const averageFilter = createLowpass11Hz(256);
+    for (let i = 0; i < averagesExt.length; i++) {
+      if (averagesExt[i] === 0) {
+        averages[i] = 0;
+      } else {
+        const average = numberUtils.truncDecimals(averageFilter.process((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
+        averages[i] = average;
+      }
+    }
+  } else {
+    for (let i = 0; i < averagesExt.length; i++) {
+      if (averagesExt[i] === 0) {
+        averages[i] = 0;
+      } else {
+        const average = numberUtils.truncDecimals(((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
+        averages[i] = average;
+      }
+    }
+  }
+
+  pointsCollection.maxValue = arrayUtils.maxValue(averages) || 0;
+  pointsCollection.minValue = arrayUtils.minValue(averages) || 0;
+
+  return returnValue;
+}
+
+
+const createLowpass11HzRoundToZero = (sampleRate) => {
+  asserts.assertFalsy(!sampleRate || sampleRate <= 0, "sampleRate must be > 0");
+
+  const fc = 11.0;
+  const omega = 2 * Math.PI * fc;
+  const alpha = omega / (sampleRate + omega);
+
+  let y = 0.0;
+  return {
+    process(x) {
+      y = y + alpha * (x - y);
+      return y;
+    },
+
+    reset(value = 0.0) {
+      y = value;
+    },
+  };
+}
 
 const createLowpass11Hz = (sampleRate) => {
   asserts.assertFalsy(!sampleRate || sampleRate <= 0, "sampleRate must be > 0");
@@ -275,7 +455,12 @@ const createLowpass11Hz = (sampleRate) => {
   let y = 0.0;
   return {
     process(x) {
-      y = y + alpha * (x - y);
+      if (y === 0) {
+        y = x;
+      } else {
+        y = y + alpha * (x - y);
+      }
+
       return y;
     },
 
@@ -453,7 +638,7 @@ const createAnalysis = (repetitions, weight) => {
 }
 
 const filterByStartEndAndPoints = (start, end, points) => {
-  const filter = createLowpass11Hz(256);
+  const filter = createLowpass11HzRoundToZero(256);
   let highestPoint = Math.floor(start + (end - start) / 2);
   let max;
   for (let i = start; i < end; i++) {
@@ -549,6 +734,152 @@ const createAveragePointCollection = (color, torquePoints, angleSplits, anglePoi
   return collection;
 }
 
+const createAveragePointCollection2 = (color, torquePoints, splits, dataFiltering, errorPercentage) => {
+  const averages = [], highest = [], lowest = [];
+  const averageCollection = { points: averages };
+  const errorBandCollection = { points: [lowest, highest] };
+  let count = 0;
+
+  splits.forEach(split => {
+    if (split.disabled || split.color !== color) {
+      return;
+    }
+
+    count++;
+    const reverse = split.color === "red";
+    const length = split.endIndex - split.startIndex;
+    const valueFromMiddleOfSplit = torquePoints[split.startIndex + Math.floor(length / 2)];
+    const t = numberUtils.trueToOneAndFalseToNegativeOne(valueFromMiddleOfSplit > 0);
+    for (let i = 0; i <= length; i++) {
+      const val = Math.max(torquePoints[reverse ? split.endIndex - i : split.startIndex + i] * t, 0);
+      averages[i] ??= 0;
+
+      averages[i] += val;
+      highest[i] = numberUtils.max(highest[i], val);
+      lowest[i] = numberUtils.min(lowest[i], val);
+    }
+  });
+
+  if (dataFiltering) {
+    const averageFilter = createLowpass11Hz(256);
+    const lowestFilter = createLowpass11Hz(256);
+    const highestFilter = createLowpass11Hz(256);
+    for (let i = 0; i < averages.length; i++) {
+      const average = numberUtils.truncDecimals(averageFilter.process(averages[i] / count), 3);
+      averages[i] = average;
+      highest[i] = lowestFilter.process(average + (highest[i] - average) * errorPercentage);
+      lowest[i] = highestFilter.process(average + (lowest[i] - average) * errorPercentage);
+    }
+  } else {
+    for (let i = 0; i < averages.length; i++) {
+      const average = numberUtils.truncDecimals(averages[i] / count, 3);
+      averages[i] = average;
+      highest[i] = average + (highest[i] - average) * errorPercentage;
+      lowest[i] = average + (lowest[i] - average) * errorPercentage;
+    }
+  }
+
+  averageCollection.maxValue = arrayUtils.maxValue(averages) || 0;
+  averageCollection.minValue = arrayUtils.minValue(averages) || 0;
+  errorBandCollection.maxValue = arrayUtils.maxValue(highest) || 0;
+  errorBandCollection.minValue = arrayUtils.minValue(lowest) || 0;
+
+  return [averageCollection, errorBandCollection];
+}
+
+// If a sample contains for example three flex repetitions the repetitions should be mostly the same size
+// They will usually differ a couple indecies of each other and because of this will also have a differing sample size
+// This function will go through all specified repetitions and give you the smallest found sample size
+// These values are then used to ensure that average calculating are using the same angle degree values and sample sizes
+const createSmallestAngleSampleSizePointCollection = (splits, anglePoints) => {
+  const splitCollection = {
+    splits: [],
+  }
+
+  let minExtAngle, maxExtAngle, minFlexAngle, maxFlexAngle;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return;
+    }
+
+    // minAngle is the highest low value found
+    // maxAngle is the lowest high value found
+    if (split.color === "red") {
+      minExtAngle = numberUtils.max(minExtAngle, Math.min(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+      maxExtAngle = numberUtils.min(maxExtAngle, Math.max(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+    } else {
+      minFlexAngle = numberUtils.max(minFlexAngle, Math.min(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+      maxFlexAngle = numberUtils.min(maxFlexAngle, Math.max(anglePoints[split.startIndex], anglePoints[split.endIndex]));
+    }
+  });
+
+  if (minExtAngle == null) {
+    return splitCollection;
+  }
+
+  asserts.assertTypeNumber(minExtAngle);
+  asserts.assertTypeNumber(maxExtAngle);
+  asserts.assertTypeNumber(minFlexAngle);
+  asserts.assertTypeNumber(maxFlexAngle);
+
+  let minExtSampleSize, minFlexSampleSize;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return;
+    }
+
+    if (split.color === "red") {
+      const extStartIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minExtAngle, split.startIndex);
+      const extEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle <= maxExtAngle, split.endIndex);
+      asserts.assertTruthy(extStartIndex <= extEndIndex, "Ext index is out of bounds");
+      minExtSampleSize = numberUtils.min(minExtSampleSize, extEndIndex - extStartIndex);
+    } else {
+      const flexStartIndex = arrayUtils.findIndex(anglePoints, angle => angle <= maxFlexAngle, split.startIndex);
+      const flexEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle >= minFlexAngle, split.endIndex);
+      asserts.assertTruthy(flexStartIndex <= flexEndIndex, "Flex index is out of bounds");
+      minFlexSampleSize = numberUtils.min(minFlexSampleSize, flexEndIndex - flexStartIndex);
+    }
+  });
+
+  asserts.assertTypeNumber(minExtSampleSize);
+  asserts.assertTypeNumber(minFlexSampleSize);
+
+  splits.forEach(split => {
+    if (split.disabled) {
+      splitCollection.splits.push(split);
+      return;
+    }
+
+    const isExt = split.color === "red";
+    if (isExt) {
+      var startIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minExtAngle, split.startIndex);
+      var endIndex = arrayUtils.findLastIndex(anglePoints, angle => angle <= maxExtAngle, split.endIndex);
+    } else {
+      var startIndex = arrayUtils.findIndex(anglePoints, angle => angle <= maxFlexAngle, split.startIndex);
+      var endIndex = arrayUtils.findLastIndex(anglePoints, angle => angle >= minFlexAngle, split.endIndex);
+    }
+
+    const sampleSize = endIndex - startIndex;
+    const minSampleSize = isExt ? minExtSampleSize : minFlexSampleSize;
+    const sampleSizeDelta = sampleSize - minSampleSize;
+    asserts.assertFalsy(sampleSizeDelta < 0, "Sample size is out of bounds");
+
+    splitCollection.startIndex = numberUtils.min(startIndex, splitCollection.startIndex);
+    splitCollection.endIndex = numberUtils.max(endIndex, splitCollection.endIndex);
+
+    splitCollection.splits.push({
+      startIndex: startIndex + Math.ceil(sampleSizeDelta / 2),
+      endIndex: endIndex + Math.floor(sampleSizeDelta / 2),
+      minAngle: isExt ? minExtAngle : minFlexAngle,
+      maxAngle: isExt ? maxExtAngle : maxFlexAngle,
+      color: split.color,
+      disabled: split.disabled ?? false
+    });
+  });
+
+  return splitCollection;
+}
+
 const createAverageErrorPointCollection = (splits, color, points, anglePoints, averagePoints, errorPercentage) => {
   const highs = Array(averagePoints.length).fill(0);
   const lows = Array(averagePoints.length).fill(0);
@@ -580,6 +911,51 @@ const createAverageErrorPointCollection = (splits, color, points, anglePoints, a
   asserts.assertTruthy(highs.length === lows.length, "Lengths miss match");
   asserts.assertTruthy(averagePoints.length === lows.length, "Lengths miss match");
   asserts.assertTruthy(errorPercentage >= 0 && errorPercentage <= 1, "Invalid error rate");
+
+  for (let i = 0; i < averagePoints.length; i++) {
+    highs[i] = numberUtils.truncDecimals(averagePoints[i] + highs[i] * errorPercentage, 3);
+    lows[i] = numberUtils.truncDecimals(averagePoints[i] + lows[i] * errorPercentage, 3);
+    minValue = numberUtils.min(minValue, lows[i]);
+    maxValue = numberUtils.max(maxValue, highs[i]);
+  }
+
+  collection.minValue = minValue ?? 0;
+  collection.maxValue = maxValue ?? 0;
+
+  return collection;
+}
+
+const createAverageErrorPointCollection2 = (color, splits, points, averagePoints, errorPercentage) => {
+  const highs = Array(averagePoints.length).fill(0);
+  const lows = Array(averagePoints.length).fill(0);
+  let minValue, maxValue;
+  const collection = { points: [highs, lows] };
+
+  splits.forEach(split => {
+    if (split.disabled || split.color !== color) {
+      return;
+    }
+
+    const reverse = split.color === "red";
+    for (let i = split.startIndex; i <= split.endIndex; i++) {
+      if (reverse) {
+        var delta = numberUtils.delta(points[split.endIndex - (i - split.startIndex)], averagePoints[i - split.startIndex]);
+      } else {
+        var delta = numberUtils.delta(points[i], averagePoints[i - split.startIndex]);
+      }
+
+      if (delta < 0) {
+        lows[i - split.startIndex] = Math.min(lows[i - split.startIndex], delta);
+      } else {
+        highs[i - split.startIndex] = Math.max(highs[i - split.startIndex], delta);
+      }
+    }
+  });
+
+  asserts.assertFalsy(highs.length !== lows.length, "Lengths miss match");
+  asserts.assertFalsy(averagePoints.length !== lows.length, "Lengths miss match");
+  asserts.assertFalsy(errorPercentage > 1 || errorPercentage < 0, "Invalid error rate");
+
 
   for (let i = 0; i < averagePoints.length; i++) {
     highs[i] = numberUtils.truncDecimals(averagePoints[i] + highs[i] * errorPercentage, 3);
@@ -665,7 +1041,8 @@ const formatRawCTMObject = (rawObject, dataFiltering, disabledList) => {
 
   object.data = rawObject.data.map(arr => arr.map(parseFloat));
   object.markersByIndex = createParsedSectionFromRawObjectSection(rawObject["markers by index"]);
-  const collections = createCollections(object.markersByIndex, object.data, dataFiltering, disabledList);
+  object.configuration = createParsedSectionFromRawObjectSection(rawObject.Configuration);
+  const collections = createCollections(object.markersByIndex, object.data, object.configuration.speed, dataFiltering, disabledList);
   object.pointCollections = collections.points;
   object.splitCollections = collections.splits;
   // object.pointCollections = createPointCollections(object.markersByIndex, object.data, dataFiltering, disabledList);
@@ -675,7 +1052,6 @@ const formatRawCTMObject = (rawObject, dataFiltering, disabledList) => {
   object.memo = cleanMemo(rawObject.memo.join("\n"));
   object.session = createParsedSectionFromRawObjectSection(rawObject.session);
   object.measurement = createParsedSectionFromRawObjectSection(rawObject.Measurement);
-  object.configuration = createParsedSectionFromRawObjectSection(rawObject.Configuration);
   object.filter = createParsedSectionFromRawObjectSection(rawObject.filter);
   object.systemStrings = createParsedSectionFromRawObjectSection(rawObject["system strings"]);
   object.repetitions = createRepetitionsSection(object.pointCollections, object.splitCollections.power.splits, object.measurement.samplingrate[0]);

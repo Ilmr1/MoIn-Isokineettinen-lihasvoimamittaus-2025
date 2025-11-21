@@ -9,7 +9,7 @@ export const padRoundDecimalsToLength = (number, charactersCount, maxDecimalsToK
   return roundDecimals(number, decimalsToKeep).toFixed(decimalsToKeep);
 }
 
-export const truncDecimals = (number, decimals) => {
+export const truncDecimals = (number, decimals = 3) => {
   const precision = Math.pow(10, decimals);
   return Math.trunc(number * precision) / precision;
 }
@@ -21,8 +21,8 @@ export const padTrucateDecimalsToLength = (number, charactersCount, maxDecimalsT
 
 export const delta = (start, end) => Math.abs(end) - Math.abs(start);
 export const absDelta = (start, end) => Math.abs(Math.max(end, start) - Math.min(end, start));
-export const min = (a, b) => Math.min(a ?? b, b ?? a);
-export const max = (a, b) => Math.max(a ?? b, b ?? a);
+export const min = (...nums) => nums.reduce((acc, num) => Math.min(acc ?? num, num ?? acc));
+export const max = (...nums) => nums.reduce((acc, num) => Math.max(acc ?? num, num ?? acc));
 export const middle = (a, b) => Math.min(a, b) + (Math.max(a, b) - Math.min(a, b)) / 2;
 export const equals = (a, b, precision) => absDelta(a, b) <= precision;
 
