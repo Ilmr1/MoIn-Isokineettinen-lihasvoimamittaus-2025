@@ -174,12 +174,8 @@ function Chart(props) {
     asserts.assertTypeFunction(props.listOfParsedCTM, "listOfParsedCTM");
     asserts.assertTruthy(props.type === "Ext" || props.type === "Flex", "Unkown type");
 
-    const errorAverageKey = createMemo(() => `averagePower${props.type}Error`);
-    const averageKey = createMemo(() => `averagePower${props.type}`);
-
     const combinedValues = createMemo(() => {
       const files = props.listOfParsedCTM();
-      const type = props.type;
       const startAngles = [];
       const endAngles = [];
       for (const { rawObject } of files) {

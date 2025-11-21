@@ -133,7 +133,7 @@ const createGoodAnglesSplitCollection = (markersByIndex, anglePoints, speeds, di
     // 600 is just a magic number that seems to work
     // From testing I found that diff value of 0.1 seems to work well for speed of 60
     // 60 / 600 = 0.1
-    // If theed is someting like 240 0.1 is way too small of diff
+    // If the speed is someting like 240 0.1 is way too small of diff
     pushIndecies(markersByIndex.move1[i], markersByIndex.move2[i], "red", speeds[0] / 600);
     pushIndecies(markersByIndex.move2[i], markersByIndex.move1[i + 1], "blue", speeds[1] / 600);
   }
