@@ -244,7 +244,7 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
   const [averagePowerExtCollection, errorExt] = createAveragePointCollection2("red", torquePoints, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
   const [angleSpecificHQRatioPointCollection, errorHQRatio] = createAngleSpecificHQRatioPointCollection(torquePoints, anglePointCollection.points, unifiedAngleSplitsCollection.splits, dataFiltering, .8);
 
-  const angleSpecificHQRatioSplitCollection = createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection);
+  const angleSpecificHQRatioSplitCollection = createAngleSpecificHQRatioSplitCollection(angleSpecificHQRatioPointCollection);
 
   const pointCollections = {
     power: torquePointCollection,
@@ -275,24 +275,19 @@ const createCollections = (markersByIndex, data, speeds, dataFiltering, disabled
   }
 }
 
-function createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection) {
-  const firstNotDisabledUnifiedAngle = unifiedAngleSplitsCollection.splits.find(split => !split.disabled);
+function createAngleSpecificHQRatioSplitCollection(angleSpecificPointCollection) {
   const splitCollection = {
     splits: [],
-    startIndex: 0,
-    endIndex: 0,
+    startIndex: angleSpecificPointCollection.startIndex,
+    endIndex: angleSpecificPointCollection.endIndex,
   }
 
-  if (!firstNotDisabledUnifiedAngle) {
-    return splitCollection;
+  if (splitCollection.endIndex) {
+    splitCollection.splits.push({
+      startIndex: 0,
+      endIndex: splitCollection.endIndex
+    });
   }
-
-  splitCollection.startIndex = 0;
-  splitCollection.endIndex = firstNotDisabledUnifiedAngle.endIndex - firstNotDisabledUnifiedAngle.startIndex;
-  splitCollection.splits.push({
-    startIndex: 0,
-    endIndex: splitCollection.endIndex
-  });
 
   return splitCollection;
 }
@@ -305,6 +300,8 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
     minValue: 0,
     minAngle: 0,
     maxAngle: 0,
+    endIndex: 0,
+    startIndex: 0,
     points: averages,
   }
   const errorBandCollection = {
@@ -363,6 +360,8 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
   }
 
   asserts.assertTypeNumber(sampleSize, "sampleSize");
+  pointsCollection.endIndex = Math.max(sampleSize - 1, 0);
+
 
   const averagesExt = [], lowestExt = [], highestExt = [];
   const averagesFlex = [], lowestFlex = [], highestFlex = [];
