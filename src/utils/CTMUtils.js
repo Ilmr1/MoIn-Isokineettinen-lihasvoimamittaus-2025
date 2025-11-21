@@ -279,6 +279,8 @@ function createAngleSpecificHQRatioSplitCollection(unifiedAngleSplitsCollection)
   const firstNotDisabledUnifiedAngle = unifiedAngleSplitsCollection.splits.find(split => !split.disabled);
   const splitCollection = {
     splits: [],
+    startIndex: 0,
+    endIndex: 0,
   }
 
   if (!firstNotDisabledUnifiedAngle) {
@@ -313,63 +315,90 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
 
   const returnValue = [pointsCollection, errorBandCollection];
 
-  const averagesExt = [], lowestExt = [], highestExt = [];
-  const averagesFlex = [], lowestFlex = [], highestFlex = [];
-  let repetitions = 0;
-  for (let i = 0; i < splits.length; i += 2) {
-    const splitA = splits[i];
-    const splitB = splits[i + 1];
-    if (splitA.disabled) {
+  let minAngle, maxAngle;
+  for (const split of splits) {
+    if (split.disabled) {
       continue;
     }
 
-    const [extSplit, flexSplit] = splitA.color === "red" ? [splitA, splitB] : [splitA, splitB];
+    minAngle = numberUtils.min(split.minAngle, minAngle);
+    maxAngle = numberUtils.max(split.maxAngle, maxAngle);
 
-    const extSampleSize = extSplit.endIndex - extSplit.startIndex;
-    const flexSampleSize = flexSplit.endIndex - flexSplit.startIndex;
-    // Flex and ext are not same size so early exit
-    if (numberUtils.absDelta(extSampleSize, flexSampleSize) > 15) {
-      return returnValue;
-    }
-    const maxAngle = Math.min(extSplit.maxAngle, flexSplit.maxAngle);
-    const minAngle = Math.max(extSplit.minAngle, flexSplit.minAngle);
-    pointsCollection.minAngle = minAngle;
-    pointsCollection.maxAngle = maxAngle;
     // Flex and ext sample size is same, but the angles are not matching so early return
-    if (extSplit.maxAngle < minAngle || extSplit.minAngle > maxAngle || flexSplit.maxAngle < minAngle || flexSplit.minAngle > maxAngle) {
+    if (split.maxAngle < minAngle || split.minAngle > maxAngle) {
       return returnValue;
-    }
-    const extEndIndex = arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, extSplit.endIndex);
-    const flexStartIndex = arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, flexSplit.startIndex);
-    const sampleSize = Math.min(extSampleSize, flexSampleSize);
-    repetitions++;
-
-    const valueFromMiddleOfSplit = torquePoints[flexStartIndex + Math.floor(sampleSize / 2)];
-    const t = numberUtils.trueToOneAndFalseToNegativeOne(valueFromMiddleOfSplit < 0);
-    for (let i = 0; i <= sampleSize; i++) {
-      const extValue = Math.max(torquePoints[extEndIndex - i] * t, 0);
-      averagesExt[i] ??= 0;
-      averagesExt[i] += extValue;
-      lowestExt[i] = numberUtils.min(lowestExt[i], extValue);
-      highestExt[i] = numberUtils.max(highestExt[i], extValue);
-
-      const flexValue = Math.max(torquePoints[flexStartIndex + i] * -t, 0);
-      averagesFlex[i] ??= 0;
-      averagesFlex[i] += flexValue;
-      lowestFlex[i] = numberUtils.min(lowestFlex[i], flexValue);
-      highestFlex[i] = numberUtils.max(highestFlex[i], flexValue);
     }
   }
 
-  if (repetitions === 0) {
+  if (minAngle == null) {
     return returnValue;
   }
 
+  asserts.assertTypeNumber(minAngle, "minAngle");
+  asserts.assertTypeNumber(minAngle, "minAngle");
+  pointsCollection.minAngle = minAngle;
+  pointsCollection.maxAngle = maxAngle;
+
+  let sampleSize;
+  for (const split of splits) {
+    if (split.disabled) {
+      continue;
+    }
+
+    const isExt = split.color === "red";
+
+    const startIndex = isExt ? arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, split.startIndex) : arrayUtils.findIndex(anglePoints, angle => angle <= maxAngle, split.startIndex);
+    const endIndex = isExt ? arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, split.endIndex) : arrayUtils.findLastIndex(anglePoints, angle => angle >= minAngle, split.endIndex);
+    const currentSampleSize = endIndex - startIndex;
+
+    asserts.assertTruthy(startIndex >= split.startIndex);
+    asserts.assertTruthy(endIndex <= split.endIndex);
+
+    // Flex and ext are not same size so early exit
+    if (sampleSize && numberUtils.absDelta(currentSampleSize, sampleSize) > 100) {
+      return returnValue;
+    }
+
+    sampleSize = numberUtils.min(currentSampleSize, sampleSize);
+  }
+
+  asserts.assertTypeNumber(sampleSize, "sampleSize");
+
+  const averagesExt = [], lowestExt = [], highestExt = [];
+  const averagesFlex = [], lowestFlex = [], highestFlex = [];
+  let repetitions = 0;
+  splits.forEach(split => {
+    if (split.disabled) {
+      return
+    }
+
+    const isExt = split.color === "red";
+    const currentAverages = isExt ? averagesExt : averagesFlex;
+    const currentLowest = isExt ? lowestExt : lowestFlex;
+    const currentHighest = isExt ? highestExt : highestFlex;
+
+    const indexOffset = isExt ? arrayUtils.findLastIndex(anglePoints, angle => angle <= maxAngle, split.endIndex) : arrayUtils.findIndex(anglePoints, angle => angle >= minAngle, split.startIndex);
+    const extFactor = numberUtils.trueToOneAndFalseToNegativeOne(!isExt);
+    repetitions++;
+
+    const middleValue = torquePoints[indexOffset + Math.floor(sampleSize / 2) * extFactor];
+    const t = numberUtils.trueToOneAndFalseToNegativeOne(middleValue > 0);
+    for (let i = 0; i <= sampleSize; i++) {
+      const value = Math.max(torquePoints[indexOffset + i * extFactor] * t, 0);
+
+      currentAverages[i] ??= 0;
+      currentAverages[i] += value;
+      currentLowest[i] = numberUtils.min(currentLowest[i], value);
+      currentHighest[i] = numberUtils.max(currentHighest[i], value);
+    }
+  });
+
+  asserts.assertTruthy(repetitions > 0, "Repetitions cant be zero");
   asserts.assertTruthy(averagesExt.length === averagesFlex.length, "Average lengths mis match");
   asserts.assert1DArrayOfNumbersOrEmptyArray(averagesExt);
   asserts.assert1DArrayOfNumbersOrEmptyArray(averagesFlex);
 
-  if (dataFiltering) {
+  if (dataFiltering && false) {
     const averageFilter = createLowpass11Hz(256);
     const lowestFilter = createLowpass11Hz(256);
     const highestFilter = createLowpass11Hz(256);
@@ -381,17 +410,17 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
     }
   } else {
     for (let i = 0; i < averagesExt.length; i++) {
-      const average = numberUtils.truncDecimals(((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
-      averages[i] = average;
-      highest[i] = average + (highestFlex[i] / lowestExt[i] - average) * errorPercentage;
-      lowest[i] = average + (lowestFlex[i] / highestExt[i] - average) * errorPercentage;
+      if (averagesExt[i] === 0) {
+        averages[i] = 0;
+      } else {
+        const average = numberUtils.truncDecimals(((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
+        averages[i] = average;
+      }
     }
   }
 
   pointsCollection.maxValue = arrayUtils.maxValue(averages) || 0;
   pointsCollection.minValue = arrayUtils.minValue(averages) || 0;
-  errorBandCollection.maxValue = arrayUtils.maxValue(highest) || 0;
-  errorBandCollection.minValue = arrayUtils.minValue(lowest) || 0;
 
   return returnValue;
 }
