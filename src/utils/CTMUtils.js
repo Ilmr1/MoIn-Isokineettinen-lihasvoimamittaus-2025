@@ -397,15 +397,15 @@ function createAngleSpecificHQRatioPointCollection(torquePoints, anglePoints, sp
   asserts.assert1DArrayOfNumbersOrEmptyArray(averagesExt);
   asserts.assert1DArrayOfNumbersOrEmptyArray(averagesFlex);
 
-  if (dataFiltering && false) {
+  if (dataFiltering) {
     const averageFilter = createLowpass11Hz(256);
-    const lowestFilter = createLowpass11Hz(256);
-    const highestFilter = createLowpass11Hz(256);
     for (let i = 0; i < averagesExt.length; i++) {
-      const average = numberUtils.truncDecimals(((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
-      averages[i] = average;
-      highest[i] = average + (highestFlex[i] / lowestExt[i] - average) * errorPercentage;
-      lowest[i] = average + (lowestFlex[i] / highestExt[i] - average) * errorPercentage;
+      if (averagesExt[i] === 0) {
+        averages[i] = 0;
+      } else {
+        const average = numberUtils.truncDecimals(averageFilter.process((averagesFlex[i] / repetitions) / (averagesExt[i] / repetitions)), 3);
+        averages[i] = average;
+      }
     }
   } else {
     for (let i = 0; i < averagesExt.length; i++) {
