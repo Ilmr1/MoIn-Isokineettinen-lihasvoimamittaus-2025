@@ -18,7 +18,7 @@ function getVariantClasses(variant) {
 }
 
 function getSizeClasses(size) {
-  switch(size) {
+  switch (size) {
     case "sm":
       return "px-3 py-1 text-sm";
     case "lg":
@@ -48,7 +48,7 @@ export function Button(props) {
 
     const color = getVariantClasses(local.variant);
     const size = getSizeClasses(local.size);
-    
+
     return [base, color, size, local.class || ""].join(" ").trim();
   });
 
