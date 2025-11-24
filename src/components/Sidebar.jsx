@@ -57,16 +57,16 @@ export function Sidebar() {
             <IconButton
               onClick={() => document.querySelector("#file-popup")?.showModal()}
               icon={FiHardDrive}
-              label="files"
+              label="Tiedostot"
             />
             <Show when={activeFiles().length}>
-              <IconButton onClick={generatePDF} icon={FiPrinter} label="Print"/>
+              <IconButton onClick={generatePDF} icon={FiPrinter} label="Tulosta"/>
             </Show>
           </div>
 
           <Show when={!activeFiles().length}>
             <p class="text-sm text-gray-500 text-center mt-2">
-              Click the button above to select files.
+              Valitse tiedostot painamalla yllä olevaa painiketta.
             </p>
           </Show>
         </div>
@@ -78,12 +78,12 @@ export function Sidebar() {
               <div class="flex flex-col gap-2">
                 <Checkbox
                   id="dataFiltering"
-                  label="Filter data"
+                  label="Suodata tiedot"
                   checked={dataFiltering()}
                   onChange={toggleDataFiltering}
                 />
                 <Checkbox
-                  label="Show error bands"
+                  label="Näytä virhealueet"
                   checked={showErrorBands()}
                   onChange={() => setShowErrorBands((s) => !s)}
                 />
@@ -94,19 +94,19 @@ export function Sidebar() {
                 onClick={clearSelectedFiles}
                 class="self-center"
               >
-                Clear all
+                Tyhjennä
               </Button>
             </div>
           </div>
         </Show>
 
 
-        {/* Ohjelmatyypit */}
+        {/* Program types */}
         <Show when={activeFiles().length}>
           <div class="flex flex-wrap justify-center gap-2 border border-gray-200 rounded-lg p-3">
             <ActiveProgramTypeButtons/>
           </div>
-          {/* Aktiiviset tiedostot ja toistot */}
+          {/* Active files and repetitions */}
           <ActiveFilesAndRepetitions/>
         </Show>
       </div>
@@ -126,16 +126,21 @@ function ActiveFilesAndRepetitions() {
     () => activeFiles()[activeFileIndex()] ?? activeFiles()[0]
   );
 
+  const sideLabels = {
+    left: "Vasen",
+    right: "Oikea"
+  }
+
   return (
     <div class="flex flex-col gap-4">
-      {/* Left / Right laatikko */}
+      {/* Left / Right box */}
       <div class="border border-gray-200 rounded-lg p-4">
         <div class="grid grid-cols-2 gap-2">
           <For each={["left", "right"]}>
             {(side) => (
-              <div class="flex-1 flex flex-col bg-gray-50 border border-gray-100 rounded-lg p-3">
-                <p class="text-center font-semibold text-gray-700 mb-2 capitalize">
-                  {side}
+              <div class="flex-1 flex flex-col bg-gray-50 border border-gray-100 rounded-lg p-2">
+                <p class="text-center font-semibold text-gray-700 mb-2">
+                  {sideLabels[side] ?? side}
                 </p>
                 <div class="flex flex-col gap-2">
                   <For each={activeFiles().filter((f) => f.legSide?.toLowerCase() === side)}>
@@ -151,7 +156,7 @@ function ActiveFilesAndRepetitions() {
                             onClick={() => setActiveFileIndex(originalIndex())}
                             class="flex items-center justify-between gap-2 w-full"
                           >
-                            {fileHandler.legSide}
+                            {sideLabels[fileHandler.legSide?.toLowerCase()] ?? fileHandler.legSide}
                             <span
                               class="w-2 h-2 rounded-full"
                               style={{
@@ -179,12 +184,12 @@ function ActiveFilesAndRepetitions() {
         </div>
       </div>
 
-      {/* Repetitions laatikko */}
+      {/* Repetitions box */}
       <div class="border border-gray-200 rounded-lg p-4">
         <p class="text-center font-medium">
           {activeFile().name} {activeFile().time}
         </p>
-        <p class="text-center text-gray-700 mt-1 mb-3">Repetitions</p>
+        <p class="text-center text-gray-700 mt-1 mb-3">Toistot</p>
 
         <div class="overflow-y-auto max-h-[200px]">
           <ul
