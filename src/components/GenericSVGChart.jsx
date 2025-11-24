@@ -876,7 +876,7 @@ export function ChartHoverToolTip(props) {
               dominant-baseline="middle"
               text-anchor={props.mouseXPercentage > 0.5 ? "end" : "start"}
               x={props.xWithPadding + props.width * props.mouseXPercentage + (-5 * numberUtils.trueToOneAndFalseToNegativeOne(props.mouseXPercentage > 0.5))}
-              y={label?.deltaY + 1}>{label.deltaValue.toFixed(1)} Nm ({label.deltaPercentage.toFixed(1)}%)
+              y={label?.deltaY + 1}>{label.deltaValue.toFixed(1)} {props.unit} ({label.deltaPercentage.toFixed(1)}%)
             </text>
           </Show>
         </>

@@ -159,6 +159,7 @@ function Chart(props) {
                       maxValue={combinedValues().maxValue}
                       minValue={combinedValues().minValue}
                       colors={colors()}
+                      unit="Nm"
                     />
                   </>
                 )}</ChartMousePositionInPercentage>
@@ -219,7 +220,6 @@ function Chart(props) {
                     x={borderArea.x}
                     width={borderArea.width}
                   />
-                  <text x={borderArea.x + borderArea.width} y={borderArea.y} dominant-baseline="ideographic" text-anchor="end">Torque [Nm]</text>
                   <ChartTextBottom {...borderArea} y={borderArea.y + borderArea.height + 20} title="Position [deg]" />
                   <ChartXAxisFloor {...borderArea} startValue={combinedValues().xStartValue} endValue={combinedValues().xEndValue} x={lineArea.x} width={lineArea.width} />
                   <ChartYAxisFloor {...borderArea} startValue={combinedValues().maxValue} endValue={combinedValues().minValue} y={lineArea.y} height={lineArea.height} />
