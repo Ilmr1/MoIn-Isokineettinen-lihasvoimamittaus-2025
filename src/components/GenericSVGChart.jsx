@@ -15,85 +15,24 @@ const labelIncrements = [
   500,
 ];
 
-export function ChartTextTop(props) {
+export function ChartText(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
 
+  const localProps = createMemo(() => {
+    if (props.position === "top") {
+      return { "dominant-baseline": "ideographic", y: props.y };
+    } else if (props.position === "bottom") {
+      return { "dominant-baseline": "hanging", y: props.y + props.height };
+    }
+  });
+
   return (
     <text
-      dominant-baseline="ideographic"
       text-anchor="middle"
       x={props.x + props.width / 2}
-      y={props.y}
-    >
-      {props.title}
-    </text>
-  );
-}
-
-export function ChartTextBottom(props) {
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  return (
-    <text
-      dominant-baseline="hanging"
-      text-anchor="middle"
-      x={props.x + props.width / 2}
-      y={props.y}
-    >
-      {props.title}
-    </text>
-  );
-}
-
-export function ChartTextRight(props) {
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  return (
-    <text
-      dominant-baseline="middle"
-      text-anchor="start"
-      x={props.x + props.width / 2}
-      y={props.y}
-    >
-      {props.title}
-    </text>
-  );
-}
-
-export function ChartTextLeft(props) {
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  return (
-    <text
-      dominant-baseline="middle"
-      text-anchor="end"
-      x={props.x + props.width / 2}
-      y={props.y}
-    >
-      {props.title}
-    </text>
-  );
-}
-
-export function ChartFooter(props) {
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  return (
-    <text
-      dominant-baseline="hanging"
-      text-anchor="middle"
-      x={props.x + props.width / 2}
-      y={props.y + props.height}
+      {...localProps()}
     >
       {props.title}
     </text>

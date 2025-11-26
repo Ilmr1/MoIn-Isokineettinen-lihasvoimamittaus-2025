@@ -1,10 +1,14 @@
 import { createMemo, ErrorBoundary, mergeProps } from "solid-js";
-import { ChartBorder, ChartFooter, ChartGrid, ChartGridAlignedWithFloorYAxisLabels, ChartTextTop, ChartPadding, ChartYAxisFloor } from "./GenericSVGChart.jsx";
-import "./GenericSVGChart.css";
-import { arrayUtils, numberUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
+import { arrayUtils, numberUtils } from "../utils/utils.js";
+import "./GenericSVGChart.css";
+import {
+  ChartGridAlignedWithFloorYAxisLabels,
+  ChartPadding,
+  ChartText,
+  ChartYAxisFloor,
+} from "./GenericSVGChart.jsx";
 export function BarChart(props) {
-
   return (
     <ErrorBoundary fallback="Barchart rendering failed">
       <Chart {...props} />
@@ -26,20 +30,42 @@ function Chart(props) {
   function AverageErrorChartForTorque(props) {
     return (
       <svg width={svgArea.width} height={svgArea.height}>
-        <ChartPadding {...svgArea} paddingRight={45} paddingTop={40} paddingBottom={20}>{chartArea => (
-          <>
-            {/* <ChartBorder {...chartArea} /> */}
-            <text y={chartArea.y} dy="-1.2em">
-              <tspan dominant-baseline="ideographic" text-anchor="middle" x={chartArea.x + chartArea.width / 2}>{props.title}</tspan>
-              <tspan dominant-baseline="ideographic" text-anchor="middle" x={chartArea.x + chartArea.width / 2} dy="1.2em">{props.unit}</tspan>
-            </text>
-            <ChartPadding {...chartArea} paddingTop={20}>{barArea => (
-              <BarGroups {...barArea} {...props} unit=""></BarGroups>
-            )}</ChartPadding>
-          </>
-        )}</ChartPadding>
+        <ChartPadding
+          {...svgArea}
+          paddingRight={45}
+          paddingTop={40}
+          paddingBottom={20}
+        >
+          {(chartArea) => (
+            <>
+              {/* <ChartBorder {...chartArea} /> */}
+              <text y={chartArea.y} dy="-1.2em">
+                <tspan
+                  dominant-baseline="ideographic"
+                  text-anchor="middle"
+                  x={chartArea.x + chartArea.width / 2}
+                >
+                  {props.title}
+                </tspan>
+                <tspan
+                  dominant-baseline="ideographic"
+                  text-anchor="middle"
+                  x={chartArea.x + chartArea.width / 2}
+                  dy="1.2em"
+                >
+                  {props.unit}
+                </tspan>
+              </text>
+              <ChartPadding {...chartArea} paddingTop={20}>
+                {(barArea) => (
+                  <BarGroups {...barArea} {...props} unit=""></BarGroups>
+                )}
+              </ChartPadding>
+            </>
+          )}
+        </ChartPadding>
       </svg>
-    )
+    );
   }
 
   function BarGroups(props) {
@@ -49,11 +75,16 @@ function Chart(props) {
     const groups = createMemo(() => {
       const ext = [];
       const flex = [];
-      for (const { rawObject: { analysis } } of props.listOfParsedCTM()) {
+      for (const {
+        rawObject: { analysis },
+      } of props.listOfParsedCTM()) {
         const extValue = Math.abs(analysis[props.analysisExtKey]);
         const flexValue = Math.abs(analysis[props.analysisFlexKey]);
 
-        if (!numberUtils.isNumber(extValue) || !numberUtils.isNumber(flexValue)) {
+        if (
+          !numberUtils.isNumber(extValue) ||
+          !numberUtils.isNumber(flexValue)
+        ) {
           continue;
         }
 
@@ -72,21 +103,41 @@ function Chart(props) {
       return [ext, flex];
     });
 
-    const maxValue = createMemo(() => arrayUtils.maxValue(groups().map(values => arrayUtils.maxValue(values))));
-    const colors = createMemo(() => props.listOfParsedCTM()?.map(ctmData => ctmData.baseColor));
+    const maxValue = createMemo(() =>
+      arrayUtils.maxValue(
+        groups().map((values) => arrayUtils.maxValue(values)),
+      ),
+    );
+    const colors = createMemo(() =>
+      props.listOfParsedCTM()?.map((ctmData) => ctmData.baseColor),
+    );
     const groupNames = ["Ext", "Flex"];
 
     return (
       <>
-        <ChartYAxisFloor {...props} decimals={3} startValue={maxValue()} endValue={0} />
+        <ChartYAxisFloor
+          {...props}
+          decimals={3}
+          startValue={maxValue()}
+          endValue={0}
+        />
         <ChartGridAlignedWithFloorYAxisLabels
           startValue={maxValue()}
           endValue={0}
           {...props}
         />
-        <ChartPadding {...props} paddingInline={20}>{barArea => (
-          <BarLineGroups {...barArea} gap={10} values={groups()} maxValue={maxValue()} colors={colors()} groupNames={groupNames} />
-        )}</ChartPadding>
+        <ChartPadding {...props} paddingInline={20}>
+          {(barArea) => (
+            <BarLineGroups
+              {...barArea}
+              gap={10}
+              values={groups()}
+              maxValue={maxValue()}
+              colors={colors()}
+              groupNames={groupNames}
+            />
+          )}
+        </ChartPadding>
       </>
     );
   }
@@ -101,23 +152,39 @@ function BarLineGroups(props) {
 
   props = mergeProps({ gap: 0 }, props);
 
-  const barWidth = createMemo(() => (props.width - ((props.values.length - 1) * props.gap)) / props.values.length);
+  const barWidth = createMemo(
+    () =>
+      (props.width - (props.values.length - 1) * props.gap) /
+      props.values.length,
+  );
 
   return (
-    <For each={props.values}>{(group, i) => (
-      <ChartPadding
-        {...props}
-        x={props.x + barWidth() * i() + props.gap * i()}
-        width={barWidth()}
-      >{barLineArea => (
-          <>
-            <BarChartLine {...props} {...barLineArea} gap={0} values={group} />
-            <ChartFooter {...barLineArea} title={props.groupNames?.[i()]} />
-          </>
-        )}
-      </ChartPadding>
-    )}</For>
-  )
+    <For each={props.values}>
+      {(group, i) => (
+        <ChartPadding
+          {...props}
+          x={props.x + barWidth() * i() + props.gap * i()}
+          width={barWidth()}
+        >
+          {(barLineArea) => (
+            <>
+              <BarChartLine
+                {...props}
+                {...barLineArea}
+                gap={0}
+                values={group}
+              />
+              <ChartText
+                position="bottom"
+                {...barLineArea}
+                title={props.groupNames?.[i()]}
+              />
+            </>
+          )}
+        </ChartPadding>
+      )}
+    </For>
+  );
 }
 
 function BarChartLine(props) {
@@ -130,22 +197,33 @@ function BarChartLine(props) {
 
   props = mergeProps({ gap: 0 }, props);
 
-  const barWidth = createMemo(() => (props.width - ((props.values.length - 1) * props.gap)) / props.values.length);
+  const barWidth = createMemo(
+    () =>
+      (props.width - (props.values.length - 1) * props.gap) /
+      props.values.length,
+  );
 
   return (
-    <For each={props.values}>{(value, i) => (
-      <ChartPadding
-        x={props.x + barWidth() * i() + props.gap * i()}
-        width={barWidth()}
-        height={(value / props.maxValue) * props.height}
-        y={props.y + props.height - (value / props.maxValue) * props.height}
-      >{barArea => (
-          <>
-            <ChartTextTop {...barArea} title={numberUtils.padRoundDecimalsToLength(value, 3)} />
-            <rect {...barArea} fill={props.colors?.[i()] ?? "grey"}></rect>
-          </>
-        )}
-      </ChartPadding>
-    )}</For>
-  )
+    <For each={props.values}>
+      {(value, i) => (
+        <ChartPadding
+          x={props.x + barWidth() * i() + props.gap * i()}
+          width={barWidth()}
+          height={(value / props.maxValue) * props.height}
+          y={props.y + props.height - (value / props.maxValue) * props.height}
+        >
+          {(barArea) => (
+            <>
+              <ChartText
+                position="top"
+                {...barArea}
+                title={numberUtils.padRoundDecimalsToLength(value, 3)}
+              />
+              <rect {...barArea} fill={props.colors?.[i()] ?? "grey"}></rect>
+            </>
+          )}
+        </ChartPadding>
+      )}
+    </For>
+  );
 }
