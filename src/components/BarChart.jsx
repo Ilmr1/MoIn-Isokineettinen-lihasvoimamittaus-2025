@@ -1,5 +1,5 @@
 import { createMemo, ErrorBoundary, mergeProps } from "solid-js";
-import { ChartBorder, ChartFooter, ChartGrid, ChartGridAlignedWithFloorYAxisLabels, ChartHeader, ChartPadding, ChartYAxisFloor } from "./GenericSVGChart.jsx";
+import { ChartBorder, ChartFooter, ChartGrid, ChartGridAlignedWithFloorYAxisLabels, ChartTextTop, ChartPadding, ChartYAxisFloor } from "./GenericSVGChart.jsx";
 import "./GenericSVGChart.css";
 import { arrayUtils, numberUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
@@ -141,7 +141,7 @@ function BarChartLine(props) {
         y={props.y + props.height - (value / props.maxValue) * props.height}
       >{barArea => (
           <>
-            <ChartHeader {...barArea} title={numberUtils.padRoundDecimalsToLength(value, 3)} />
+            <ChartTextTop {...barArea} title={numberUtils.padRoundDecimalsToLength(value, 3)} />
             <rect {...barArea} fill={props.colors?.[i()] ?? "grey"}></rect>
           </>
         )}
