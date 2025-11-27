@@ -97,7 +97,7 @@ function parseCTMForFiltering(text, fileHandler) {
   }
 
   const sessionNumber = parseCTMForFiltering.sessionMap[sessionKey];
-  const sessionId = `Session ${sessionNumber}`;
+  const sessionId = `Istunto ${sessionNumber}`;
 
   return {
     fileHandler,

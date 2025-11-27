@@ -1,7 +1,7 @@
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
 import {Checkbox} from "./ui/Checkbox.jsx";
-import {FiChevronDown, FiChevronRight} from "solid-icons/fi";
+import {FiChevronDown, FiChevronRight, FiEyeOff} from "solid-icons/fi";
 import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
 import {
   batch,
@@ -73,7 +73,7 @@ export function FileBrowser() {
   const sortByDate = (a, b, date) => {
     const aDate = a.files[0].date.split(".").reverse().join("")
     const bDate = b.files[0].date.split(".").reverse().join("")
-    if (date === "Old") {
+    if (date === "Vanhat") {
       return aDate.localeCompare(bDate)
     } else {
       return bDate.localeCompare(aDate)
@@ -83,7 +83,7 @@ export function FileBrowser() {
   const sortByTime = (a, b, time) => {
     const aTime = a.files[0].time.split(":").reverse().join("")
     const bTime = b.files[0].time.split(":").reverse().join("")
-    if (time === "Old") {
+    if (time === "Vanhat") {
       return aTime.localeCompare(bTime)
     } else {
       return bTime.localeCompare(aTime)
@@ -170,7 +170,6 @@ export function FileBrowser() {
       worker.onmessage = async message => {
         if (message.data === "success") {
           const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
-          console.log("files", files);
           const sessions = groupFilesBySession(files);
           setFiles(files);
           setSessions(sessions);
@@ -239,6 +238,16 @@ export function FileBrowser() {
     });
   }
 
+  const translateLegSide = (legSide) => {
+    if (legSide === "left") {
+      return "vasen";
+    }
+    if (legSide === "right") {
+      return "oikea";
+    }
+    return;
+  }
+
   return (
     <>
       <dialog id="file-popup" class="space-y-4">
@@ -258,7 +267,7 @@ export function FileBrowser() {
             size="xl"
             onClick={handleOpenDirectory}
           >
-            Open Folder
+            Valitse Kansio
           </Button>
         </div>
 
@@ -320,40 +329,40 @@ export function FileBrowser() {
     return (
       <div class="session-table overflow-y-auto">
         <div class="session-header">
-          <Dropdown label="Session / File" disabled/>
+          <Dropdown label="Istunto / Tiedosto" disabled/>
           <Dropdown
-            label="Date"
-            options={["New", "Old"]}
+            label="Päivämäärä"
+            options={["Uudet", "Vanhat"]}
             onSelect={(value) => storeSessionFilters("date", value)}
             selected={sessionFilters.date}
           />
           <Dropdown
-            label="Time"
-            options={["New", "Old"]}
+            label="Aika"
+            options={["Uudet", "Vanhat"]}
             onSelect={(v) => storeSessionFilters("time", v)}
             selected={sessionFilters.time}
           />
-          <Dropdown label="First" disabled/>
-          <Dropdown label="Last" disabled/>
+          <Dropdown label="Etunimi" disabled/>
+          <Dropdown label="Sukunimi" disabled/>
           <Dropdown
-            label="Foot"
-            options={["left", "right"]}
+            label="Jalka"
+            options={["vasen", "oikea"]}
             onSelect={(value) => storeSessionFilters("foot", value)}
             selected={sessionFilters.foot}
           />
           <Dropdown
-            label="Speed"
+            label="Nopeus"
             options={collectedValues().speed}
             onSelect={(value) => storeSessionFilters("speed", value)}
             selected={sessionFilters.speed}
           />
           <Dropdown
-            label="Program"
+            label="Ohjelma"
             options={collectedValues().program}
             onSelect={(value) => storeSessionFilters("program", value)}
             selected={sessionFilters.program}
           />
-          <Dropdown label="Files" disabled/>
+          <Dropdown label="Tiedostot" disabled/>
         </div>
         <div class="session-body">
           <For each={filteredSessions()}>
@@ -444,7 +453,7 @@ export function FileBrowser() {
                           <p>{file.time}</p>
                           <p>-</p>
                           <p>-</p>
-                          <p>{file.legSide}</p>
+                          <p>{translateLegSide(file.legSide)}</p>
                           <p>{file.speed}</p>
                           <p>{file.program}</p>
                           <p>-</p>
@@ -497,14 +506,14 @@ export function FileBrowser() {
             size="sm"
             onClick={askForFolderAccess}
           >
-            load
+            Lataa
           </Button>
           <Button
             variant="danger"
             size="sm"
             onClick={removeRecentFolderByIndex}
           >
-            delete
+            Poista
           </Button>
         </div>
       </li>
@@ -516,13 +525,13 @@ export function FileBrowser() {
       <form onSubmit={handleSubmit} class="flex justify-center items-center gap-3 mt-4">
         <input
           type="text"
-          placeholder="First name"
+          placeholder="Etunimi"
           value={firstNameInput()}
           onInput={(e) => setFirstNameInput(e.currentTarget.value)}
           class="p-2 border rounded-lg"/>
         <input
           type="text"
-          placeholder="Last name"
+          placeholder="Sukunimi"
           value={lastNameInput()}
           onInput={(e) => setLastNameInput(e.currentTarget.value)}
           class="p-2 border rounded-lg"/>
@@ -531,7 +540,7 @@ export function FileBrowser() {
           size="lg"
           type="submit"
         >
-          Search
+          Haku
         </Button>
       </form>
     )
@@ -542,10 +551,11 @@ export function FileBrowser() {
       <div class="flex items-center space-x-2 mt-2">
         <Checkbox
           id="safe-mode"
-          label="Safe Search?"
+          label=""
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />
+        <FiEyeOff />
         <Button
           variant={sessionFilters.foot || sessionFilters.speed || sessionFilters.program ? "danger" : "secondary"}
           size="sm"
@@ -557,14 +567,14 @@ export function FileBrowser() {
             });
           }}
         >
-          Clear filters
+          Tyhjennä suodatus
         </Button>
         <Button
           variant={activeFiles().length ? "danger" : "secondary"}
           size="sm"
           onClick={clearSelectedFiles}
         >
-          Unselect all
+          Tyhjennä valitut tiedostot
         </Button>
       </div>
     );
