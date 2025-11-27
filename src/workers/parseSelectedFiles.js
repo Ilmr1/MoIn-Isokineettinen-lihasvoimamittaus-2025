@@ -1,11 +1,12 @@
 import { CTMUtils } from "../utils/utils";
 
+
+// Parse files for graph handling
 onmessage = async (message) => {
   const { filesToParse, dataFiltering, disabledRepetitions } = message.data;
   if (!filesToParse) {
     return;
   }
-  console.log("worker", message)
   let files = [];
 
   for (let i = 0; i < filesToParse.length; i++) {

@@ -55,7 +55,7 @@ import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
   const {activeFiles} = useGlobalContext();
-
+  
   const groupFilesBySession = (files) => {
     const sessionMap = {};
     for (const file of files) {
@@ -90,12 +90,15 @@ export function FileBrowser() {
     }
   }
 
+  // Apply filters & sorting to loaded files
   const filteredSessions = createMemo(() => {
     const {date, time, foot, speed, program} = sessionFilters;
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
 
     const returnArray = [];
+
+    // Filter sessions with specified first/last names, if applicable
     sessions().forEach(session => {
       if (firstName && !session.files[0]?.subjectFirstName?.toLowerCase().includes(firstName.toLowerCase())) {
         return;
@@ -104,6 +107,7 @@ export function FileBrowser() {
         return;
       }
 
+      // Filter files by criteria
       if (speed || program || foot) {
         var ses = {
           ...session,
@@ -157,17 +161,17 @@ export function FileBrowser() {
     setRecentFolders(files);
   });
 
+  // Web Workers
 
-  let worker;
+  let fetchFilesFromFolderWorker;
   const sendToWorker = () => {
     if (window.Worker) {
-      worker = worker instanceof Worker ? worker : new FilterFilesFromActiveFolders();
-
-      worker.postMessage({
+      fetchFilesFromFolderWorker = fetchFilesFromFolderWorker instanceof Worker ? fetchFilesFromFolderWorker : new FilterFilesFromActiveFolders();
+      fetchFilesFromFolderWorker.postMessage({
         activeFolders: foldersThatHaveAccess(),
       });
 
-      worker.onmessage = async message => {
+      fetchFilesFromFolderWorker.onmessage = async message => {
         if (message.data === "success") {
           const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
           const sessions = groupFilesBySession(files);
@@ -177,18 +181,20 @@ export function FileBrowser() {
       }
     }
   }
-  let worker2;
+
+
+  let parseSelectedFilesWorker;
   createEffect(() => {
     if (window.Worker) {
-      worker2 = worker2 instanceof Worker ? worker2 : new parseSelectedFiles();
+      parseSelectedFilesWorker = parseSelectedFilesWorker instanceof Worker ? parseSelectedFilesWorker : new parseSelectedFiles();
 
-      worker2.postMessage({
+      parseSelectedFilesWorker.postMessage({
         filesToParse: selectedFiles(),
         dataFiltering: dataFiltering(),
         disabledRepetitions: disabledRepetitions(),
       });
 
-      worker2.onmessage = async message => {
+      parseSelectedFilesWorker.onmessage = async message => {
         if (message.data.type === "parsedFiles") {
           setParsedFileData(message.data.files);
         }
@@ -215,13 +221,14 @@ export function FileBrowser() {
     setRecentFolders(folders);
   }
 
+  // Display Filebrowser modal if no files selected
   createEffect(() => {
     if (!selectedFiles().length) {
       document.querySelector("#file-popup").showModal();
     }
   })
 
-
+  // Apply filtering by first/last name input
   const handleSubmit = (e) => {
     e.preventDefault();
     batch(() => {
@@ -251,7 +258,6 @@ export function FileBrowser() {
   return (
     <>
       <dialog id="file-popup" class="space-y-4">
-        {/* Folder management */}
         <Button
           variant="dangerAlt"
           size="sm"
@@ -297,6 +303,8 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
+
+    // Render only sessions visible in the viewport + scrollMargin value
     const [visibility, storeVisibility] = createStore([]);
 
     const callback = entries => {
@@ -313,6 +321,7 @@ export function FileBrowser() {
     onCleanup(() => {
       intersectionObserver.disconnect();
     })
+
 
     const collectedValues = createMemo(() => {
       const speedValues = new Set();
@@ -375,6 +384,7 @@ export function FileBrowser() {
                 });
               }
 
+              // Apply render optimization only when filebrowser is mounted
               let ref;
               onMount(() => {
                 intersectionObserver.observe(ref);
@@ -551,7 +561,6 @@ export function FileBrowser() {
       <div class="flex items-center space-x-2 mt-2">
         <Checkbox
           id="safe-mode"
-          label=""
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />

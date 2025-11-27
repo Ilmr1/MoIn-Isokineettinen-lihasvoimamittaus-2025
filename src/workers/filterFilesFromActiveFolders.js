@@ -6,15 +6,17 @@ onmessage = async (message) => {
     return;
   }
 
-  console.log("worker", message);
   const filteredFiles = [];
+
+  // Load files in batches to improve performance for large file trees
   const batchPromises = [];
   const batchResolvers = [];
-
   const batchSize = 500;
+
   let currentBatch = 0;
   let filesStartedReading = 0
   let filesFinishedReading = 0;
+
 
   const { promise: allFilesPromise, resolve: allFilesResolve } = Promise.withResolvers()
   for (const folderHandler of activeFolders) {
@@ -44,6 +46,7 @@ onmessage = async (message) => {
       }
     }
   }
+  // Wait for all batches to complete before sorting
   await allFilesPromise;
   filteredFiles.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
