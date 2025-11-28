@@ -7,16 +7,30 @@ import {
 import { createStore, produce } from "solid-js/store";
 import { asserts } from "../collections/collections";
 import { arrayUtils, chartUtils, numberUtils } from "../utils/utils";
-import "./GenericSVGChart.css";
 
-const debug = false;
+const DEBUG = false;
+// These are all the valid increments for the axis components
+// So for example its not possible for the axis to increment using 3
+// 3, 6, 9... should be impossible patter. This will also effect the axis starting value
+// If increment is 5 every axis value has to be divisible by 5
 const labelIncrements = [
   0.01, 0.025, 0.05, 0.1, 0.2, 0.5, 1, 2, 4, 5, 10, 20, 25, 40, 50, 100, 250,
   500,
 ];
 
+// This file contains all the chart library components
+// Each component is as minimal as possible and should just provide the needed svg element(s)
+// You can stack these components to create a fully functional chart
+// Each component should have asserts that will crash the component if initialized incorrectly
+// The assert message can provide extra info about what a specific value is meant to be
+//
+// The idea behind every component is that you give x, y, width and height info that will be used to calculate the position
+// This is done to make the math a lot more easier and modular, because now we can just calculate everything in relative coordinate space (between 0 - width)
+// then we just add props.x and props.y to make the coordinate space absolute
+
 export function ChartText(props) {
   asserts.assertTypeNumber(props.width, "width");
+  asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
 
@@ -29,17 +43,19 @@ export function ChartText(props) {
   });
 
   return (
-    <text
-      text-anchor="middle"
-      x={props.x + props.width / 2}
-      {...localProps()}
-    >
+    <text text-anchor="middle" x={props.x + props.width / 2} {...localProps()}>
       {props.title}
     </text>
   );
 }
 
+// Add vertical hover line using the mouseXPercentage prop
 export function ChartPercentageVerticalLine(props) {
+  asserts.assertTypeNumber(
+    props.mouseXPercentage,
+    "mouseXPercentage",
+    "You can use ChartMousePositionInPercentage component to generate the mouse position",
+  );
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.x, "x");
@@ -59,6 +75,7 @@ export function ChartPercentageVerticalLine(props) {
   );
 }
 
+// Add horizontal line between min and max value by providing prop.value
 export function ChartHorizontalLineFromValue(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.height, "height");
@@ -109,13 +126,18 @@ export function ChartHorizontalZeroLine(props) {
   );
 }
 
+// Add horizontal hover line using the mouseXPercentage prop and points
 export function ChartHorizontalPointLineWithLabel(props) {
   asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
   asserts.assertTypeNumber(props.endIndex, "endIndex");
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.maxValue, "maxValue");
   asserts.assertTypeNumber(props.minValue, "minValue");
-  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(
+    props.mouseXPercentage,
+    "mouseXPercentage",
+    "You can use ChartMousePositionInPercentage component to generate the mouse position",
+  );
   asserts.assertTypeNumber(props.startIndex, "startIndex");
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
@@ -181,7 +203,11 @@ export function ChartHorizontalPointLine(props) {
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.maxValue, "maxValue");
   asserts.assertTypeNumber(props.minValue, "minValue");
-  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(
+    props.mouseXPercentage,
+    "mouseXPercentage",
+    "You can use ChartMousePositionInPercentage component to generate the mouse position",
+  );
   asserts.assertTypeNumber(props.startIndex, "startIndex");
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
@@ -238,7 +264,11 @@ export function ChartHorizontalSplitLineWithLabel(props) {
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.maxValue, "maxValue");
   asserts.assertTypeNumber(props.minValue, "minValue");
-  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(
+    props.mouseXPercentage,
+    "mouseXPercentage",
+    "You can use ChartMousePositionInPercentage component to generate the mouse position",
+  );
   asserts.assertTypeNumber(props.startIndex, "startIndex");
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
@@ -304,7 +334,11 @@ export function ChartVecticalLinePercentageToRelativeIndex(props) {
   asserts.assertTruthy(props.split, "split");
   asserts.assertTypeNumber(props.startIndex, "startIndex");
   asserts.assertTypeNumber(props.endIndex, "endIndex");
-  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(
+    props.mouseXPercentage,
+    "mouseXPercentage",
+    "You can use ChartMousePositionInPercentage component to generate the mouse position",
+  );
   asserts.assertTypeNumber(props.height, "height");
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
@@ -667,7 +701,11 @@ export function ChartHoverToolTip(props) {
   asserts.assertTypeNumber(props.y, "y");
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.mouseXPercentage, "mouseXPercentage");
+  asserts.assertTypeNumber(
+    props.mouseXPercentage,
+    "mouseXPercentage",
+    "You can use ChartMousePositionInPercentage component to generate the mouse position",
+  );
   asserts.assert2DArrayOfNumbersOrEmptyArray(
     props.listOfPoints,
     "listOfPoints",
@@ -1211,7 +1249,7 @@ export function ChartPadding(props) {
 
   return (
     <>
-      <Show when={debug && hasValues()}>
+      <Show when={DEBUG && hasValues()}>
         <g data-debug-padding data-debug-name={props.name}>
           <Show when={top()}>
             <rect

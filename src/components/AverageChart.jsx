@@ -14,7 +14,6 @@ import {
   ChartXAxisFloor,
   ChartYAxisFloor,
 } from "./GenericSVGChart.jsx";
-import "./GenericSVGChart.css";
 import { arrayUtils } from "../utils/utils.js";
 import { asserts } from "../collections/collections.js";
 export function AverageChart(props) {

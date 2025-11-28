@@ -1,9 +1,4 @@
-import {
-  batch,
-  createSignal,
-  ErrorBoundary,
-  mergeProps,
-} from "solid-js";
+import { batch, createSignal, ErrorBoundary, mergeProps } from "solid-js";
 import {
   ChartBorder,
   ChartGridAlignedWithFloorXAxisLabels,
@@ -20,7 +15,6 @@ import {
   ChartXAxisFloor,
   ChartYAxisFloor,
 } from "./GenericSVGChart.jsx";
-import "./GenericSVGChart.css";
 import { asserts } from "../collections/collections.js";
 import { $hoveredRepetition } from "../signals.js";
 export function ThreeCharts(props) {

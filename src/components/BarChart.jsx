@@ -1,7 +1,6 @@
 import { createMemo, ErrorBoundary, mergeProps } from "solid-js";
 import { asserts } from "../collections/collections.js";
 import { arrayUtils, numberUtils } from "../utils/utils.js";
-import "./GenericSVGChart.css";
 import {
   ChartGridAlignedWithFloorYAxisLabels,
   ChartPadding,
