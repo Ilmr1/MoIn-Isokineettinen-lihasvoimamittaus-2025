@@ -48,111 +48,7 @@ const METRICS = [
   { idx: 151, label: "Huipputeho keskiarvo koukistus / kg", unit: "W/kg" },
 ];
 
-
-function drawSymmetryBar(pdf, x, y, percentage) {
-  const barWidth = 50;
-  const barHeight = 3;
-  const minVal = 50;
-  const maxVal = 100;
-  const val = parseFloat(percentage);
-
-  const redWidth = ((90 - minVal) / (maxVal - minVal)) * barWidth;
-  pdf.setFillColor(255, 180, 180);
-  pdf.rect(x, y, redWidth, barHeight, "F");
-
-  const greenWidth = ((maxVal - 90) / (maxVal - minVal)) * barWidth;
-  pdf.setFillColor(180, 255, 180);
-  pdf.rect(x + redWidth, y, greenWidth, barHeight, "F");
-
-  const adjustedVal = Math.min(Math.max(val, 50), 100);
-  const posX = x + ((adjustedVal - minVal) / (maxVal - minVal)) * barWidth;
-  pdf.setDrawColor(0);
-  pdf.line(posX, y - 1, posX, y + barHeight + 1);
-
-  const icon = val >= 90 ? tickIcon : crossIcon;
-  pdf.addImage(icon, "PNG", x + barWidth + 5, y - 1.5, 5.5, 5.5);
-}
-
-const getVal = (data, idx) => {
-  if (!data || typeof data[idx] !== "number") return "–";
-  return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
-};
-
-function svgToPng(svgElement) {
-  return new Promise(resolve => {
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const width = parseFloat(svgElement.getAttribute("width")) || svgElement.clientWidth;
-    const height = parseFloat(svgElement.getAttribute("height")) || svgElement.clientHeight;
-    const scale = 3; 
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const ctx = canvas.getContext("2d");
-
-    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
-    const img = new Image();
-
-    img.onload = () => {
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, 0, 0, width, height);
-      URL.revokeObjectURL(url);
-      resolve({ dataUrl: canvas.toDataURL("image/png"), width, height });
-    };
-    img.src = url;
-  });
-}
-
-function addAnalysisTable(pdf, group, patientInfo) {
-
-  const operatedSide = patientInfo.involvedSide?.includes("vasen")
-    ? "vasen"
-    : patientInfo.involvedSide?.includes("oikea")
-      ? "oikea"
-      : null;
-
-  const rightHeader = operatedSide === "oikea" ? "Oikea (L)" : "Oikea";
-  const leftHeader = operatedSide === "vasen" ? "Vasen (L)" : "Vasen";
-
-  const rows = METRICS.map(metric => {
-    const rightAnalysis = group?.right ?? null;
-    const leftAnalysis = group?.left ?? null;
-
-    const rightVal = rightAnalysis ? rightAnalysis[metric.idx] : undefined;
-    const leftVal = leftAnalysis ? leftAnalysis[metric.idx] : undefined;
-
-    const rightText = getVal(rightAnalysis, metric.idx);
-    const leftText = getVal(leftAnalysis, metric.idx);
-
-    const symm = (rightAnalysis && leftAnalysis)
-      ? symmetryPercent(rightVal, leftVal, patientInfo.involvedSide)
-      : "–";
-
-    return [metric.label, metric.unit, rightText, leftText, symm];
-  });
-
-  autoTable(pdf, {
-    startY: 130,
-    head: [["Kuvaus", "Yksikkö", rightHeader, leftHeader, "Symmetria"]],
-    body: rows,
-    theme: "grid",
-    styles: { fontSize: 11, cellPadding: 1 },
-    headStyles: {
-      fillColor: [230, 230, 230],
-      textColor: 0,
-      fontSize: 11,
-    },
-  });
-}
-
-
-export async function generatePDF() {
-  const pdf = new jsPDF();
-  pdf.setFontSize(11);
-  const files = parsedFileData();
-  const patientInfo = files[0].rawObject.session;
-
-  const TESTS = [
+const TESTS = [
     {
       key: "kons60",
       title: "Maksimivoima",
@@ -175,10 +71,124 @@ export async function generatePDF() {
     },
   ];
 
-  const operatedSide = patientInfo.involvedSide?.includes("vasen") ? "vasen" : patientInfo.involvedSide?.includes("oikea") ? "oikea" : null;
-  const rightHeader = operatedSide === "oikea" ? "Oikea (L)" : "Oikea";
-  const leftHeader = operatedSide === "vasen" ? "Vasen (L)" : "Vasen";
 
+function drawSymmetryBar(pdf, x, y, percentage) {
+  const barWidth = 50;
+  const barHeight = 3;
+  const minVal = 50;
+  const maxVal = 100;
+  const val = parseFloat(percentage);
+
+  //width of the red section (50%-90%)
+  const redWidth = ((90 - minVal) / (maxVal - minVal)) * barWidth;
+  pdf.setFillColor(255, 180, 180);
+  pdf.rect(x, y, redWidth, barHeight, "F");
+  //width of the green section (90%-100%)
+  const greenWidth = ((maxVal - 90) / (maxVal - minVal)) * barWidth;
+  pdf.setFillColor(180, 255, 180);
+  pdf.rect(x + redWidth, y, greenWidth, barHeight, "F");
+  // clamp and convert symmetry % to bar position
+  const adjustedVal = Math.min(Math.max(val, 50), 100);
+  const posX = x + ((adjustedVal - minVal) / (maxVal - minVal)) * barWidth;
+  // Draw indicator line for the actual symmetry value
+  pdf.setDrawColor(0);
+  pdf.line(posX, y - 1, posX, y + barHeight + 1);
+  // add tick or cross icon based on threshold
+  const icon = val >= 90 ? tickIcon : crossIcon;
+  pdf.addImage(icon, "PNG", x + barWidth + 5, y - 1.5, 5.5, 5.5);
+}
+
+const getVal = (data, idx) => {
+  if (!data || typeof data[idx] !== "number") return "–";
+  return padRoundDecimalsToLength(Math.abs(data[idx]), 3);
+};
+
+function getSideHeaders(involvedSide) {
+  let operated = null;
+
+  if (involvedSide?.includes("vasen")) operated = "vasen";
+  if (involvedSide?.includes("oikea")) operated = "oikea";
+
+  const rightHeader = operated === "oikea" ? "Oikea (L)" : "Oikea";
+  const leftHeader  = operated === "vasen" ? "Vasen (L)" : "Vasen";
+
+  return { operated, rightHeader, leftHeader };
+}
+
+
+function svgToPng(svgElement) {
+  return new Promise(resolve => {
+    // serialize SVG to string
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    // Determine dimensions and scale for higher-res PNG
+    const width = parseFloat(svgElement.getAttribute("width")) || svgElement.clientWidth;
+    const height = parseFloat(svgElement.getAttribute("height")) || svgElement.clientHeight;
+    const scale = 3; 
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d");
+    // Create image from SVG string
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+
+    img.onload = () => {
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve({ dataUrl: canvas.toDataURL("image/png"), width, height });
+    };
+    img.src = url;
+  });
+}
+
+function addAnalysisTable(pdf, group, patientInfo) {
+  // determine operated side and header labels
+  const { operated, rightHeader, leftHeader } = getSideHeaders(patientInfo.involvedSide);
+  // prepare table rows for each metric
+  const rows = METRICS.map(metric => {
+    const rightAnalysis = group?.right ?? null;
+    const leftAnalysis = group?.left ?? null;
+
+    const rightVal = rightAnalysis ? rightAnalysis[metric.idx] : undefined;
+    const leftVal = leftAnalysis ? leftAnalysis[metric.idx] : undefined;
+
+    const rightText = getVal(rightAnalysis, metric.idx);
+    const leftText = getVal(leftAnalysis, metric.idx);
+
+    const symm = (rightAnalysis && leftAnalysis)
+      ? symmetryPercent(rightVal, leftVal, operated)
+      : "–";
+
+    return [metric.label, metric.unit, rightText, leftText, symm];
+  });
+
+  // render analysis table
+  autoTable(pdf, {
+    startY: 130,
+    head: [["Kuvaus", "Yksikkö", rightHeader, leftHeader, "Symmetria"]],
+    body: rows,
+    theme: "grid",
+    styles: { fontSize: 11, cellPadding: 1 },
+    headStyles: {
+      fillColor: [230, 230, 230],
+      textColor: 0,
+      fontSize: 11,
+    },
+  });
+}
+
+
+export async function generatePDF() {
+  const pdf = new jsPDF();
+  pdf.setFontSize(11);
+  const files = parsedFileData();
+  const patientInfo = files[0].rawObject.session;
+  // determine operated side and headers
+  const { operated, rightHeader, leftHeader } = getSideHeaders(patientInfo.involvedSide);
+
+  // group analysis data by test type and side
   const groups = {};
   for (const f of files) {
     const name = f.rawObject.measurement.name;
@@ -201,6 +211,7 @@ export async function generatePDF() {
 
   let y = 32;
 
+  // generate tables and symmetry bars for each test. Page 1
   for (const { key, title } of TESTS) {
     const test = groups[key];
     if (!test) continue;
@@ -212,18 +223,19 @@ export async function generatePDF() {
     const extIdx = isEks30 ? 111 : 110;
     const flexIdx = isEks30 ? 110 : 111;
 
-    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[extIdx], leftData[extIdx], patientInfo.involvedSide) : "–";
-    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 213 : 212], leftData[isEks30 ? 213 : 212], operatedSide) : "–";
-    const extWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 204 : 203], leftData[isEks30 ? 204 : 203], operatedSide) : "–";
+    // calculate symmetry values
+    const torqExtSymm = leftData && rightData ? symmetryPercent(rightData[extIdx], leftData[extIdx], operated) : "–";
+    const workExtSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 213 : 212], leftData[isEks30 ? 213 : 212], operated) : "–";
+    const extWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 204 : 203], leftData[isEks30 ? 204 : 203], operated) : "–";
 
-    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[flexIdx], leftData[flexIdx], operatedSide) : "–";
-    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 212 : 213], leftData[isEks30 ? 212 : 213], operatedSide) : "–";
-    const flexWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 203 : 204], leftData[isEks30 ? 203 : 204], operatedSide) : "–";
-
+    const torqFlexSymm = leftData && rightData ? symmetryPercent(rightData[flexIdx], leftData[flexIdx], operated) : "–";
+    const workFlexSymm = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 212 : 213], leftData[isEks30 ? 212 : 213], operated) : "–";
+    const flexWork = leftData && rightData ? symmetryPercent(rightData[isEks30 ? 203 : 204], leftData[isEks30 ? 203 : 204], operated) : "–";
     pdf.setFont("Helvetica", "bold");
     pdf.setFontSize(12);
     pdf.text(title, 14, y);
 
+    // prepare table rows
     const rows = [
       ["Etureisi", "", "", ""],
       ["Huippuvääntö (Nm)", getVal(rightData, extIdx), getVal(leftData, extIdx), torqExtSymm],
@@ -241,6 +253,7 @@ export async function generatePDF() {
       ],
     ];
 
+    // render table
     autoTable(pdf, {
       startY: y +2,
       head: [["", rightHeader, leftHeader, "Symmetria %"]],
@@ -271,6 +284,8 @@ export async function generatePDF() {
 
     y = pdf.lastAutoTable.finalY + 5;
   }
+
+  // Calculate mixed ratio for kons240 + eks30
   const kons240 = groups["kons240"];
   const eks30 = groups["eks30"];
   if (kons240 && eks30){
@@ -290,12 +305,13 @@ export async function generatePDF() {
     const mixedLeft  = hasLeft  ? (leftData.flex30  / leftData.ext240)  * 100 : "–";
     const mixedRight = hasRight ? (rightData.flex30 / rightData.ext240) * 100 : "–";
 
-    const mixedSymm = hasLeft && hasRight? symmetryPercent(mixedRight, mixedLeft, operatedSide): "–";
+    const mixedSymm = hasLeft && hasRight? symmetryPercent(mixedRight, mixedLeft, operated): "–";
 
 
     pdf.setFont("Helvetica", "bold");
     pdf.setFontSize(12);
 
+    // render mixed ratio table
     const mixedRows = [
       ["Mixed Ratio (%)      ",
         hasRight ? padRoundDecimalsToLength(mixedRight, 3): "–",
@@ -327,6 +343,7 @@ export async function generatePDF() {
     }
   }
 
+  // convert SVG charts to PNG and add to PDF
   for (const testDef of TESTS) {
     const group = groups[testDef.key];
 
@@ -351,15 +368,16 @@ export async function generatePDF() {
     pdf.text(testDef.title, 85, 35);
     pdf.setFont("Helvetica", "normal");
     pdf.setFontSize(11);
-
+    // add PNG images
     let x = -11;
     for (const { dataUrl, width, height } of pngs) {
-      const pdfWidth = width * 0.2646;
-      const pdfHeight = height * 0.2646;
+      const pdfWidth = width * 0.2646;  // convert px to mm
+      const pdfHeight = height * 0.2646; // convert px to mm
       pdf.addImage(dataUrl, "PNG", x, 40, pdfWidth, pdfHeight);
       x += 100;
     }
-
+    
+    // render analysis tables for the other pages
     addAnalysisTable(pdf, group, patientInfo);
   }
   pdf.save("make.pdf");
