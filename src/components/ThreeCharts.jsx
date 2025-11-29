@@ -1,7 +1,6 @@
 import { batch, createSignal, ErrorBoundary, mergeProps } from "solid-js";
 import {
   ChartBorder,
-  ChartGridAlignedWithFloorYAxisLabels,
   ChartHorizontalHoverPointLine,
   ChartHorizontalZeroLine,
   ChartMousePositionInPercentage,
@@ -159,13 +158,6 @@ function Chart(props) {
           y={props.borderArea.y + 20}
           title="Time [s]"
         />
-        <ChartGridAlignedWithFloorYAxisLabels
-          startValue={props.maxValue}
-          endValue={props.minValue}
-          {...props.lineArea}
-          x={props.borderArea.x}
-          width={props.borderArea.width}
-        />
         <ChartHorizontalZeroLine
           {...props.lineArea}
           x={props.borderArea.x}
@@ -266,13 +258,6 @@ function CircleChart(props) {
               <ChartPadding name="lines" {...borderArea} padding={15}>
                 {(lineArea) => (
                   <>
-                    <ChartGridAlignedWithFloorYAxisLabels
-                      startValue={props.maxValue}
-                      endValue={props.minValue}
-                      {...lineArea}
-                      x={borderArea.x}
-                      width={borderArea.width}
-                    />
                     <ChartHorizontalZeroLine
                       {...lineArea}
                       x={borderArea.x}

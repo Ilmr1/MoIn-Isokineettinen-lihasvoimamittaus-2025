@@ -2,7 +2,6 @@ import { createMemo, ErrorBoundary, mergeProps } from "solid-js";
 import { asserts } from "../collections/collections.js";
 import { arrayUtils, numberUtils } from "../utils/utils.js";
 import {
-  ChartGridAlignedWithFloorYAxisLabels,
   ChartPadding,
   ChartText,
   ChartYAxisFloor,
@@ -119,11 +118,6 @@ function Chart(props) {
           decimals={3}
           startValue={maxValue()}
           endValue={0}
-        />
-        <ChartGridAlignedWithFloorYAxisLabels
-          startValue={maxValue()}
-          endValue={0}
-          {...props}
         />
         <ChartPadding {...props} paddingInline={20}>
           {(barArea) => (

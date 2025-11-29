@@ -281,76 +281,6 @@ export function ChartBorder(props) {
   return <rect {...local} />;
 }
 
-export function ChartGridAlignedWithFloorYAxisLabels(props) {
-  asserts.assertTypeNumber(props.startValue, "startValue");
-  asserts.assertTypeNumber(props.endValue, "endValue");
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  props = mergeProps(
-    {
-      stroke: "black",
-      "stroke-width": ".25",
-      "stroke-dasharray": "2",
-      fill: "none",
-    },
-    props,
-  );
-  const [local] = splitProps(props, [
-    "fill",
-    "stroke-width",
-    "stroke-dasharray",
-    "stroke",
-  ]);
-
-  const idealSegmentSize = 30;
-
-  const grid = createMemo(() => {
-    const { x, y, height, width, startValue, endValue } = props;
-    const initialDelta = numberUtils.absDelta(startValue, endValue);
-    const idealSegmentCount = Math.round(height / idealSegmentSize);
-    const rawLabelIncrementCount = initialDelta / idealSegmentCount;
-    const closestLabelIncrementCount = arrayUtils.findByMinDelta(
-      labelIncrements,
-      rawLabelIncrementCount,
-    );
-
-    const roundedStartValue =
-      numberUtils.floorClosestToValue(
-        startValue / closestLabelIncrementCount,
-        endValue / closestLabelIncrementCount,
-      ) * closestLabelIncrementCount;
-    const roundedEndValue =
-      numberUtils.floorClosestToValue(
-        endValue / closestLabelIncrementCount,
-        startValue / closestLabelIncrementCount,
-      ) * closestLabelIncrementCount;
-    const roundedDelta = numberUtils.absDelta(
-      roundedStartValue,
-      roundedEndValue,
-    );
-    const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-
-    const labelHeight = (height / initialDelta) * roundedDelta;
-
-    const start =
-      height *
-      (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
-    const step = labelHeight / labelSegmentCount;
-    const string = [];
-
-    for (let i = start; i < height; i += step) {
-      string.push(`M ${x} ${y + i} l ${width} 0`);
-    }
-
-    return string.join(" ");
-  });
-
-  return <path d={grid()} {...local} />;
-}
-
 export function ChartMousePositionInPercentage(props) {
   asserts.assertTypeFunction(props.mouseX, "mouseX");
   asserts.assertTypeFunction(props.mouseY, "mouseY");
@@ -691,6 +621,7 @@ export function ChartXAxisFloor(props) {
   props = mergeProps(
     {
       fill: "black",
+      decimals: 1,
       gap: 3,
       "font-size": 16,
     },
@@ -703,8 +634,15 @@ export function ChartXAxisFloor(props) {
   const idealSegmentSize = 40;
 
   const labels = createMemo(() => {
-    const { width, startValue, endValue, x, y, height } = props;
+    const { height, startValue, endValue, width, x, y } = props;
     const initialDelta = numberUtils.absDelta(startValue, endValue);
+
+    if (!initialDelta) {
+      return {
+        values: [],
+      };
+    }
+
     const idealSegmentCount = Math.round(width / idealSegmentSize);
     const rawLabelIncrementCount = initialDelta / idealSegmentCount;
     const closestLabelIncrementCount = arrayUtils.findByMinDelta(
@@ -727,18 +665,17 @@ export function ChartXAxisFloor(props) {
       roundedEndValue,
     );
     const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-
-    const labels = [];
-    const paddingLeft =
-      width *
-      (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
     const labelWidth = (width / initialDelta) * roundedDelta;
     const gap = labelWidth / labelSegmentCount;
     const direction = numberUtils.trueToOneAndFalseToNegativeOne(
       roundedStartValue < roundedEndValue,
     );
+    const paddingLeft =
+      width *
+      (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
 
-    const string = [];
+    const labels = [],
+      string = [];
     for (let i = 0; i <= labelSegmentCount; i++) {
       const increment = i * closestLabelIncrementCount * direction;
 
@@ -816,10 +753,11 @@ export function ChartYAxisFloor(props) {
 
   const [local] = splitProps(props, ["fill", "stroke", "font-size"]);
 
+  // Try to make the gap between labels as close to 30px as possible
   const idealSegmentSize = 30;
 
   const labels = createMemo(() => {
-    const { height, startValue, endValue } = props;
+    const { height, startValue, endValue, width, x, y } = props;
     const initialDelta = numberUtils.absDelta(startValue, endValue);
 
     if (!initialDelta) {
@@ -850,53 +788,62 @@ export function ChartYAxisFloor(props) {
       roundedEndValue,
     );
     const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-
-    const listOfLabels = [];
-    for (
-      let i = roundedStartValue;
-      i <= roundedEndValue;
-      i += closestLabelIncrementCount
-    ) {
-      listOfLabels.push(i);
-    }
-    for (
-      let i = roundedStartValue;
-      i >= roundedEndValue;
-      i -= closestLabelIncrementCount
-    ) {
-      listOfLabels.push(i);
-    }
-
     const labelHeight = (height / initialDelta) * roundedDelta;
+    const gap = labelHeight / labelSegmentCount;
+    const direction = numberUtils.trueToOneAndFalseToNegativeOne(
+      roundedStartValue < roundedEndValue,
+    );
+    const paddingTop =
+      height *
+      (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
+
+    const labels = [],
+      string = [];
+    for (let i = 0; i <= labelSegmentCount; i++) {
+      const increment = i * closestLabelIncrementCount * direction;
+
+      labels.push({
+        value: roundedStartValue + increment,
+        y: paddingTop + y + gap * i,
+      });
+
+      string.push(`M ${x} ${paddingTop + y + i * gap} l ${width} 0`);
+    }
 
     return {
-      values: listOfLabels,
-      gap: labelHeight / labelSegmentCount,
-      paddingTop:
-        height *
-        (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),
+      labels,
+      d: string.join(" "),
     };
   });
 
   return (
-    <g data-y-axis>
-      <For each={labels().values}>
-        {(value, i) => (
-          <>
+    <>
+      <g data-y-axis-labels>
+        <For each={labels().labels}>
+          {(label) => (
             <text
               dominant-baseline="middle"
               text-anchor="start"
               x={props.x + props.width + 4}
-              y={labels().paddingTop + props.y + labels().gap * i()}
+              y={label.y}
               {...local}
             >
-              {numberUtils.roundDecimals(value, props.decimals)}
+              {numberUtils.roundDecimals(label.value, props.decimals)}
               {props.unit}
             </text>
-          </>
-        )}
-      </For>
-    </g>
+          )}
+        </For>
+      </g>
+      <g data-y-axis-grid>
+        <path
+          d={labels().d}
+          stroke="black"
+          stroke-width=".25"
+          stroke-dasharray="2"
+          fill="none"
+        />
+      </g>
+    </>
   );
 }
 

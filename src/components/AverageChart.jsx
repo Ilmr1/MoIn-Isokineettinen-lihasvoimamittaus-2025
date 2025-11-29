@@ -2,7 +2,6 @@ import { batch, createMemo, createSignal, ErrorBoundary } from "solid-js";
 import {
   ChartBorder,
   ChartErrorBands,
-  ChartGridAlignedWithFloorYAxisLabels,
   ChartHorizontalHoverPointLine,
   ChartHoverToolTip,
   ChartMousePositionInPercentage,
@@ -135,13 +134,6 @@ function Chart(props) {
               <ChartPadding name="lines" {...borderArea} padding={15}>
                 {(lineArea) => (
                   <>
-                    <ChartGridAlignedWithFloorYAxisLabels
-                      startValue={combinedValues().maxValue}
-                      endValue={combinedValues().minValue}
-                      {...lineArea}
-                      x={borderArea.x}
-                      width={borderArea.width}
-                    />
                     <text
                       x={borderArea.x + borderArea.width}
                       y={borderArea.y}
@@ -390,13 +382,6 @@ function Chart(props) {
                 <ChartPadding name="lines" {...borderArea} padding={15}>
                   {(lineArea) => (
                     <>
-                      <ChartGridAlignedWithFloorYAxisLabels
-                        startValue={combinedValues().maxValue}
-                        endValue={combinedValues().minValue}
-                        {...lineArea}
-                        x={borderArea.x}
-                        width={borderArea.width}
-                      />
                       <ChartText
                         position="bottom"
                         {...borderArea}
