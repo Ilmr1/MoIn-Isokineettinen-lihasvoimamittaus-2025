@@ -55,7 +55,18 @@ import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
   const {activeFiles} = useGlobalContext();
-  
+
+  const translateLegSide = (value) => {
+    // English -> Finnish (for display)
+    if (value === "left") return "vasen";
+    if (value === "right") return "oikea";
+    // Finnish -> English (for filtering)
+    if (value === "vasen") return "left";
+    if (value === "oikea") return "right";
+
+    return null;
+  }
+
   const groupFilesBySession = (files) => {
     const sessionMap = {};
     for (const file of files) {
@@ -245,16 +256,6 @@ export function FileBrowser() {
     });
   }
 
-  const translateLegSide = (legSide) => {
-    if (legSide === "left") {
-      return "vasen";
-    }
-    if (legSide === "right") {
-      return "oikea";
-    }
-    return;
-  }
-
   return (
     <>
       <dialog id="file-popup" class="space-y-4">
@@ -356,8 +357,8 @@ export function FileBrowser() {
           <Dropdown
             label="Jalka"
             options={["vasen", "oikea"]}
-            onSelect={(value) => storeSessionFilters("foot", value)}
-            selected={sessionFilters.foot}
+            onSelect={(value) => storeSessionFilters("foot", translateLegSide(value))}
+            selected={translateLegSide(sessionFilters.foot)}
           />
           <Dropdown
             label="Nopeus"
@@ -564,7 +565,7 @@ export function FileBrowser() {
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />
-        <FiEyeOff />
+        <FiEyeOff/>
         <Button
           variant={sessionFilters.foot || sessionFilters.speed || sessionFilters.program ? "danger" : "secondary"}
           size="sm"
