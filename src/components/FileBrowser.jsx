@@ -337,7 +337,7 @@ export function FileBrowser() {
     });
 
     return (
-      <div class="session-table overflow-y-auto">
+      <div class="session-table overflow-y-auto mt-2">
         <div class="session-header">
           <Dropdown label="Istunto / Tiedosto" disabled/>
           <Dropdown
@@ -533,7 +533,7 @@ export function FileBrowser() {
 
   function FileSearchForm() {
     return (
-      <form onSubmit={handleSubmit} class="flex justify-center items-center gap-3 mt-4">
+      <form onSubmit={handleSubmit} class="flex justify-center items-center gap-3 mt-3">
         <input
           type="text"
           placeholder="Etunimi"
@@ -559,7 +559,7 @@ export function FileBrowser() {
 
   function SafeSearchCheckbox() {
     return (
-      <div class="flex items-center space-x-2 mt-2">
+      <div class="flex items-center space-x-2 mt-3">
         <Checkbox
           id="safe-mode"
           checked={safeMode()}
