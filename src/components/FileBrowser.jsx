@@ -55,7 +55,17 @@ import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
   const {activeFiles} = useGlobalContext();
-  
+
+  const translateLegSide = (legSide) => {
+    if (legSide === "left") {
+      return "vasen";
+    }
+    if (legSide === "right") {
+      return "oikea";
+    }
+    return;
+  }
+
   const groupFilesBySession = (files) => {
     const sessionMap = {};
     for (const file of files) {
@@ -118,7 +128,7 @@ export function FileBrowser() {
             if (program && file.program !== program) {
               return false
             }
-            if (foot && file.legSide !== foot) {
+            if (foot && translateLegSide(file.legSide) !== foot) {
               return false
             }
 
@@ -243,16 +253,6 @@ export function FileBrowser() {
       setDisabledRepetitions([]);
       storeSelectedSessionsCounts(reconcile({}));
     });
-  }
-
-  const translateLegSide = (legSide) => {
-    if (legSide === "left") {
-      return "vasen";
-    }
-    if (legSide === "right") {
-      return "oikea";
-    }
-    return;
   }
 
   return (
@@ -564,7 +564,7 @@ export function FileBrowser() {
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />
-        <FiEyeOff />
+        <FiEyeOff/>
         <Button
           variant={sessionFilters.foot || sessionFilters.speed || sessionFilters.program ? "danger" : "secondary"}
           size="sm"
