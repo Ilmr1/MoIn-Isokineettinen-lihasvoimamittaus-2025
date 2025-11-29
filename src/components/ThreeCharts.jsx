@@ -1,7 +1,6 @@
 import { batch, createSignal, ErrorBoundary, mergeProps } from "solid-js";
 import {
   ChartBorder,
-  ChartGridAlignedWithFloorXAxisLabels,
   ChartGridAlignedWithFloorYAxisLabels,
   ChartHorizontalHoverPointLine,
   ChartHorizontalZeroLine,
@@ -154,13 +153,6 @@ function Chart(props) {
           {props.yUnit}
         </text>
         <ChartBorder {...props.borderArea} />
-        <ChartGridAlignedWithFloorXAxisLabels
-          startValue={props.startIndex / 256}
-          endValue={props.endIndex / 256}
-          {...props.lineArea}
-          y={props.borderArea.y}
-          height={props.borderArea.height}
-        />
         <ChartText
           position="bottom"
           {...props.borderArea}

@@ -1,13 +1,17 @@
 import {
   createMemo,
   createRenderEffect,
+  For,
   mergeProps,
+  Show,
   splitProps,
 } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { asserts } from "../collections/collections";
 import { arrayUtils, chartUtils, numberUtils } from "../utils/utils";
+import { Dynamic } from "solid-js/web";
 
+// This will display all chart paddings
 const DEBUG = false;
 // These are all the valid increments for the axis components
 // So for example its not possible for the axis to increment using 3
@@ -62,7 +66,7 @@ export function ChartPercentageVerticalLine(props) {
   asserts.assertTypeNumber(props.y, "y");
 
   props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
-  const [local, _] = splitProps(props, ["stroke", "stroke-width"]);
+  const [local] = splitProps(props, ["stroke", "stroke-width"]);
 
   return (
     <line
@@ -144,7 +148,7 @@ export function ChartHorizontalHoverPointLine(props) {
   asserts.assertTypeNumber(props.y, "y");
 
   props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
-  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
+  const [styles] = splitProps(props, ["stroke", "stroke-width"]);
 
   const hover = createMemo(() => {
     const {
@@ -217,7 +221,7 @@ export function ChartVecticalLinePercentageToRelativeIndex(props) {
   asserts.assertTypeNumber(props.y, "y");
 
   props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
-  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
+  const [styles] = splitProps(props, ["stroke", "stroke-width"]);
 
   const posX = createMemo(() => {
     const { mouseXPercentage, startIndex, endIndex, width, split } = props;
@@ -264,7 +268,7 @@ export function ChartBorder(props) {
     { fill: "none", stroke: "black", "stroke-width": 1 },
     props,
   );
-  const [local, _] = splitProps(props, [
+  const [local] = splitProps(props, [
     "fill",
     "stroke",
     "width",
@@ -275,116 +279,6 @@ export function ChartBorder(props) {
   ]);
 
   return <rect {...local} />;
-}
-
-export function ChartGrid(props) {
-  asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  props = mergeProps(
-    {
-      stroke: "black",
-      "stroke-width": ".25",
-      "stroke-dasharray": "2",
-      fill: "none",
-    },
-    props,
-  );
-  const [local, _] = splitProps(props, [
-    "fill",
-    "stroke-width",
-    "stroke-dasharray",
-    "stroke",
-  ]);
-
-  const grid = createMemo(() => {
-    const string = [];
-    const height = props.height,
-      width = props.width,
-      x = props.x,
-      y = props.y;
-    for (let i = 0; i < height / 50; i++) {
-      string.push(`M ${x} ${y + i * 50} l ${width} 0`);
-    }
-    for (let i = 0; i < width / 50; i++) {
-      string.push(`M ${x + i * 50} ${y} l 0 ${height}`);
-    }
-    return string.join(" ");
-  });
-
-  return <path d={grid()} {...local} />;
-}
-
-export function ChartGridAlignedWithFloorXAxisLabels(props) {
-  asserts.assertTypeNumber(props.startValue, "startValue");
-  asserts.assertTypeNumber(props.endValue, "endValue");
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  props = mergeProps(
-    {
-      stroke: "black",
-      "stroke-width": ".25",
-      "stroke-dasharray": "2",
-      fill: "none",
-    },
-    props,
-  );
-  const [local, _] = splitProps(props, [
-    "fill",
-    "stroke-width",
-    "stroke-dasharray",
-    "stroke",
-  ]);
-
-  const idealSegmentSize = 40;
-
-  const grid = createMemo(() => {
-    const { x, y, height, width, startValue, endValue } = props;
-    const initialDelta = numberUtils.absDelta(startValue, endValue);
-    const idealSegmentCount = Math.round(width / idealSegmentSize);
-    const rawLabelIncrementCount = initialDelta / idealSegmentCount;
-    const closestLabelIncrementCount = arrayUtils.findByMinDelta(
-      labelIncrements,
-      rawLabelIncrementCount,
-    );
-
-    const roundedStartValue =
-      numberUtils.floorClosestToValue(
-        startValue / closestLabelIncrementCount,
-        endValue / closestLabelIncrementCount,
-      ) * closestLabelIncrementCount;
-    const roundedEndValue =
-      numberUtils.floorClosestToValue(
-        endValue / closestLabelIncrementCount,
-        startValue / closestLabelIncrementCount,
-      ) * closestLabelIncrementCount;
-    const roundedDelta = numberUtils.absDelta(
-      roundedStartValue,
-      roundedEndValue,
-    );
-    const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-
-    const labelWidth = (width / initialDelta) * roundedDelta;
-
-    const start =
-      width *
-      (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
-    const step = labelWidth / labelSegmentCount;
-    const string = [];
-
-    for (let i = start; i < width; i += step) {
-      string.push(`M ${x + i} ${y} l 0 ${height}`);
-    }
-
-    return string.join(" ");
-  });
-
-  return <path d={grid()} {...local} />;
 }
 
 export function ChartGridAlignedWithFloorYAxisLabels(props) {
@@ -404,7 +298,7 @@ export function ChartGridAlignedWithFloorYAxisLabels(props) {
     },
     props,
   );
-  const [local, _] = splitProps(props, [
+  const [local] = splitProps(props, [
     "fill",
     "stroke-width",
     "stroke-dasharray",
@@ -742,7 +636,7 @@ export function ChartErrorBands(props) {
   asserts.assertTypeNumber(props.y, "y");
 
   props = mergeProps({ fill: "#00000082", stroke: "black" }, props);
-  const [local, _] = splitProps(props, ["fill", "stroke"]);
+  const [local] = splitProps(props, ["fill", "stroke"]);
 
   const paths = createMemo(() => {
     const { maxValue, points, x, y } = props;
@@ -786,110 +680,6 @@ export function ChartErrorBands(props) {
   return <For each={paths()}>{(path) => <path d={path} {...local} />}</For>;
 }
 
-export function ChartXAxisCeil(props) {
-  return (
-    <ChartPadding {...props}>
-      {(area) => <Component {...props} {...area} />}
-    </ChartPadding>
-  );
-
-  function Component(props) {
-    asserts.assertTypeNumber(props.startValue, "startValue");
-    asserts.assertTypeNumber(props.endValue, "endValue");
-    asserts.assertTypeNumber(props.width, "width");
-    asserts.assertTypeNumber(props.height, "height");
-    asserts.assertTypeNumber(props.x, "x");
-    asserts.assertTypeNumber(props.y, "y");
-
-    props = mergeProps(
-      {
-        fill: "black",
-        gap: 3,
-        "font-size": 16,
-      },
-      props,
-    );
-
-    const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
-
-    const labels = createMemo(() => {
-      const { width, startValue, endValue } = props;
-      const delta = endValue - startValue;
-      const idealSegmentSize = 40;
-      const idealSegment = Math.round(width / idealSegmentSize);
-      const axisGap = delta / idealSegment;
-      const gap = arrayUtils.findByMinDelta(labelIncrements, axisGap);
-
-      const direction = startValue < endValue;
-      const roundedStartValue =
-        (direction
-          ? Math.floor(startValue / gap)
-          : Math.ceil(startValue / gap)) * gap;
-      const roundedEndValue =
-        (direction ? Math.ceil(endValue / gap) : Math.floor(endValue / gap)) *
-        gap;
-      const segments = Math.abs((roundedEndValue - roundedStartValue) / gap);
-
-      const listOfLabels = [];
-      for (let i = roundedStartValue; i <= roundedEndValue; i += gap) {
-        listOfLabels.push(i);
-      }
-      for (let i = roundedStartValue; i >= roundedEndValue; i -= gap) {
-        listOfLabels.push(i);
-      }
-
-      const roundedDelta = numberUtils.absDelta(
-        roundedStartValue,
-        roundedEndValue,
-      );
-
-      return {
-        values: listOfLabels,
-        gap: width / Math.abs(segments),
-        paddingLeft:
-          (width / roundedDelta) *
-          numberUtils.absDelta(roundedStartValue, startValue),
-        paddingRight:
-          (width / roundedDelta) *
-          numberUtils.absDelta(roundedEndValue, endValue),
-        paddingBottom: local["font-size"] * (64 / 48) + props.gap,
-      };
-    });
-
-    return (
-      <>
-        <g data-x-axis>
-          <For each={labels().values}>
-            {(value, i) => (
-              <>
-                <line
-                  x1={props.x + labels().gap * i()}
-                  x2={props.x + labels().gap * i()}
-                  y1={props.y + props.height - labels().paddingBottom - 2}
-                  y2={props.y + props.height - labels().paddingBottom + 2}
-                  stroke="black"
-                ></line>
-                <text
-                  dominant-baseline="hanging"
-                  text-anchor="middle"
-                  x={props.x + labels().gap * i()}
-                  y={
-                    props.y + props.height - labels().paddingBottom + props.gap
-                  }
-                  {...local}
-                >
-                  {numberUtils.truncDecimals(value, 1)}
-                </text>
-              </>
-            )}
-          </For>
-        </g>
-        <ChartPadding {...props} {...labels()} />
-      </>
-    );
-  }
-}
-
 export function ChartXAxisFloor(props) {
   asserts.assertTypeNumber(props.startValue, "startValue");
   asserts.assertTypeNumber(props.endValue, "endValue");
@@ -907,12 +697,13 @@ export function ChartXAxisFloor(props) {
     props,
   );
 
-  const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
+  const [local] = splitProps(props, ["fill", "stroke", "font-size"]);
 
+  // Try to make the gap between labels as close to 40px as possible
   const idealSegmentSize = 40;
 
   const labels = createMemo(() => {
-    const { width, startValue, endValue } = props;
+    const { width, startValue, endValue, x, y, height } = props;
     const initialDelta = numberUtils.absDelta(startValue, endValue);
     const idealSegmentCount = Math.round(width / idealSegmentSize);
     const rawLabelIncrementCount = initialDelta / idealSegmentCount;
@@ -937,59 +728,71 @@ export function ChartXAxisFloor(props) {
     );
     const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
 
-    const listOfLabels = [];
-    for (
-      let i = roundedStartValue;
-      i <= roundedEndValue;
-      i += closestLabelIncrementCount
-    ) {
-      listOfLabels.push(i);
-    }
-    for (
-      let i = roundedStartValue;
-      i >= roundedEndValue;
-      i -= closestLabelIncrementCount
-    ) {
-      listOfLabels.push(i);
-    }
-
+    const labels = [];
+    const paddingLeft =
+      width *
+      (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
     const labelWidth = (width / initialDelta) * roundedDelta;
+    const gap = labelWidth / labelSegmentCount;
+    const direction = numberUtils.trueToOneAndFalseToNegativeOne(
+      roundedStartValue < roundedEndValue,
+    );
+
+    const string = [];
+    for (let i = 0; i <= labelSegmentCount; i++) {
+      const increment = i * closestLabelIncrementCount * direction;
+
+      labels.push({
+        value: roundedStartValue + increment,
+        x: paddingLeft + x + gap * i,
+      });
+
+      string.push(`M ${paddingLeft + x + i * gap} ${y} l 0 ${height}`);
+    }
 
     return {
-      values: listOfLabels,
-      gap: labelWidth / labelSegmentCount,
-      paddingLeft:
-        width *
-        (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta),
+      labels,
+      d: string.join(" "),
     };
   });
 
   return (
-    <g data-x-axis>
-      <For each={labels().values}>
-        {(value, i) => (
-          <>
-            <line
-              x1={labels().paddingLeft + props.x + labels().gap * i()}
-              x2={labels().paddingLeft + props.x + labels().gap * i()}
-              y1={props.y + props.height - 2}
-              y2={props.y + props.height + 2}
-              stroke="black"
-            ></line>
-            <text
-              dominant-baseline="hanging"
-              text-anchor="middle"
-              x={labels().paddingLeft + props.x + labels().gap * i()}
-              y={props.y + props.height + props.gap}
-              {...local}
-            >
-              {numberUtils.truncDecimals(value, 1)}
-              {props.unit}
-            </text>
-          </>
-        )}
-      </For>
-    </g>
+    <>
+      <g data-x-axis-labels>
+        <For each={labels().labels}>
+          {(label) => (
+            <>
+              <line
+                x1={label.x}
+                x2={label.x}
+                y1={props.y + props.height - 2}
+                y2={props.y + props.height + 2}
+                stroke="black"
+              ></line>
+              <text
+                dominant-baseline="hanging"
+                text-anchor="middle"
+                x={label.x}
+                y={props.y + props.height + props.gap}
+                {...local}
+              >
+                {numberUtils.truncDecimals(label.value, 1)}
+                {props.unit}
+              </text>
+            </>
+          )}
+        </For>
+      </g>
+      <g data-x-axis-grid>
+        <path
+          d={labels().d}
+          stroke="black"
+          stroke-width=".25"
+          stroke-dasharray="2"
+          fill="none"
+        />
+      </g>
+    </>
   );
 }
 
@@ -1011,7 +814,7 @@ export function ChartYAxisFloor(props) {
     props,
   );
 
-  const [local, _] = splitProps(props, ["fill", "stroke", "font-size"]);
+  const [local] = splitProps(props, ["fill", "stroke", "font-size"]);
 
   const idealSegmentSize = 30;
 
@@ -1131,7 +934,6 @@ export function ChartPadding(props) {
               width={props.width}
               height={top()}
               fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-              outline="none"
             ></rect>
           </Show>
           <Show when={bottom()}>
@@ -1142,7 +944,6 @@ export function ChartPadding(props) {
               width={props.width}
               height={bottom()}
               fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-              outline="none"
             ></rect>
           </Show>
           <Show when={left()}>
@@ -1153,7 +954,6 @@ export function ChartPadding(props) {
               width={left()}
               height={props.height - bottom() - top()}
               fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-              outline="none"
             ></rect>
           </Show>
           <Show when={right()}>
@@ -1164,7 +964,6 @@ export function ChartPadding(props) {
               width={right()}
               height={props.height - bottom() - top()}
               fill="color-mix(in oklab, oklch(79.2% 0.209 151.711) 20%, transparent)"
-              outline="none"
             ></rect>
           </Show>
           <rect
