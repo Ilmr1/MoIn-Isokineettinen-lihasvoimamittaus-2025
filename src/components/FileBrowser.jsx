@@ -128,7 +128,7 @@ export function FileBrowser() {
             if (program && file.program !== program) {
               return false
             }
-            if (foot && translateLegSide(file.legSide) !== foot) {
+            if (foot && file.legSide !== foot) {
               return false
             }
 
@@ -356,8 +356,17 @@ export function FileBrowser() {
           <Dropdown
             label="Jalka"
             options={["vasen", "oikea"]}
-            onSelect={(value) => storeSessionFilters("foot", value)}
-            selected={sessionFilters.foot}
+            onSelect={(value) => {
+              let englishValue = null;
+              if (value === "vasen") englishValue = "left";
+              if (value === "oikea") englishValue = "right";
+              storeSessionFilters("foot", englishValue);
+            }}
+            selected={
+              sessionFilters.foot === "left" ? "vasen" :
+                sessionFilters.foot === "right" ? "oikea" :
+                  null
+            }
           />
           <Dropdown
             label="Nopeus"
