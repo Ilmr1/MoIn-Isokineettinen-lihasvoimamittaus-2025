@@ -56,14 +56,15 @@ import {Dropdown} from "./ui/Dropdown.jsx";
 export function FileBrowser() {
   const {activeFiles} = useGlobalContext();
 
-  const translateLegSide = (legSide) => {
-    if (legSide === "left") {
-      return "vasen";
-    }
-    if (legSide === "right") {
-      return "oikea";
-    }
-    return;
+  const translateLegSide = (value) => {
+    // English -> Finnish (for display)
+    if (value === "left") return "vasen";
+    if (value === "right") return "oikea";
+    // Finnish -> English (for filtering)
+    if (value === "vasen") return "left";
+    if (value === "oikea") return "right";
+
+    return null;
   }
 
   const groupFilesBySession = (files) => {
@@ -356,17 +357,8 @@ export function FileBrowser() {
           <Dropdown
             label="Jalka"
             options={["vasen", "oikea"]}
-            onSelect={(value) => {
-              let englishValue = null;
-              if (value === "vasen") englishValue = "left";
-              if (value === "oikea") englishValue = "right";
-              storeSessionFilters("foot", englishValue);
-            }}
-            selected={
-              sessionFilters.foot === "left" ? "vasen" :
-                sessionFilters.foot === "right" ? "oikea" :
-                  null
-            }
+            onSelect={(value) => storeSessionFilters("foot", translateLegSide(value))}
+            selected={translateLegSide(sessionFilters.foot)}
           />
           <Dropdown
             label="Nopeus"
