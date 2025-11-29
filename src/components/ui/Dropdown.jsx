@@ -6,12 +6,12 @@ import {
   For,
   mergeProps
 } from "solid-js";
-import { signalUtils } from "../../utils/utils";
+import {signalUtils} from "../../utils/utils";
 
 let activeDropdownSetter = null;
 
 export function Dropdown(props) {
-  // lisää oletuspropsit
+  // Default props
   props = mergeProps(
     {
       label: "",
@@ -27,19 +27,18 @@ export function Dropdown(props) {
   const [selected, setSelected] = signalUtils.createEffectSignal(() => props.selected);
 
   const resolve = (v) => (typeof v === "function" ? v() : v);
-
-  // --- Nappi avaa/sulkee dropdownin ---
+  // Toggle dropdown
   const handleButtonClick = () => {
     if (props.disabled) return;
 
     if (open()) {
-      // Jos painetaan uudestaan → resetoi valinta
+      // If clicked while open, reset selection
       setSelected(null);
       props.onSelect(null);
       setOpen(false);
       activeDropdownSetter = null;
     } else {
-      // Sulje muut dropdownit jos auki
+      // Close other dropdown if open
       if (activeDropdownSetter && activeDropdownSetter !== setOpen)
         activeDropdownSetter(false);
 
@@ -48,7 +47,7 @@ export function Dropdown(props) {
     }
   };
 
-  // --- Valinnan tekeminen ---
+  // Handle selection
   const handleSelect = (value) => {
     setSelected(value);
     props.onSelect(value);
@@ -56,7 +55,7 @@ export function Dropdown(props) {
     activeDropdownSetter = null;
   };
 
-  // --- Klikki ulkopuolelle sulkee dropdownin ---
+  // Click outside closes dropdown
   const handleClickOutside = (e) => {
     if (!e.target.closest(".dropdown-container")) {
       setOpen(false);
@@ -64,35 +63,39 @@ export function Dropdown(props) {
     }
   };
 
-  // --- Event listener hallinta ---
+  // Event listener management
   createEffect(() => {
     document.addEventListener("click", handleClickOutside);
     onCleanup(() => document.removeEventListener("click", handleClickOutside));
   });
 
-  // --- Dropdownin pystysijainti ---
+  // Dropdown vertical position
   const dropdownOffset = () =>
     selected() ? "calc(100% + 3px)" : "calc(100% - 10px)";
 
   return (
     <div
       class="relative inline-block text-left dropdown-container select-none"
-      style={{
-        "min-width": "fit-content",
+      style={{"min-width": "fit-content"}}
+      onFocusOut={(e) => {
+        // Close dropdown when focus moves outside
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          setOpen(false);
+        }
       }}
     >
-      {/* Pääpainike */}
+      {/* Main Button */}
       <button
         type="button"
         onClick={handleButtonClick}
         disabled={props.disabled}
-        class="relative flex flex-col items-center justify-start cursor-pointer h-[30px] outline-none"
+        class="relative flex flex-col items-center justify-start cursor-pointer h-[30px] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-inset"
         classList={{
           "cursor-default text-gray-400": props.disabled,
           "hover:text-indigo-600": !props.disabled,
         }}
       >
-        {/* Label + nuoli */}
+        {/* Label + arrow */}
         <div class="flex items-center justify-center gap-[2px] font-semibold text-sm leading-none text-gray-700">
           <span>{props.label}</span>
           <Show when={!props.disabled}>
@@ -105,7 +108,7 @@ export function Dropdown(props) {
           </Show>
         </div>
 
-        {/* Valittu arvo labelin alla */}
+        {/* Selected value below label */}
         <Show when={selected()}>
           <div class="mt-[1px] text-xs text-gray-500 font-semibold text-center">
             {selected()}
@@ -113,7 +116,7 @@ export function Dropdown(props) {
         </Show>
       </button>
 
-      {/* Dropdown-valikko */}
+      {/* Dropdown menu */}
       <Show when={open()}>
         <ul
           class="absolute left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]
@@ -127,8 +130,16 @@ export function Dropdown(props) {
           <For each={resolve(props.options)}>
             {(opt) => (
               <li
+                tabIndex={0}
                 class="flex items-center justify-center px-4 py-1 cursor-pointer
-                       font-semibold  text-gray-700 hover:bg-gray-200 transition"
+                       font-semibold  text-gray-700 hover:bg-gray-200 transition
+                       focus:bg-gray-200 focus:outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelect(opt);
+                  }
+                }}
                 onClick={() => handleSelect(opt)}
               >
                 <span>{opt}</span>
