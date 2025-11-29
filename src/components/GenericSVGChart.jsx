@@ -281,6 +281,9 @@ export function ChartBorder(props) {
   return <rect {...local} />;
 }
 
+// Convert absolute mouse x and y coordinates to be a value between 0 and 1
+// If mouse is outside the specified area the coordinates will be -1
+// The mouse percentage coordinates will be passed down to a child component
 export function ChartMousePositionInPercentage(props) {
   asserts.assertTypeFunction(props.mouseX, "mouseX");
   asserts.assertTypeFunction(props.mouseY, "mouseY");
@@ -288,7 +291,7 @@ export function ChartMousePositionInPercentage(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
-  asserts.assertTypeFunction(props.children, "children");
+  asserts.assertTypeFunction(props.children, "children", "ChartMousePositionInPercentage needs a child component to pass the mouse percentage information to");
 
   const percentage = createMemo(() => {
     const { width, height, x, y } = props;
@@ -404,7 +407,7 @@ export function ChartHoverToolTip(props) {
   );
   asserts.assert2DArrayOfNumbersOrEmptyArray(
     props.listOfPoints,
-    "listOfPoints",
+    "listOfPoints", "If your chart displays 10 files you will pass here all the 10 files points",
   );
   asserts.assertTypeArray(props.listOfSplits, "listOfSplits");
 
@@ -610,6 +613,8 @@ export function ChartErrorBands(props) {
   return <For each={paths()}>{(path) => <path d={path} {...local} />}</For>;
 }
 
+// Axis floor means that the label values will always be equal or lower than the start and end values
+// start value of 1 and end value of 24 with an increment of 5 would make the following labels: 5, 10, 15, 20
 export function ChartXAxisFloor(props) {
   asserts.assertTypeNumber(props.startValue, "startValue");
   asserts.assertTypeNumber(props.endValue, "endValue");
@@ -733,6 +738,8 @@ export function ChartXAxisFloor(props) {
   );
 }
 
+// Axis floor means that the label values will always be equal or lower than the start and end values
+// start value of 1 and end value of 24 with an increment of 5 would make the following labels: 5, 10, 15, 20
 export function ChartYAxisFloor(props) {
   asserts.assertTypeNumber(props.startValue, "startValue");
   asserts.assertTypeNumber(props.endValue, "endValue");
@@ -847,6 +854,8 @@ export function ChartYAxisFloor(props) {
   );
 }
 
+// Helper component that will modify input relative coordinates by padding amount and pass the new props to children
+// You can visualise every padding used when you switch the DEBUG mode on at the top of the file
 export function ChartPadding(props) {
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
@@ -871,6 +880,7 @@ export function ChartPadding(props) {
 
   return (
     <>
+      {/* This is just for debugging */}
       <Show when={DEBUG && hasValues()}>
         <g data-debug-padding data-debug-name={props.name}>
           <Show when={top()}>
@@ -925,6 +935,7 @@ export function ChartPadding(props) {
           ></rect>
         </g>
       </Show>
+      {/* Pass the modified coordinate props to children */}
       <Dynamic
         component={props.children}
         x={props.x + left()}
