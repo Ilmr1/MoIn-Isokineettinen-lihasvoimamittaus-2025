@@ -633,7 +633,7 @@ export function ChartXAxisFloor(props) {
   // Try to make the gap between labels as close to 40px as possible
   const idealSegmentSize = 40;
 
-  const labels = createMemo(() => {
+  const computed = createMemo(() => {
     const { height, startValue, endValue, width, x, y } = props;
     const initialDelta = numberUtils.absDelta(startValue, endValue);
 
@@ -665,38 +665,38 @@ export function ChartXAxisFloor(props) {
       roundedEndValue,
     );
     const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-    const labelWidth = (width / initialDelta) * roundedDelta;
-    const gap = labelWidth / labelSegmentCount;
+    const labelSize = (width / initialDelta) * roundedDelta;
+    const step = labelSize / labelSegmentCount;
     const direction = numberUtils.trueToOneAndFalseToNegativeOne(
       roundedStartValue < roundedEndValue,
     );
-    const paddingLeft =
+    const offset =
       width *
       (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
 
-    const labels = [],
-      string = [];
+    const labels = [];
+    const grid = [];
     for (let i = 0; i <= labelSegmentCount; i++) {
       const increment = i * closestLabelIncrementCount * direction;
 
       labels.push({
         value: roundedStartValue + increment,
-        x: paddingLeft + x + gap * i,
+        x: offset + x + step * i,
       });
 
-      string.push(`M ${paddingLeft + x + i * gap} ${y} l 0 ${height}`);
+      grid.push(`M ${offset + x + i * step} ${y} l 0 ${height}`);
     }
 
     return {
       labels,
-      d: string.join(" "),
+      grid: grid.join(" "),
     };
   });
 
   return (
     <>
       <g data-x-axis-labels>
-        <For each={labels().labels}>
+        <For each={computed().labels}>
           {(label) => (
             <>
               <line
@@ -722,7 +722,7 @@ export function ChartXAxisFloor(props) {
       </g>
       <g data-x-axis-grid>
         <path
-          d={labels().d}
+          d={computed().grid}
           stroke="black"
           stroke-width=".25"
           stroke-dasharray="2"
@@ -756,7 +756,7 @@ export function ChartYAxisFloor(props) {
   // Try to make the gap between labels as close to 30px as possible
   const idealSegmentSize = 30;
 
-  const labels = createMemo(() => {
+  const computed = createMemo(() => {
     const { height, startValue, endValue, width, x, y } = props;
     const initialDelta = numberUtils.absDelta(startValue, endValue);
 
@@ -788,38 +788,38 @@ export function ChartYAxisFloor(props) {
       roundedEndValue,
     );
     const labelSegmentCount = roundedDelta / closestLabelIncrementCount;
-    const labelHeight = (height / initialDelta) * roundedDelta;
-    const gap = labelHeight / labelSegmentCount;
+    const labelSize = (height / initialDelta) * roundedDelta;
+    const step = labelSize / labelSegmentCount;
     const direction = numberUtils.trueToOneAndFalseToNegativeOne(
       roundedStartValue < roundedEndValue,
     );
-    const paddingTop =
+    const offset =
       height *
       (numberUtils.absDelta(startValue, roundedStartValue) / initialDelta);
 
-    const labels = [],
-      string = [];
+    const labels = [];
+    const grid = [];
     for (let i = 0; i <= labelSegmentCount; i++) {
       const increment = i * closestLabelIncrementCount * direction;
 
       labels.push({
         value: roundedStartValue + increment,
-        y: paddingTop + y + gap * i,
+        y: offset + y + step * i,
       });
 
-      string.push(`M ${x} ${paddingTop + y + i * gap} l ${width} 0`);
+      grid.push(`M ${x} ${offset + y + i * step} l ${width} 0`);
     }
 
     return {
       labels,
-      d: string.join(" "),
+      grid: grid.join(" "),
     };
   });
 
   return (
     <>
       <g data-y-axis-labels>
-        <For each={labels().labels}>
+        <For each={computed().labels}>
           {(label) => (
             <text
               dominant-baseline="middle"
@@ -836,7 +836,7 @@ export function ChartYAxisFloor(props) {
       </g>
       <g data-y-axis-grid>
         <path
-          d={labels().d}
+          d={computed().grid}
           stroke="black"
           stroke-width=".25"
           stroke-dasharray="2"
