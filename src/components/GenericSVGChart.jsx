@@ -127,7 +127,7 @@ export function ChartHorizontalZeroLine(props) {
 }
 
 // Add horizontal hover line using the mouseXPercentage prop and points
-export function ChartHorizontalPointLineWithLabel(props) {
+export function ChartHorizontalHoverPointLine(props) {
   asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
   asserts.assertTypeNumber(props.endIndex, "endIndex");
   asserts.assertTypeNumber(props.height, "height");
@@ -155,7 +155,11 @@ export function ChartHorizontalPointLineWithLabel(props) {
       height,
       maxValue,
       minValue,
+      // These are optional props to limit the range where the hover line is shown
+      minIndex = startIndex,
+      maxIndex = endIndex,
     } = props;
+
     if (mouseXPercentage === -1) {
       return { y: -1, value: null };
     }
@@ -164,20 +168,18 @@ export function ChartHorizontalPointLineWithLabel(props) {
     const length = endIndex - startIndex;
     const index = startIndex + Math.round(mouseXPercentage * length);
     const value = points[index];
-    if (value == null || index < startIndex || index > endIndex) {
+
+    if (value == null || index < minIndex || index > maxIndex) {
       return { y: -1, value: null };
     }
 
-    const y = chartUtils.flipYAxes(
-      ((value - minValue) / delta) * height,
-      height,
-    );
+    const y = (1 - (value - minValue) / delta) * height;
 
     return { y: y + props.y, value };
   });
 
   return (
-    <>
+    <Show when={hover().value != null}>
       <line
         x1={props.x}
         x2={props.x + props.width}
@@ -185,147 +187,17 @@ export function ChartHorizontalPointLineWithLabel(props) {
         y2={hover().y}
         {...styles}
       />
-      <text
-        dominant-baseline="middle"
-        text-anchor="end"
-        x={props.x - 5}
-        y={hover().y}
-      >
-        {hover().value}
-      </text>
-    </>
-  );
-}
-
-export function ChartHorizontalPointLine(props) {
-  asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
-  asserts.assertTypeNumber(props.endIndex, "endIndex");
-  asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.maxValue, "maxValue");
-  asserts.assertTypeNumber(props.minValue, "minValue");
-  asserts.assertTypeNumber(
-    props.mouseXPercentage,
-    "mouseXPercentage",
-    "You can use ChartMousePositionInPercentage component to generate the mouse position",
-  );
-  asserts.assertTypeNumber(props.startIndex, "startIndex");
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
-  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
-
-  const hover = createMemo(() => {
-    const {
-      points,
-      mouseXPercentage,
-      startIndex,
-      endIndex,
-      height,
-      maxValue,
-      minValue,
-    } = props;
-    if (mouseXPercentage === -1) {
-      return { y: -1, value: null };
-    }
-
-    const delta = maxValue - minValue;
-    const length = endIndex - startIndex;
-    const index = startIndex + Math.round(mouseXPercentage * length);
-    const value = points[index];
-    if (value == null || index < startIndex || index > endIndex) {
-      return { y: -1, value: null };
-    }
-
-    const y = chartUtils.flipYAxes(
-      ((value - minValue) / delta) * height,
-      height,
-    );
-
-    return { y: y + props.y, value };
-  });
-
-  return (
-    <line
-      x1={props.x}
-      x2={props.x + props.width}
-      y1={hover().y}
-      y2={hover().y}
-      {...styles}
-    />
-  );
-}
-
-export function ChartHorizontalSplitLineWithLabel(props) {
-  asserts.assert1DArrayOfNumbersOrEmptyArray(props.points, "points");
-  asserts.assertTruthy(props.split, "split");
-  asserts.assertTypeNumber(props.endIndex, "endIndex");
-  asserts.assertTypeNumber(props.height, "height");
-  asserts.assertTypeNumber(props.maxValue, "maxValue");
-  asserts.assertTypeNumber(props.minValue, "minValue");
-  asserts.assertTypeNumber(
-    props.mouseXPercentage,
-    "mouseXPercentage",
-    "You can use ChartMousePositionInPercentage component to generate the mouse position",
-  );
-  asserts.assertTypeNumber(props.startIndex, "startIndex");
-  asserts.assertTypeNumber(props.width, "width");
-  asserts.assertTypeNumber(props.x, "x");
-  asserts.assertTypeNumber(props.y, "y");
-
-  props = mergeProps({ stroke: "black", "stroke-width": 1 }, props);
-  const [styles, _] = splitProps(props, ["stroke", "stroke-width"]);
-
-  const hover = createMemo(() => {
-    const {
-      points,
-      mouseXPercentage,
-      startIndex,
-      endIndex,
-      height,
-      maxValue,
-      minValue,
-      split,
-    } = props;
-    if (mouseXPercentage === -1) {
-      return { y: -1, value: null };
-    }
-
-    const delta = maxValue - minValue;
-    const length = endIndex - startIndex;
-    const index = startIndex + Math.round(mouseXPercentage * length);
-    const value = points[index];
-    if (value == null || index < split.startIndex || index > split.endIndex) {
-      return { y: -1, value: null };
-    }
-
-    const y = chartUtils.flipYAxes(
-      ((value - minValue) / delta) * height,
-      height,
-    );
-
-    return { y: y + props.y, value };
-  });
-
-  return (
-    <>
-      <line
-        x1={props.x}
-        x2={props.x + props.width}
-        y1={hover().y}
-        y2={hover().y}
-        {...styles}
-      />
-      <text
-        dominant-baseline="middle"
-        text-anchor="end"
-        x={props.x - 5}
-        y={hover().y}
-      >
-        {hover().value}
-      </text>
-    </>
+      <Show when={props.showLabelValue}>
+        <text
+          dominant-baseline="middle"
+          text-anchor="end"
+          x={props.x - 5}
+          y={hover().y}
+        >
+          {hover().value}
+        </text>
+      </Show>
+    </Show>
   );
 }
 

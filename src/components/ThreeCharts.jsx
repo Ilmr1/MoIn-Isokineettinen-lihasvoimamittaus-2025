@@ -3,8 +3,7 @@ import {
   ChartBorder,
   ChartGridAlignedWithFloorXAxisLabels,
   ChartGridAlignedWithFloorYAxisLabels,
-  ChartHorizontalPointLineWithLabel,
-  ChartHorizontalSplitLineWithLabel,
+  ChartHorizontalHoverPointLine,
   ChartHorizontalZeroLine,
   ChartMousePositionInPercentage,
   ChartPadding,
@@ -213,13 +212,14 @@ function Chart(props) {
           y={props.borderArea.y}
           height={props.borderArea.height}
         />
-        <ChartHorizontalPointLineWithLabel
+        <ChartHorizontalHoverPointLine
           {...props}
           {...controls}
           {...props.mouseArea}
           {...props.lineArea}
           x={props.borderArea.x}
           width={props.borderArea.width}
+          showLabelValue={true}
         />
       </svg>
     );
@@ -309,17 +309,20 @@ function CircleChart(props) {
                             stroke={getStrokeColorIfHovered(split, i())}
                             {...lineArea}
                           ></ChartPath>
-                          <ChartHorizontalSplitLineWithLabel
+                          <ChartHorizontalHoverPointLine
                             points={props.points}
                             maxValue={props.maxValue}
                             minValue={props.minValue}
-                            split={split}
                             startIndex={props.startIndex}
                             endIndex={props.endIndex}
+                            // Only show the hover line if cursor is inside the current repetition
+                            minIndex={split.startIndex}
+                            maxIndex={split.endIndex}
                             {...props.mouseArea}
                             {...lineArea}
                             x={borderArea.x}
                             width={borderArea.width}
+                            showLabelValue={true}
                           />
                           <ChartVecticalLinePercentageToRelativeIndex
                             points={

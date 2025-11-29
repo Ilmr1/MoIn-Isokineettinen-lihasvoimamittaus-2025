@@ -4,7 +4,7 @@ import {
   ChartErrorBands,
   ChartGridAlignedWithFloorXAxisLabels,
   ChartGridAlignedWithFloorYAxisLabels,
-  ChartHorizontalPointLine,
+  ChartHorizontalHoverPointLine,
   ChartHoverToolTip,
   ChartMousePositionInPercentage,
   ChartPadding,
@@ -259,7 +259,7 @@ function Chart(props) {
                           />
                           <For each={props.listOfParsedCTM()}>
                             {(parsedData) => (
-                              <ChartHorizontalPointLine
+                              <ChartHorizontalHoverPointLine
                                 points={
                                   parsedData.rawObject.pointCollections[
                                     averageKey()
@@ -493,7 +493,7 @@ function Chart(props) {
                             />
                             <For each={props.listOfParsedCTM()}>
                               {(parsedData) => (
-                                <ChartHorizontalPointLine
+                                <ChartHorizontalHoverPointLine
                                   points={
                                     parsedData.rawObject.pointCollections
                                       .angleSpecificHQRatio.points
