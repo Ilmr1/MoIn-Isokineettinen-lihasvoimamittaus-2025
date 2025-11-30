@@ -9,10 +9,9 @@ html {
 }
 
 .tab-trigger {
-  @apply min-w-[8rem] px-6 py-2   /* pienennä py-3 → py-2 */
-  text-center font-medium text-gray-800 text-lg
-  rounded-lg transition w-fit
-  lg:flex-1;
+  @apply min-w-[8rem] px-6 py-2
+  /* pienennä py-3 → py-2 */
+  text-center font-medium text-gray-800 text-lg rounded-lg transition w-fit lg:flex-1;
 
   @apply bg-transparent shadow-none;
   /* oletuksena läpinäkyvä, ei varjoa */
@@ -45,11 +44,14 @@ html {
   min-height: 300px;
   align-content: start;
 
-  .session-body{
+  .session-body {
     grid-auto-rows: 24px;
   }
 
-  .session-header, .session-body, .session-row, .file-row {
+  .session-header,
+  .session-body,
+  .session-row,
+  .file-row {
     grid-column: 1/-1;
     display: grid;
     grid-template-columns: subgrid;
@@ -68,9 +70,11 @@ html {
     background-color: #ffffff;
     outline: 1px solid white;
     box-shadow: 0 9px 6px -10px #0000007a;
+    z-index: 1;
   }
 
-  .session-row, .file-row {
+  .session-row,
+  .file-row {
     cursor: pointer;
     padding-inline: 8px;
 
@@ -80,6 +84,8 @@ html {
     }
 
     &.opened {
+      position: sticky;
+      top: 30px;
       @apply bg-gray-100;
 
       &:hover {
