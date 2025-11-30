@@ -7,6 +7,8 @@ import crossIcon from "../assets/icons/delete.png";
 import { numberUtils } from "./utils";
 
 
+
+
 function addPatientInfo(pdf, patientInfo, files){
   pdf.setFontSize(11);
   pdf.setFont("Helvetica", "normal");
@@ -71,6 +73,10 @@ const TESTS = [
     },
   ];
 
+const pdfColors = {
+  right: [0, 200, 80], // green
+  left: [220, 30, 30],  // red
+};
 
 function drawSymmetryBar(pdf, x, y, percentage) {
   const barWidth = 50;
@@ -166,7 +172,7 @@ function addAnalysisTable(pdf, group, patientInfo) {
 
   // render analysis table
   autoTable(pdf, {
-    startY: 130,
+    startY: 145,
     head: [["Kuvaus", "Yksikkö", rightHeader, leftHeader, "Symmetria"]],
     body: rows,
     theme: "grid",
@@ -177,6 +183,21 @@ function addAnalysisTable(pdf, group, patientInfo) {
       fontSize: 11,
     },
   });
+}
+
+// Draw color key for right & left legs
+function drawColorKey(pdf) {
+  pdf.setFontSize(11);
+
+  // Right leg (blue)
+  pdf.setFillColor(...pdfColors.right);
+  pdf.rect(20, 40, 4, 4, "F");
+  pdf.text("Oikea jalka", 26, 43.5);
+
+  // Left leg (red)
+  pdf.setFillColor(...pdfColors.left);
+  pdf.rect(20, 46, 4, 4, "F");
+  pdf.text("Vasen jalka", 26, 49.5);
 }
 
 
@@ -363,6 +384,8 @@ export async function generatePDF() {
     pdf.addPage();
     addPatientInfo(pdf, patientInfo, files);
 
+    drawColorKey(pdf)
+
     pdf.setFont("Helvetica", "bold");
     pdf.setFontSize(18);
     pdf.text(testDef.title, 85, 35);
@@ -373,7 +396,7 @@ export async function generatePDF() {
     for (const { dataUrl, width, height } of pngs) {
       const pdfWidth = width * 0.2646;  // convert px to mm
       const pdfHeight = height * 0.2646; // convert px to mm
-      pdf.addImage(dataUrl, "PNG", x, 40, pdfWidth, pdfHeight);
+      pdf.addImage(dataUrl, "PNG", x, 60, pdfWidth, pdfHeight);
       x += 100;
     }
     
