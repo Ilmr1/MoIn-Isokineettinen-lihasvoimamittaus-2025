@@ -93,12 +93,10 @@ export function FileBrowser() {
   }
 
   const sortByTime = (a, b, time) => {
-    const aTime = a.files[0].time.split(":").reverse().join("")
-    const bTime = b.files[0].time.split(":").reverse().join("")
     if (time === "Vanhat") {
-      return aTime.localeCompare(bTime)
+      return a.localeCompare(b)
     } else {
-      return bTime.localeCompare(aTime)
+      return b.localeCompare(a)
     }
   }
 
@@ -149,7 +147,7 @@ export function FileBrowser() {
     });
 
     returnArray.sort((a, b) => {
-      return sortByDate(a, b, date) || sortByTime(a, b, time);
+      return sortByDate(a, b, date) || sortByTime(a.files[0].time || "", b.files[0].time || "", time);
     });
 
     return returnArray;
@@ -450,7 +448,7 @@ export function FileBrowser() {
                     </Show>
                   </div>
                   <Show when={opened()}>
-                    <For each={ses.files}>
+                    <For each={ses.files.toSorted((a, b) => sortByTime(a.time, b.time, sessionFilters.time))}>
                       {(file) => (
                         <label class="file-row">
                           <p class="identifier">
