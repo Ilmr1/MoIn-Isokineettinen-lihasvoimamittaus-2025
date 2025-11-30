@@ -8,6 +8,7 @@ import {
   createEffect,
   createMemo,
   createRenderEffect,
+  createResource,
   createSignal,
   For,
   on,
@@ -496,6 +497,7 @@ export function FileBrowser() {
       const access = await fileUtils.checkOrGrantFileAccess(props.directoryHandler, "readwrite");
       if (!access) return;
       setFoldersThatHaveAccess((folders) => [...folders, props.directoryHandler]);
+      mutate(false);
     };
 
     const removeRecentFolderByIndex = async () => {
@@ -508,17 +510,23 @@ export function FileBrowser() {
       setRecentFolders(files);
     };
 
+    const [doesNotHaveAccess, {mutate}] = createResource(() => props.directoryHandler, async dir => {
+      return !await fileUtils.checkFileAccess(dir);
+    });
+
     return (
       <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow-sm">
         <span class="font-medium">{props.directoryHandler.name}</span>
         <div class="space-x-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={askForFolderAccess}
-          >
-            Lataa
-          </Button>
+          <Show when={doesNotHaveAccess()}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={askForFolderAccess}
+            >
+              Lataa
+            </Button>
+          </Show>
           <Button
             variant="danger"
             size="sm"
