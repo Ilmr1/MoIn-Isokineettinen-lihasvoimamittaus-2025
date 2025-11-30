@@ -44,8 +44,8 @@ function Chart(props) {
   const svgArea = { width: svgWidth, height: svgHeight, x: 0, y: 0 };
   return (
     <Show when={props.listOfParsedCTM()?.length}>
-      <AverageErrorChartForTorque type="Ext" {...props} />
-      <AverageErrorChartForTorque type="Flex" {...props} />
+      <AverageErrorChartForTorque title="Ojennuksen keskiarvo" type="Ext" {...props} />
+      <AverageErrorChartForTorque title="Koukistuksen keskiarvo" type="Flex" {...props} />
       <AngleSpecificHQRatio type="Flex" {...props} />
     </Show>
   );
@@ -128,7 +128,7 @@ function Chart(props) {
               <ChartText
                 position="top"
                 {...borderArea}
-                title={props.type + " average"}
+                title={props.title}
               />
               <ChartBorder {...borderArea} />
               <ChartPadding name="lines" {...borderArea} padding={15}>
@@ -140,13 +140,13 @@ function Chart(props) {
                       dominant-baseline="ideographic"
                       text-anchor="end"
                     >
-                      Torque [Nm]
+                      Vääntö [Nm]
                     </text>
                     <ChartText
                       position="bottom"
                       {...borderArea}
                       y={borderArea.y + 20}
-                      title="Position [deg]"
+                      title="Kulma [aste]"
                     />
                     <ChartXAxisFloor
                       {...borderArea}
@@ -376,7 +376,7 @@ function Chart(props) {
                 <ChartText
                   position="top"
                   {...borderArea}
-                  title="Angle Specific HQ-ratio"
+                  title="Kulmakohtainen HQ-suhde"
                 />
                 <ChartBorder {...borderArea} />
                 <ChartPadding name="lines" {...borderArea} padding={15}>
@@ -386,7 +386,7 @@ function Chart(props) {
                         position="bottom"
                         {...borderArea}
                         y={borderArea.y + 20}
-                        title="Position [deg]"
+                        title="Kulma [aste]"
                       />
                       <ChartXAxisFloor
                         {...borderArea}

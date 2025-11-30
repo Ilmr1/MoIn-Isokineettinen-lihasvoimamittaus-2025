@@ -41,14 +41,14 @@ function Chart(props) {
                 <tspan
                   dominant-baseline="ideographic"
                   text-anchor="middle"
-                  x={chartArea.x + chartArea.width / 2}
+                  x={svgArea.x + svgArea.width / 2}
                 >
                   {props.title}
                 </tspan>
                 <tspan
                   dominant-baseline="ideographic"
                   text-anchor="middle"
-                  x={chartArea.x + chartArea.width / 2}
+                  x={svgArea.x + svgArea.width / 2}
                   dy="1.2em"
                 >
                   {props.unit}
@@ -109,7 +109,7 @@ function Chart(props) {
     const colors = createMemo(() =>
       props.listOfParsedCTM()?.map((ctmData) => ctmData.baseColor),
     );
-    const groupNames = ["Ext", "Flex"];
+    const groupNames = ["Ojennus", "Koukistus"];
 
     return (
       <>
