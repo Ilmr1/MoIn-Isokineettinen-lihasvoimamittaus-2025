@@ -1,17 +1,17 @@
-import {createSignal, createMemo, For, createEffect, on} from "solid-js";
-import {Tabs} from "@kobalte/core";
-import {fileUtils} from "../utils/utils.js";
-import {FileBrowser} from "./FileBrowser.jsx";
-import {AverageChart} from "./AverageChart.jsx";
-import {ThreeCharts} from "./ThreeCharts.jsx"; // keep eager if light; otherwise lazy
-import {Repetitions} from "./Repetitions.jsx";
-import {useGlobalContext} from "../providers.js";
-import {BarChart} from "./BarChart.jsx";
-import {Button} from "./ui/Button.jsx";
-import {parsedFileData, activeProgram, setActiveProgram, showErrorBands, setShowErrorBands, activeFileIndex} from "../signals.js";
+import { createSignal, createMemo, For, createEffect, on } from "solid-js";
+import { Tabs } from "@kobalte/core";
+import { fileUtils } from "../utils/utils.js";
+import { FileBrowser } from "./FileBrowser.jsx";
+import { AverageChart } from "./AverageChart.jsx";
+import { ThreeCharts } from "./ThreeCharts.jsx";
+import { Repetitions } from "./Repetitions.jsx";
+import { useGlobalContext } from "../providers.js";
+import { BarChart } from "./BarChart.jsx";
+import { Button } from "./ui/Button.jsx";
+import { parsedFileData, activeProgram, setActiveProgram, showErrorBands, setShowErrorBands, activeFileIndex } from "../signals.js";
 
 export function FileManager() {
-  const {activeFiles} = useGlobalContext();
+  const { activeFiles } = useGlobalContext();
 
   createEffect(on(parsedFileData, files => {
     const type = activeProgram();
@@ -46,28 +46,28 @@ export function FileManager() {
         </Tabs.List>
         <Tabs.Content value="files" class="bg-white rounded-lg flex-1 overflow-auto">
           <div class="w-full h-full space-y-4 grid place-items-center items-start">
-            <FileBrowser/>
-            <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()}/>
+            <FileBrowser />
+            <AverageChart listOfParsedCTM={activeFiles} errorBands={showErrorBands()} />
             <div class="grid grid-cols-3 gap-2">
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max" unit="[Nm]" analysisExtKey="110"
-                        analysisFlexKey="111"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max avearge" unit="[Nm]" analysisExtKey="112"
-                        analysisFlexKey="113"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Torque max aver." unit="[Nm/kg]" analysisExtKey="203"
-                        analysisFlexKey="204"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Time aver. to peak Torque Ext" unit="[s]"
-                        analysisExtKey="116"
-                        analysisFlexKey="117"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Position aver. @ peak Torque" unit="[deg]"
-                        analysisExtKey="114"
-                        analysisFlexKey="115"/>
-              <BarChart listOfParsedCTM={activeFiles} title="Peak Torque Variation" unit="[Nm]"
-                        analysisExtKey="250"
-                        analysisFlexKey="251"/>
+              <BarChart listOfParsedCTM={activeFiles} title="Maksimivääntö" unit="[Nm]" analysisExtKey="110"
+                analysisFlexKey="111" />
+              <BarChart listOfParsedCTM={activeFiles} title="Maksimivääntö keskiarvo" unit="[Nm]" analysisExtKey="112"
+                analysisFlexKey="113" />
+              <BarChart listOfParsedCTM={activeFiles} title="Maksimivääntö keskiarvo / kg" unit="[Nm/kg]" analysisExtKey="203"
+                analysisFlexKey="204" />
+              <BarChart listOfParsedCTM={activeFiles} title="Ajankeskiarvo huippuväännössä" unit="[s]"
+                analysisExtKey="116"
+                analysisFlexKey="117" />
+              <BarChart listOfParsedCTM={activeFiles} title="Kulmankeskiarvo huippuväännössä" unit="[aste]"
+                analysisExtKey="114"
+                analysisFlexKey="115" />
+              <BarChart listOfParsedCTM={activeFiles} title="Huippuväännön vaihtelu" unit="[Nm]"
+                analysisExtKey="250"
+                analysisFlexKey="251" />
             </div>
             <Show when={activeFiles()[activeFileIndex()]}>{activeFile => (
               <>
-                <ThreeCharts parsedCTM={activeFile().rawObject} fileIndex={activeFile().index}/>
+                <ThreeCharts parsedCTM={activeFile().rawObject} fileIndex={activeFile().index} />
                 <div class="flex gap-2 pb-6">
                   <Button
                     variant="info"

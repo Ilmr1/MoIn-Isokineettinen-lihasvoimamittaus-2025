@@ -68,7 +68,7 @@ function Chart(props) {
                       borderArea={borderArea}
                       lineArea={lineArea}
                       mouseArea={mouseArea}
-                      title="Torque"
+                      title="Vääntö"
                       yUnit="[Nm]"
                       points={props.parsedCTM.pointCollections.power.points}
                       maxValue={props.parsedCTM.pointCollections.power.maxValue}
@@ -84,8 +84,8 @@ function Chart(props) {
                       borderArea={borderArea}
                       lineArea={lineArea}
                       mouseArea={mouseArea}
-                      title="Speed"
-                      yUnit="[deg/s]"
+                      title="Nopeus"
+                      yUnit="[aste/s]"
                       points={props.parsedCTM.pointCollections.speed.points}
                       maxValue={props.parsedCTM.pointCollections.speed.maxValue}
                       minValue={props.parsedCTM.pointCollections.speed.minValue}
@@ -100,8 +100,8 @@ function Chart(props) {
                       borderArea={borderArea}
                       lineArea={lineArea}
                       mouseArea={mouseArea}
-                      title="Angle"
-                      yUnit="[deg]"
+                      title="Kulma"
+                      yUnit="[aste]"
                       points={props.parsedCTM.pointCollections.angle.points}
                       maxValue={props.parsedCTM.pointCollections.angle.maxValue}
                       minValue={props.parsedCTM.pointCollections.angle.minValue}
@@ -156,7 +156,7 @@ function Chart(props) {
           position="bottom"
           {...props.borderArea}
           y={props.borderArea.y + 20}
-          title="Time [s]"
+          title="Aika [s]"
         />
         <ChartHorizontalZeroLine
           {...props.lineArea}
@@ -253,7 +253,7 @@ function CircleChart(props) {
               <ChartText
                 position="top"
                 {...borderArea}
-                title="Torque repetitions"
+                title="Vääntötoistot"
               />
               <ChartPadding name="lines" {...borderArea} padding={15}>
                 {(lineArea) => (
