@@ -250,11 +250,7 @@ function CircleChart(props) {
               >
                 [Nm]
               </text>
-              <ChartText
-                position="top"
-                {...borderArea}
-                title="Vääntötoistot"
-              />
+              <ChartText position="top" {...borderArea} title="Vääntötoistot" />
               <ChartPadding name="lines" {...borderArea} padding={15}>
                 {(lineArea) => (
                   <>

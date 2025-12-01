@@ -1,6 +1,5 @@
 import { CTMUtils } from "../utils/utils";
 
-
 // Parse files for graph handling
 onmessage = async (message) => {
   const { filesToParse, dataFiltering, disabledRepetitions } = message.data;
@@ -15,12 +14,16 @@ onmessage = async (message) => {
       const file = await fileHandler.getFile();
       const text = await file.text();
       const disabledList = disabledRepetitions[file.name] || {};
-      const rawObject = CTMUtils.parseTextToObject(text, dataFiltering, disabledList);
+      const rawObject = CTMUtils.parseTextToObject(
+        text,
+        dataFiltering,
+        disabledList,
+      );
       files.push({
         ...filesToParse[i],
         name: file.name,
         index: files.length,
-        rawObject
+        rawObject,
       });
     }
   }

@@ -44,8 +44,16 @@ function Chart(props) {
   const svgArea = { width: svgWidth, height: svgHeight, x: 0, y: 0 };
   return (
     <Show when={props.listOfParsedCTM()?.length}>
-      <AverageErrorChartForTorque title="Ojennuksen keskiarvo" type="Ext" {...props} />
-      <AverageErrorChartForTorque title="Koukistuksen keskiarvo" type="Flex" {...props} />
+      <AverageErrorChartForTorque
+        title="Ojennuksen keskiarvo"
+        type="Ext"
+        {...props}
+      />
+      <AverageErrorChartForTorque
+        title="Koukistuksen keskiarvo"
+        type="Flex"
+        {...props}
+      />
       <AngleSpecificHQRatio type="Flex" {...props} />
     </Show>
   );
@@ -120,11 +128,7 @@ function Chart(props) {
         >
           {(borderArea) => (
             <>
-              <ChartText
-                position="top"
-                {...borderArea}
-                title={props.title}
-              />
+              <ChartText position="top" {...borderArea} title={props.title} />
               <ChartBorder {...borderArea} />
               <ChartPadding name="lines" {...borderArea} padding={15}>
                 {(lineArea) => (

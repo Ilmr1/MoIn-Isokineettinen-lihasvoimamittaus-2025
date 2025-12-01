@@ -35,7 +35,6 @@ html {
   }
 }
 
-
 .session-table {
   display: grid;
   grid-template-columns: 4fr repeat(7, 2fr) 1fr;
@@ -78,7 +77,6 @@ html {
     cursor: pointer;
     padding-inline: 8px;
 
-
     &:hover {
       @apply bg-gray-50;
     }
@@ -93,7 +91,6 @@ html {
       }
     }
   }
-
 
   .file-row {
     .identifier {
@@ -119,7 +116,6 @@ html {
     display: flex;
   }
 
-
   #file-popup-close {
     position: absolute;
     top: 0px;
@@ -133,8 +129,8 @@ html {
 
   .file-color-dot {
     display: inline-block;
-    width: .5rem;
-    height: .5rem;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 50%;
   }
 }

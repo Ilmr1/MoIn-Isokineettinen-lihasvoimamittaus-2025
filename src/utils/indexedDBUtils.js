@@ -14,15 +14,15 @@ const createDbStore = (db, storeName, key) => {
   if (!db.objectStoreNames.contains(storeName)) {
     db.createObjectStore(storeName, key);
   }
-}
+};
 
 export const openStore = (storeName, mode) => {
   const request = indexedDB.open("innovation-project-2025", 1);
 
-  request.onupgradeneeded = evt => {
+  request.onupgradeneeded = (evt) => {
     console.log("tarvitsee päivitystä");
     const db = evt.target.result;
-    switch(evt.oldVersion) {
+    switch (evt.oldVersion) {
       case 0: {
         createDbStore(db, "file-handlers");
       }
@@ -33,13 +33,16 @@ export const openStore = (storeName, mode) => {
     request.onerror = rej;
     request.onsuccess = (evt) => {
       const db = evt.target.result;
-      asserts.assertTruthy(db.objectStoreNames.contains(storeName), `Unknown store name "${storeName}"`);
+      asserts.assertTruthy(
+        db.objectStoreNames.contains(storeName),
+        `Unknown store name "${storeName}"`,
+      );
       const transaction = db.transaction(storeName, mode);
 
       res(transaction.objectStore(storeName));
-    }
+    };
   });
-}
+};
 
 export const setValue = (storeName, key, value) => {
   return new Promise(async (res, rej) => {
@@ -48,17 +51,17 @@ export const setValue = (storeName, key, value) => {
     putReq.onerror = rej;
     putReq.onsuccess = res;
   });
-}
+};
 
 export const getValue = async (storeName, key) => {
   const store = await openStore(storeName, "readonly");
   return await storeGet(store, key);
-}
+};
 
 export const deleteKey = async (storeName, key) => {
   const store = await openStore(storeName, "readwrite");
   store.delete(key);
-}
+};
 
 export const mutateValue = (storeName, key, mutate) => {
   return new Promise(async (res, rej) => {
@@ -71,14 +74,13 @@ export const mutateValue = (storeName, key, mutate) => {
     setRequest.onerror = rej;
     setRequest.onsuccess = () => res(result);
   });
-}
+};
 
 const storeGet = (store, key) => {
   return new Promise((res, rej) => {
     const getRequest = store.get(key);
 
-    getRequest.onsuccess = evt => res(evt.target.result);
+    getRequest.onsuccess = (evt) => res(evt.target.result);
     getRequest.onerror = rej;
   });
-}
-
+};

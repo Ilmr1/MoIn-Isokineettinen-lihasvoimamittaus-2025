@@ -1,13 +1,7 @@
-import {FiPrinter, FiHardDrive} from "solid-icons/fi";
-import {
-  batch,
-  createEffect,
-  createMemo,
-  For,
-  Show,
-} from "solid-js";
-import {generatePDF} from "../utils/pdfUtils";
-import {ActiveProgramTypeButtons} from "./ActiveProgramTypeButtons.jsx";
+import { FiPrinter, FiHardDrive } from "solid-icons/fi";
+import { batch, createEffect, createMemo, For, Show } from "solid-js";
+import { generatePDF } from "../utils/pdfUtils";
+import { ActiveProgramTypeButtons } from "./ActiveProgramTypeButtons.jsx";
 import {
   activeProgram,
   selectedFiles,
@@ -21,17 +15,17 @@ import {
   activeFileIndex,
   setActiveFileIndex,
   toggleSelectedFile,
-  setDisabledRepetitions
+  setDisabledRepetitions,
 } from "../signals.js";
-import {useGlobalContext} from "../providers.js";
-import {Button} from "./ui/Button.jsx";
-import {ListOfFileHandlerRepetitions} from "./ListOfFileHandlerRepetitions.jsx";
-import {reconcile} from "solid-js/store";
-import {IconButton} from "./ui/IconButton.jsx";
-import {Checkbox} from "./ui/Checkbox.jsx";
+import { useGlobalContext } from "../providers.js";
+import { Button } from "./ui/Button.jsx";
+import { ListOfFileHandlerRepetitions } from "./ListOfFileHandlerRepetitions.jsx";
+import { reconcile } from "solid-js/store";
+import { IconButton } from "./ui/IconButton.jsx";
+import { Checkbox } from "./ui/Checkbox.jsx";
 
 export function Sidebar() {
-  const {activeFiles} = useGlobalContext();
+  const { activeFiles } = useGlobalContext();
 
   const toggleDataFiltering = () => setDataFiltering((s) => !s);
 
@@ -60,7 +54,11 @@ export function Sidebar() {
               label="Tiedostot"
             />
             <Show when={activeFiles().length}>
-              <IconButton onClick={generatePDF} icon={FiPrinter} label="Tulosta"/>
+              <IconButton
+                onClick={generatePDF}
+                icon={FiPrinter}
+                label="Tulosta"
+              />
             </Show>
           </div>
 
@@ -100,14 +98,13 @@ export function Sidebar() {
           </div>
         </Show>
 
-
         {/* Program types */}
         <Show when={activeFiles().length}>
           <div class="flex flex-wrap justify-center gap-2 border border-gray-200 rounded-lg p-3">
-            <ActiveProgramTypeButtons/>
+            <ActiveProgramTypeButtons />
           </div>
           {/* Active files and repetitions */}
-          <ActiveFilesAndRepetitions/>
+          <ActiveFilesAndRepetitions />
         </Show>
       </div>
     </nav>
@@ -115,7 +112,7 @@ export function Sidebar() {
 }
 
 function ActiveFilesAndRepetitions() {
-  const {activeFiles} = useGlobalContext();
+  const { activeFiles } = useGlobalContext();
 
   createEffect(() => {
     activeProgram();
@@ -123,13 +120,13 @@ function ActiveFilesAndRepetitions() {
   });
 
   const activeFile = createMemo(
-    () => activeFiles()[activeFileIndex()] ?? activeFiles()[0]
+    () => activeFiles()[activeFileIndex()] ?? activeFiles()[0],
   );
 
   const sideLabels = {
     left: "Vasen",
-    right: "Oikea"
-  }
+    right: "Oikea",
+  };
 
   return (
     <div class="flex flex-col gap-4">
@@ -143,10 +140,15 @@ function ActiveFilesAndRepetitions() {
                   {sideLabels[side] ?? side}
                 </p>
                 <div class="flex flex-col gap-2">
-                  <For each={activeFiles().filter((f) => f.legSide?.toLowerCase() === side)}>
+                  <For
+                    each={activeFiles().filter(
+                      (f) => f.legSide?.toLowerCase() === side,
+                    )}
+                  >
                     {(fileHandler) => {
-                      const originalIndex = () => activeFiles().findIndex(f => f === fileHandler);
-                      const isActive = () => activeFile() === fileHandler
+                      const originalIndex = () =>
+                        activeFiles().findIndex((f) => f === fileHandler);
+                      const isActive = () => activeFile() === fileHandler;
 
                       return (
                         <div class="flex items-center gap-1">
@@ -156,7 +158,8 @@ function ActiveFilesAndRepetitions() {
                             onClick={() => setActiveFileIndex(originalIndex())}
                             class="flex items-center justify-between gap-2 w-full"
                           >
-                            {sideLabels[fileHandler.legSide?.toLowerCase()] ?? fileHandler.legSide}
+                            {sideLabels[fileHandler.legSide?.toLowerCase()] ??
+                              fileHandler.legSide}
                             <span
                               class="w-2 h-2 rounded-full"
                               style={{
@@ -170,7 +173,10 @@ function ActiveFilesAndRepetitions() {
                             variant="dangerAlt"
                             label="︎×"
                             onClick={() =>
-                              toggleSelectedFile(fileHandler.sessionId, selectedFiles()[fileHandler.index])
+                              toggleSelectedFile(
+                                fileHandler.sessionId,
+                                selectedFiles()[fileHandler.index],
+                              )
                             }
                           />
                         </div>
@@ -196,7 +202,7 @@ function ActiveFilesAndRepetitions() {
             class="flex flex-col items-center gap-1"
             onMouseLeave={clearRepetitionHover}
           >
-            <ListOfFileHandlerRepetitions fileHandler={activeFile()}/>
+            <ListOfFileHandlerRepetitions fileHandler={activeFile()} />
           </ul>
         </div>
       </div>
@@ -205,5 +211,5 @@ function ActiveFilesAndRepetitions() {
 }
 
 function clearRepetitionHover() {
-  storeHoveredRepetition({fileIndex: -1, repetitionIndex: -1})
+  storeHoveredRepetition({ fileIndex: -1, repetitionIndex: -1 });
 }
