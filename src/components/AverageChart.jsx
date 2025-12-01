@@ -87,12 +87,7 @@ function Chart(props) {
       const xEndValue = arrayUtils.findByMaxDelta(endAngles, 0) || 1;
 
       return {
-        minValue: Math.min(
-          ...files.map(
-            (parsedData) =>
-              parsedData.rawObject.pointCollections[errorAverageKey()].minValue,
-          ),
-        ),
+        minValue: 0,
         maxValue: Math.max(
           ...files.map(
             (parsedData) =>
