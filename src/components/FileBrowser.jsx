@@ -1,8 +1,8 @@
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
-import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker"
-import {Checkbox} from "./ui/Checkbox.jsx";
-import {FiChevronDown, FiChevronRight, FiEyeOff} from "solid-icons/fi";
-import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
+import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker";
+import { Checkbox } from "./ui/Checkbox.jsx";
+import { FiChevronDown, FiChevronRight, FiEyeOff } from "solid-icons/fi";
+import { IoDocumentTextSharp, IoFolderOutline } from "solid-icons/io";
 import {
   batch,
   createEffect,
@@ -14,10 +14,10 @@ import {
   on,
   onCleanup,
   onMount,
-  Show
+  Show,
 } from "solid-js";
-import {createStore, reconcile, unwrap} from "solid-js/store";
-import {fileUtils, indexedDBUtils} from "../utils/utils";
+import { createStore, reconcile, unwrap } from "solid-js/store";
+import { fileUtils, indexedDBUtils } from "../utils/utils";
 import {
   $selectedSessionsCounts,
   dataFiltering,
@@ -48,14 +48,14 @@ import {
   storeSessionFilters,
   openSessionsMemory,
   toggleSelectedFile,
-  setDisabledRepetitions
+  setDisabledRepetitions,
 } from "../signals";
-import {useGlobalContext} from "../providers";
-import {Button} from "./ui/Button.jsx";
-import {Dropdown} from "./ui/Dropdown.jsx";
+import { useGlobalContext } from "../providers";
+import { Button } from "./ui/Button.jsx";
+import { Dropdown } from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
-  const {activeFiles} = useGlobalContext();
+  const { activeFiles } = useGlobalContext();
 
   const translateLegSide = (value) => {
     // English -> Finnish (for display)
@@ -66,7 +66,7 @@ export function FileBrowser() {
     if (value === "oikea") return "right";
 
     return null;
-  }
+  };
 
   const groupFilesBySession = (files) => {
     const sessionMap = {};
@@ -79,41 +79,51 @@ export function FileBrowser() {
     return Object.entries(sessionMap).map(([sessionId, sessionFiles]) => ({
       sessionId,
       files: sessionFiles,
-    }))
-  }
+    }));
+  };
 
   const sortByDate = (a, b, date) => {
-    const aDate = a.files[0].date.split(".").reverse().join("")
-    const bDate = b.files[0].date.split(".").reverse().join("")
+    const aDate = a.files[0].date.split(".").reverse().join("");
+    const bDate = b.files[0].date.split(".").reverse().join("");
     if (date === "Vanhat") {
-      return aDate.localeCompare(bDate)
+      return aDate.localeCompare(bDate);
     } else {
-      return bDate.localeCompare(aDate)
+      return bDate.localeCompare(aDate);
     }
-  }
+  };
 
   const sortByTime = (a, b, time) => {
     if (time === "Vanhat") {
-      return a.localeCompare(b)
+      return a.localeCompare(b);
     } else {
-      return b.localeCompare(a)
+      return b.localeCompare(a);
     }
-  }
+  };
 
   // Apply filters & sorting to loaded files
   const filteredSessions = createMemo(() => {
-    const {date, time, foot, speed, program} = sessionFilters;
+    const { date, time, foot, speed, program } = sessionFilters;
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
 
     const returnArray = [];
 
     // Filter sessions with specified first/last names, if applicable
-    sessions().forEach(session => {
-      if (firstName && !session.files[0]?.subjectFirstName?.toLowerCase().includes(firstName.toLowerCase())) {
+    sessions().forEach((session) => {
+      if (
+        firstName &&
+        !session.files[0]?.subjectFirstName
+          ?.toLowerCase()
+          .includes(firstName.toLowerCase())
+      ) {
         return;
       }
-      if (lastName && !session.files[0]?.subjectLastName?.toLowerCase().includes(lastName.toLowerCase())) {
+      if (
+        lastName &&
+        !session.files[0]?.subjectLastName
+          ?.toLowerCase()
+          .includes(lastName.toLowerCase())
+      ) {
         return;
       }
 
@@ -121,20 +131,20 @@ export function FileBrowser() {
       if (speed || program || foot) {
         var ses = {
           ...session,
-          files: session.files.filter(file => {
+          files: session.files.filter((file) => {
             if (speed && file.speed !== speed) {
-              return false
+              return false;
             }
             if (program && file.program !== program) {
-              return false
+              return false;
             }
             if (foot && file.legSide !== foot) {
-              return false
+              return false;
             }
 
             return true;
-          })
-        }
+          }),
+        };
       } else {
         var ses = session;
       }
@@ -147,27 +157,42 @@ export function FileBrowser() {
     });
 
     returnArray.sort((a, b) => {
-      return sortByDate(a, b, date) || sortByTime(a.files[0].time || "", b.files[0].time || "", time);
+      return (
+        sortByDate(a, b, date) ||
+        sortByTime(a.files[0].time || "", b.files[0].time || "", time)
+      );
     });
 
     return returnArray;
   });
 
-  createRenderEffect(on(recentFolders, async folders => {
-    const newFoldersThatHaveAccess = [];
+  createRenderEffect(
+    on(
+      recentFolders,
+      async (folders) => {
+        const newFoldersThatHaveAccess = [];
 
-    for (const folderHandler of folders) {
-      const access = await fileUtils.checkFileAccess(folderHandler, "readwrite");
-      if (access) {
-        newFoldersThatHaveAccess.push(folderHandler);
-      }
-    }
+        for (const folderHandler of folders) {
+          const access = await fileUtils.checkFileAccess(
+            folderHandler,
+            "readwrite",
+          );
+          if (access) {
+            newFoldersThatHaveAccess.push(folderHandler);
+          }
+        }
 
-    setFoldersThatHaveAccess(newFoldersThatHaveAccess);
-  }, {defer: true}));
+        setFoldersThatHaveAccess(newFoldersThatHaveAccess);
+      },
+      { defer: true },
+    ),
+  );
 
   createRenderEffect(async () => {
-    const files = await indexedDBUtils.getValue("file-handlers", "recent-files");
+    const files = await indexedDBUtils.getValue(
+      "file-handlers",
+      "recent-files",
+    );
     setRecentFolders(files);
   });
 
@@ -176,27 +201,35 @@ export function FileBrowser() {
   let fetchFilesFromFolderWorker;
   const sendToWorker = () => {
     if (window.Worker) {
-      fetchFilesFromFolderWorker = fetchFilesFromFolderWorker instanceof Worker ? fetchFilesFromFolderWorker : new FilterFilesFromActiveFolders();
+      fetchFilesFromFolderWorker =
+        fetchFilesFromFolderWorker instanceof Worker
+          ? fetchFilesFromFolderWorker
+          : new FilterFilesFromActiveFolders();
       fetchFilesFromFolderWorker.postMessage({
         activeFolders: foldersThatHaveAccess(),
       });
 
-      fetchFilesFromFolderWorker.onmessage = async message => {
+      fetchFilesFromFolderWorker.onmessage = async (message) => {
         if (message.data === "success") {
-          const files = await indexedDBUtils.getValue("file-handlers", "filtered-files");
+          const files = await indexedDBUtils.getValue(
+            "file-handlers",
+            "filtered-files",
+          );
           const sessions = groupFilesBySession(files);
           setFiles(files);
           setSessions(sessions);
         }
-      }
+      };
     }
-  }
-
+  };
 
   let parseSelectedFilesWorker;
   createEffect(() => {
     if (window.Worker) {
-      parseSelectedFilesWorker = parseSelectedFilesWorker instanceof Worker ? parseSelectedFilesWorker : new parseSelectedFiles();
+      parseSelectedFilesWorker =
+        parseSelectedFilesWorker instanceof Worker
+          ? parseSelectedFilesWorker
+          : new parseSelectedFiles();
 
       parseSelectedFilesWorker.postMessage({
         filesToParse: selectedFiles(),
@@ -204,20 +237,23 @@ export function FileBrowser() {
         disabledRepetitions: disabledRepetitions(),
       });
 
-      parseSelectedFilesWorker.onmessage = async message => {
+      parseSelectedFilesWorker.onmessage = async (message) => {
         if (message.data.type === "parsedFiles") {
           setParsedFileData(message.data.files);
         }
-      }
+      };
     }
   });
 
-  createRenderEffect(on(foldersThatHaveAccess, sendToWorker, {defer: true}));
-
+  createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
 
   const handleOpenDirectory = async () => {
-    const directoryHandler = await window.showDirectoryPicker({id: "innovation-project", mode: "readwrite"});
-    const folders = await indexedDBUtils.getValue("file-handlers", "recent-files") || [];
+    const directoryHandler = await window.showDirectoryPicker({
+      id: "innovation-project",
+      mode: "readwrite",
+    });
+    const folders =
+      (await indexedDBUtils.getValue("file-handlers", "recent-files")) || [];
 
     for (const folder of folders) {
       if (await folder.isSameEntry(directoryHandler)) {
@@ -229,14 +265,14 @@ export function FileBrowser() {
     await indexedDBUtils.setValue("file-handlers", "recent-files", folders);
 
     setRecentFolders(folders);
-  }
+  };
 
   // Display Filebrowser modal if no files selected
   createEffect(() => {
     if (!selectedFiles().length) {
       document.querySelector("#file-popup").showModal();
     }
-  })
+  });
 
   // Apply filtering by first/last name input
   const handleSubmit = (e) => {
@@ -245,7 +281,7 @@ export function FileBrowser() {
       setFilterByFirstName(firstNameInput().trim().toLowerCase());
       setFilterByLastName(lastNameInput().trim().toLowerCase());
     });
-  }
+  };
 
   const clearSelectedFiles = () => {
     batch(() => {
@@ -253,7 +289,7 @@ export function FileBrowser() {
       setDisabledRepetitions([]);
       storeSelectedSessionsCounts(reconcile({}));
     });
-  }
+  };
 
   return (
     <>
@@ -263,25 +299,21 @@ export function FileBrowser() {
           size="sm"
           id="file-popup-close"
           class="mt-4 mr-4"
-          onClick={() => document.querySelector("#file-popup").close()}>
+          onClick={() => document.querySelector("#file-popup").close()}
+        >
           ✖︎
         </Button>
 
         <div class="flex justify-center">
-          <Button
-            variant="primary"
-            size="xl"
-            onClick={handleOpenDirectory}
-          >
+          <Button variant="primary" size="xl" onClick={handleOpenDirectory}>
             Valitse Kansio
           </Button>
         </div>
 
-
-        <ListOfRecentFolders/>
-        <FileSearchForm/>
-        <SafeSearchCheckbox/>
-        <SessionsAsATable/>
+        <ListOfRecentFolders />
+        <FileSearchForm />
+        <SafeSearchCheckbox />
+        <SessionsAsATable />
       </dialog>
     </>
   );
@@ -290,7 +322,7 @@ export function FileBrowser() {
     const count = $selectedSessionsCounts[sessionId]?.length;
     let sum = 0;
     if (count > 0) {
-      $selectedSessionsCounts[sessionId].forEach(file => {
+      $selectedSessionsCounts[sessionId].forEach((file) => {
         for (const f of files) {
           if (f.fileHandler === file) {
             sum++;
@@ -303,42 +335,40 @@ export function FileBrowser() {
   }
 
   function SessionsAsATable() {
-
     // Render only sessions visible in the viewport + scrollMargin value
     const [visibility, storeVisibility] = createStore([]);
 
-    const callback = entries => {
+    const callback = (entries) => {
       for (const entry of entries) {
-        storeVisibility(entry.target.dataset.index, entry.isIntersecting)
+        storeVisibility(entry.target.dataset.index, entry.isIntersecting);
       }
-    }
+    };
 
     const options = {
-      scrollMargin: "800px"
+      scrollMargin: "800px",
     };
     const intersectionObserver = new IntersectionObserver(callback, options);
 
     onCleanup(() => {
       intersectionObserver.disconnect();
-    })
-
+    });
 
     const collectedValues = createMemo(() => {
       const speedValues = new Set();
       const programValues = new Set();
 
-      files().forEach(file => {
+      files().forEach((file) => {
         speedValues.add(file.speed);
         programValues.add(file.program);
       });
 
-      return {speed: [...speedValues], program: [...programValues]};
+      return { speed: [...speedValues], program: [...programValues] };
     });
 
     return (
       <div class="session-table overflow-y-auto mt-2">
         <div class="session-header">
-          <Dropdown label="Istunto / Tiedosto" disabled/>
+          <Dropdown label="Istunto / Tiedosto" disabled />
           <Dropdown
             label="Päivämäärä"
             options={["Uudet", "Vanhat"]}
@@ -351,12 +381,14 @@ export function FileBrowser() {
             onSelect={(v) => storeSessionFilters("time", v)}
             selected={sessionFilters.time}
           />
-          <Dropdown label="Etunimi" disabled/>
-          <Dropdown label="Sukunimi" disabled/>
+          <Dropdown label="Etunimi" disabled />
+          <Dropdown label="Sukunimi" disabled />
           <Dropdown
             label="Jalka"
             options={["vasen", "oikea"]}
-            onSelect={(value) => storeSessionFilters("foot", translateLegSide(value))}
+            onSelect={(value) =>
+              storeSessionFilters("foot", translateLegSide(value))
+            }
             selected={translateLegSide(sessionFilters.foot)}
           />
           <Dropdown
@@ -371,18 +403,20 @@ export function FileBrowser() {
             onSelect={(value) => storeSessionFilters("program", value)}
             selected={sessionFilters.program}
           />
-          <Dropdown label="Tiedostot" disabled/>
+          <Dropdown label="Tiedostot" disabled />
         </div>
         <div class="session-body">
           <For each={filteredSessions()}>
             {(ses, i) => {
-              const [opened, setOpened] = createSignal(openSessionsMemory[ses.sessionId]);
+              const [opened, setOpened] = createSignal(
+                openSessionsMemory[ses.sessionId],
+              );
               const toggleOpen = () => {
-                setOpened(s => {
+                setOpened((s) => {
                   openSessionsMemory[ses.sessionId] = !s;
-                  return !s
+                  return !s;
                 });
-              }
+              };
 
               // Apply render optimization only when filebrowser is mounted
               let ref;
@@ -396,48 +430,79 @@ export function FileBrowser() {
 
               return (
                 <>
-                  <div attr:data-index={i()} ref={ref} class="session-row" classList={{opened: opened()}}
-                       onClick={toggleOpen}>
+                  <div
+                    attr:data-index={i()}
+                    ref={ref}
+                    class="session-row"
+                    classList={{ opened: opened() }}
+                    onClick={toggleOpen}
+                  >
                     <Show when={visibility[i()]}>
-
                       <p class="identifier">
                         <input
                           type="checkbox"
-                          checked={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0}
+                          checked={
+                            activeFilesCountInsideSession(
+                              ses.sessionId,
+                              ses.files,
+                            ) > 0
+                          }
                           onClick={(e) => {
                             e.stopPropagation();
                             batch(() => {
-                              const count = activeFilesCountInsideSession(ses.sessionId, ses.files);
+                              const count = activeFilesCountInsideSession(
+                                ses.sessionId,
+                                ses.files,
+                              );
                               if (count > 0) {
-                                const files = unwrap($selectedSessionsCounts[ses.sessionId]);
-                                ses.files.forEach(file => {
+                                const files = unwrap(
+                                  $selectedSessionsCounts[ses.sessionId],
+                                );
+                                ses.files.forEach((file) => {
                                   if (files.includes(file.fileHandler)) {
                                     toggleSelectedFile(ses.sessionId, file);
                                   }
                                 });
                               } else {
-                                ses.files.forEach(file => {
+                                ses.files.forEach((file) => {
                                   toggleSelectedFile(ses.sessionId, file);
                                 });
                               }
-                            })
+                            });
                           }}
-                          indeterminate={activeFilesCountInsideSession(ses.sessionId, ses.files) > 0 && activeFilesCountInsideSession(ses.sessionId, ses.files) < ses.files.length}
+                          indeterminate={
+                            activeFilesCountInsideSession(
+                              ses.sessionId,
+                              ses.files,
+                            ) > 0 &&
+                            activeFilesCountInsideSession(
+                              ses.sessionId,
+                              ses.files,
+                            ) < ses.files.length
+                          }
                         />
-                        <Show when={opened()} fallback={<FiChevronRight class="w-4 h-4 text-gray-500"/>}>
-                          <FiChevronDown class="w-4 h-4 text-gray-500"/>
+                        <Show
+                          when={opened()}
+                          fallback={
+                            <FiChevronRight class="w-4 h-4 text-gray-500" />
+                          }
+                        >
+                          <FiChevronDown class="w-4 h-4 text-gray-500" />
                         </Show>
-                        <IoFolderOutline class="text-xl text-orange-400"/>
+                        <IoFolderOutline class="text-xl text-orange-400" />
                         {ses.sessionId}
                       </p>
                       <p>{ses.files[0]?.date}</p>
                       <p>{ses.files[0]?.time}</p>
-                      <Show when={!safeMode()} fallback={
-                        <>
-                          <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
-                          <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
-                        </>
-                      }>
+                      <Show
+                        when={!safeMode()}
+                        fallback={
+                          <>
+                            <p>{ses.files[0]?.subjectFirstName?.[0]}...</p>
+                            <p>{ses.files[0]?.subjectLastName?.[0]}...</p>
+                          </>
+                        }
+                      >
                         <p>{ses.files[0]?.subjectFirstName}</p>
                         <p>{ses.files[0]?.subjectLastName}</p>
                       </Show>
@@ -448,16 +513,24 @@ export function FileBrowser() {
                     </Show>
                   </div>
                   <Show when={opened()}>
-                    <For each={ses.files.toSorted((a, b) => sortByTime(a.time, b.time, sessionFilters.time))}>
+                    <For
+                      each={ses.files.toSorted((a, b) =>
+                        sortByTime(a.time, b.time, sessionFilters.time),
+                      )}
+                    >
                       {(file) => (
                         <label class="file-row">
                           <p class="identifier">
                             <input
                               type="checkbox"
-                              checked={selectedFiles().some(f => f.fileHandler === file.fileHandler)}
-                              onChange={() => toggleSelectedFile(ses.sessionId, file)}
+                              checked={selectedFiles().some(
+                                (f) => f.fileHandler === file.fileHandler,
+                              )}
+                              onChange={() =>
+                                toggleSelectedFile(ses.sessionId, file)
+                              }
                             />
-                            <IoDocumentTextSharp class="w-5 h-5 text-blue-400"/>
+                            <IoDocumentTextSharp class="w-5 h-5 text-blue-400" />
                             {file.name}
                           </p>
                           <p>{file.time}</p>
@@ -472,56 +545,67 @@ export function FileBrowser() {
                     </For>
                   </Show>
                 </>
-              )
+              );
             }}
           </For>
         </div>
       </div>
-    )
+    );
   }
 
   function ListOfRecentFolders() {
     return (
       <ul class="space-y-2">
-        <For each={recentFolders()}>{(directoryHandler, i) => (
-          <RecentFolderItem directoryHandler={directoryHandler} i={i}/>
-        )}</For>
+        <For each={recentFolders()}>
+          {(directoryHandler, i) => (
+            <RecentFolderItem directoryHandler={directoryHandler} i={i} />
+          )}
+        </For>
       </ul>
-    )
+    );
   }
 
   function RecentFolderItem(props) {
     const askForFolderAccess = async () => {
-      const access = await fileUtils.checkOrGrantFileAccess(props.directoryHandler, "readwrite");
+      const access = await fileUtils.checkOrGrantFileAccess(
+        props.directoryHandler,
+        "readwrite",
+      );
       if (!access) return;
-      setFoldersThatHaveAccess((folders) => [...folders, props.directoryHandler]);
+      setFoldersThatHaveAccess((folders) => [
+        ...folders,
+        props.directoryHandler,
+      ]);
       mutate(false);
     };
 
     const removeRecentFolderByIndex = async () => {
-      const files = await indexedDBUtils.mutateValue("file-handlers", "recent-files", (result) => {
-        const recentFiles = result || [];
-        recentFiles.splice(props.i(), 1);
-        return recentFiles;
-      });
+      const files = await indexedDBUtils.mutateValue(
+        "file-handlers",
+        "recent-files",
+        (result) => {
+          const recentFiles = result || [];
+          recentFiles.splice(props.i(), 1);
+          return recentFiles;
+        },
+      );
 
       setRecentFolders(files);
     };
 
-    const [doesNotHaveAccess, {mutate}] = createResource(() => props.directoryHandler, async dir => {
-      return !await fileUtils.checkFileAccess(dir);
-    });
+    const [doesNotHaveAccess, { mutate }] = createResource(
+      () => props.directoryHandler,
+      async (dir) => {
+        return !(await fileUtils.checkFileAccess(dir));
+      },
+    );
 
     return (
       <li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow-sm">
         <span class="font-medium">{props.directoryHandler.name}</span>
         <div class="space-x-2">
           <Show when={doesNotHaveAccess()}>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={askForFolderAccess}
-            >
+            <Button variant="secondary" size="sm" onClick={askForFolderAccess}>
               Lataa
             </Button>
           </Show>
@@ -534,33 +618,34 @@ export function FileBrowser() {
           </Button>
         </div>
       </li>
-    )
+    );
   }
 
   function FileSearchForm() {
     return (
-      <form onSubmit={handleSubmit} class="flex justify-center items-center gap-3 mt-3">
+      <form
+        onSubmit={handleSubmit}
+        class="flex justify-center items-center gap-3 mt-3"
+      >
         <input
           type="text"
           placeholder="Etunimi"
           value={firstNameInput()}
           onInput={(e) => setFirstNameInput(e.currentTarget.value)}
-          class="p-2 border rounded-lg"/>
+          class="p-2 border rounded-lg"
+        />
         <input
           type="text"
           placeholder="Sukunimi"
           value={lastNameInput()}
           onInput={(e) => setLastNameInput(e.currentTarget.value)}
-          class="p-2 border rounded-lg"/>
-        <Button
-          variant="info"
-          size="lg"
-          type="submit"
-        >
+          class="p-2 border rounded-lg"
+        />
+        <Button variant="info" size="lg" type="submit">
           Haku
         </Button>
       </form>
-    )
+    );
   }
 
   function SafeSearchCheckbox() {
@@ -571,9 +656,15 @@ export function FileBrowser() {
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />
-        <FiEyeOff/>
+        <FiEyeOff />
         <Button
-          variant={sessionFilters.foot || sessionFilters.speed || sessionFilters.program ? "danger" : "secondary"}
+          variant={
+            sessionFilters.foot ||
+            sessionFilters.speed ||
+            sessionFilters.program
+              ? "danger"
+              : "secondary"
+          }
           size="sm"
           onClick={() => {
             storeSessionFilters({
@@ -596,4 +687,3 @@ export function FileBrowser() {
     );
   }
 }
-

@@ -291,7 +291,11 @@ export function ChartMousePositionInPercentage(props) {
   asserts.assertTypeNumber(props.width, "width");
   asserts.assertTypeNumber(props.x, "x");
   asserts.assertTypeNumber(props.y, "y");
-  asserts.assertTypeFunction(props.children, "children", "ChartMousePositionInPercentage needs a child component to pass the mouse percentage information to");
+  asserts.assertTypeFunction(
+    props.children,
+    "children",
+    "ChartMousePositionInPercentage needs a child component to pass the mouse percentage information to",
+  );
 
   const percentage = createMemo(() => {
     const { width, height, x, y } = props;
@@ -407,7 +411,8 @@ export function ChartHoverToolTip(props) {
   );
   asserts.assert2DArrayOfNumbersOrEmptyArray(
     props.listOfPoints,
-    "listOfPoints", "If your chart displays 10 files you will pass here all the 10 files points",
+    "listOfPoints",
+    "If your chart displays 10 files you will pass here all the 10 files points",
   );
   asserts.assertTypeArray(props.listOfSplits, "listOfSplits");
 
