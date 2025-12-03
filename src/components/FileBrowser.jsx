@@ -1,8 +1,8 @@
 import FilterFilesFromActiveFolders from "../workers/filterFilesFromActiveFolders.js?worker";
 import parseSelectedFiles from "../workers/parseSelectedFiles.js?worker";
-import { Checkbox } from "./ui/Checkbox.jsx";
-import { FiChevronDown, FiChevronRight, FiEyeOff } from "solid-icons/fi";
-import { IoDocumentTextSharp, IoFolderOutline } from "solid-icons/io";
+import {Checkbox} from "./ui/Checkbox.jsx";
+import {FiChevronDown, FiChevronRight, FiEyeOff} from "solid-icons/fi";
+import {IoDocumentTextSharp, IoFolderOutline} from "solid-icons/io";
 import {
   batch,
   createEffect,
@@ -16,8 +16,8 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import { createStore, reconcile, unwrap } from "solid-js/store";
-import { fileUtils, indexedDBUtils } from "../utils/utils";
+import {createStore, reconcile, unwrap} from "solid-js/store";
+import {fileUtils, indexedDBUtils} from "../utils/utils";
 import {
   $selectedSessionsCounts,
   dataFiltering,
@@ -50,12 +50,12 @@ import {
   toggleSelectedFile,
   setDisabledRepetitions,
 } from "../signals";
-import { useGlobalContext } from "../providers";
-import { Button } from "./ui/Button.jsx";
-import { Dropdown } from "./ui/Dropdown.jsx";
+import {useGlobalContext} from "../providers";
+import {Button} from "./ui/Button.jsx";
+import {Dropdown} from "./ui/Dropdown.jsx";
 
 export function FileBrowser() {
-  const { activeFiles } = useGlobalContext();
+  const {activeFiles} = useGlobalContext();
 
   const translateLegSide = (value) => {
     // English -> Finnish (for display)
@@ -102,7 +102,7 @@ export function FileBrowser() {
 
   // Apply filters & sorting to loaded files
   const filteredSessions = createMemo(() => {
-    const { date, time, foot, speed, program } = sessionFilters;
+    const {date, time, foot, speed, program} = sessionFilters;
     const firstName = filterByFirstName();
     const lastName = filterByLastName();
 
@@ -184,7 +184,7 @@ export function FileBrowser() {
 
         setFoldersThatHaveAccess(newFoldersThatHaveAccess);
       },
-      { defer: true },
+      {defer: true},
     ),
   );
 
@@ -245,7 +245,7 @@ export function FileBrowser() {
     }
   });
 
-  createRenderEffect(on(foldersThatHaveAccess, sendToWorker, { defer: true }));
+  createRenderEffect(on(foldersThatHaveAccess, sendToWorker, {defer: true}));
 
   const handleOpenDirectory = async () => {
     const directoryHandler = await window.showDirectoryPicker({
@@ -310,10 +310,10 @@ export function FileBrowser() {
           </Button>
         </div>
 
-        <ListOfRecentFolders />
-        <FileSearchForm />
-        <SafeSearchCheckbox />
-        <SessionsAsATable />
+        <ListOfRecentFolders/>
+        <FileSearchForm/>
+        <SafeSearchCheckbox/>
+        <SessionsAsATable/>
       </dialog>
     </>
   );
@@ -362,13 +362,13 @@ export function FileBrowser() {
         programValues.add(file.program);
       });
 
-      return { speed: [...speedValues], program: [...programValues] };
+      return {speed: [...speedValues], program: [...programValues]};
     });
 
     return (
       <div class="session-table overflow-y-auto mt-2">
         <div class="session-header">
-          <Dropdown label="Istunto / Tiedosto" disabled />
+          <Dropdown label="Istunto / Tiedosto" disabled/>
           <Dropdown
             label="Päivämäärä"
             options={["Uudet", "Vanhat"]}
@@ -381,8 +381,8 @@ export function FileBrowser() {
             onSelect={(v) => storeSessionFilters("time", v)}
             selected={sessionFilters.time}
           />
-          <Dropdown label="Etunimi" disabled />
-          <Dropdown label="Sukunimi" disabled />
+          <Dropdown label="Etunimi" disabled/>
+          <Dropdown label="Sukunimi" disabled/>
           <Dropdown
             label="Jalka"
             options={["vasen", "oikea"]}
@@ -403,7 +403,7 @@ export function FileBrowser() {
             onSelect={(value) => storeSessionFilters("program", value)}
             selected={sessionFilters.program}
           />
-          <Dropdown label="Tiedostot" disabled />
+          <Dropdown label="Tiedostot" disabled/>
         </div>
         <div class="session-body">
           <For each={filteredSessions()}>
@@ -434,13 +434,22 @@ export function FileBrowser() {
                     attr:data-index={i()}
                     ref={ref}
                     class="session-row"
-                    classList={{ opened: opened() }}
+                    classList={{opened: opened()}}
                     onClick={toggleOpen}
+                    tabIndex={0}
+                    role="button"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleOpen();
+                      }
+                    }}
                   >
                     <Show when={visibility[i()]}>
                       <p class="identifier">
                         <input
                           type="checkbox"
+                          onKeyDown={(e) => e.stopPropagation()}
                           checked={
                             activeFilesCountInsideSession(
                               ses.sessionId,
@@ -484,12 +493,12 @@ export function FileBrowser() {
                         <Show
                           when={opened()}
                           fallback={
-                            <FiChevronRight class="w-4 h-4 text-gray-500" />
+                            <FiChevronRight class="w-4 h-4 text-gray-500"/>
                           }
                         >
-                          <FiChevronDown class="w-4 h-4 text-gray-500" />
+                          <FiChevronDown class="w-4 h-4 text-gray-500"/>
                         </Show>
-                        <IoFolderOutline class="text-xl text-orange-400" />
+                        <IoFolderOutline class="text-xl text-orange-400"/>
                         {ses.sessionId}
                       </p>
                       <p>{ses.files[0]?.date}</p>
@@ -530,7 +539,7 @@ export function FileBrowser() {
                                 toggleSelectedFile(ses.sessionId, file)
                               }
                             />
-                            <IoDocumentTextSharp class="w-5 h-5 text-blue-400" />
+                            <IoDocumentTextSharp class="w-5 h-5 text-blue-400"/>
                             {file.name}
                           </p>
                           <p>{file.time}</p>
@@ -558,7 +567,7 @@ export function FileBrowser() {
       <ul class="space-y-2">
         <For each={recentFolders()}>
           {(directoryHandler, i) => (
-            <RecentFolderItem directoryHandler={directoryHandler} i={i} />
+            <RecentFolderItem directoryHandler={directoryHandler} i={i}/>
           )}
         </For>
       </ul>
@@ -593,7 +602,7 @@ export function FileBrowser() {
       setRecentFolders(files);
     };
 
-    const [doesNotHaveAccess, { mutate }] = createResource(
+    const [doesNotHaveAccess, {mutate}] = createResource(
       () => props.directoryHandler,
       async (dir) => {
         return !(await fileUtils.checkFileAccess(dir));
@@ -656,7 +665,7 @@ export function FileBrowser() {
           checked={safeMode()}
           onChange={() => setSafeMode((m) => !m)}
         />
-        <FiEyeOff />
+        <FiEyeOff/>
         <Button
           variant={
             sessionFilters.foot ||
