@@ -86,7 +86,7 @@ Kun kaikki tiedostot on valittu, Istunnon nimen edessä valintaruutu  näytetä�
 -	Valinnan poistaminen
      -	Klikkaa valintaruutua uudelleen poistetaan valinnan.
      -	Klikkaa “**Sulje valitut tiedostot**” poistetaan kaikki valinnat tiedostot.
-     - 
+     
 Kun olet valinnut haluamasi tiedostot, voit sulkea ikkunan ja siirtyä tietostojen analysointiin. 
 
 ---
