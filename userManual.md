@@ -18,7 +18,7 @@ Sovellus avautuu selaimessa osoitteessa:  http://localhost:5173
 - Painaa “**Valitse kansio**” – painiketta ladataa kansion.
   - Näet käyttöoikeuspyynnön ikkuna. Valitse  “**Allow**” (Salli)
   
-    <img src="public/images/allow.png" alt= "allow to edit files" width="250">
+    <img src="public/images/allow.png" alt= "allow to edit files" width="300">
 
 - Ladattu kansion nimi näkyy näytöllä. Kansion nimen oikealla puolella on painikke “**Poista**”, josta voit poista ladatun kansion.
     
