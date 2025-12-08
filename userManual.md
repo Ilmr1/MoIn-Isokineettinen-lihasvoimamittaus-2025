@@ -17,22 +17,23 @@ Sovellus avautuu selaimessa osoitteessa:  http://localhost:5173
 - Jos olet aiemmin ladattu kansion sovellukseen, sovellus muistaa sen automaattisesti. Muussa tapauksessa sovellus avaa ikkunan, josta voit valita ladattavan kansion.
 - Painaa “**Valitse kansio**” – painiketta ladataa kansion.
   - Näet käyttöoikeuspyynnön ikkuna. Valitse  “**Allow**” (Salli)
-
-      ![allow](public/images/allow.png)
+  
+    <img src="public/images/allow.png" alt= "allow to edit files" width="250">
 
 - Ladattu kansion nimi näkyy näytöllä. Kansion nimen oikealla puolella on painikke “**Poista**”, josta voit poista ladatun kansion.
-
-    ![folderName](public/images/folderName.png)
+    
+  <img src="public/images/folderName.png" alt="folder name" width="400">
 
 - Tiedostojen määrä lasketaan automaattisesti.
-
-    ![fileCount](public/images/fileCount.png)
+  
+  <img src="public/images/fileCount.png" alt="folder count" width="700">
+    
 ---
 
 ## 3. Tiedostojen haku 
 -	Haku nimellä:
-
-     ![searchByName](public/images/searchForm.png)
+  
+  <img src="public/images/searchForm.png" alt="serch form" width="300">
 
 Voit etsiä tiedostoja nimien perusteella. Kirjoita asiakkaan etunimi tai sukunimi tai molemmat ja paina “**Haku**”. 
 
@@ -46,7 +47,7 @@ Voit etsiä tiedostoja nimien perusteella. Kirjoita asiakkaan etunimi tai sukuni
 
 ## 4. Tiedostojen suodatus ja valinta
 
-  ![sessionList](public/images/sessionList.png)
+  <img src="public/images/sessionList.png" alt="session list" width="700">
 
 ### 4.1 Tiedostojen suodatus
 
@@ -62,26 +63,27 @@ Voit etsiä tiedostoja nimien perusteella. Kirjoita asiakkaan etunimi tai sukuni
 - Esimerkki: Jos haluat suodattaa vain **kons/kons** -ohjelmatyypin, klikkaa ohjelmatyypikohdan nuolta, avaa pudotusvalikko ja valitse **kons/kons**. Valittu tyyppi näkyy “**Ohjelma**” -kohdan alla.
   - Kun tyyppi on valittu, klikkaa "**Ohjelma**" uudelleen avataksesi pudotusvalikon. Toisella klikkauksella voit sulkea pudotusvalikon ja poistaa suodatuksen.
 
-      ![programTypes](public/images/programType.png)
+  <img src="public/images/programType.png" alt="types of program" width="300">
 
 - Jos jotakin suodatuksia on valittuna,  “**Tyhjennä suodatus**” -painike muuttuu punaiseksi. Klikkaa sitä poistetaan kaikki suodattimet.
 
-    ![clearFilters](public/images/clearFilter.png)
+  <img src="public/images/clearFilter.png" alt="clear all filters" width="300">
 
 ### 4.2 Tiedostojen valinta ja poista avalinnasta
 -	Voit valinta kaikki istunnon tiedostot klikkaamalla valintaruutua istunnon nimen edessä.
 Kun kaikki tiedostot on valittu, Istunnon nimen edessä valintaruutu  näytetään:
-
-      ![allSelected](public/images/selectedAll.png)
+    
+      <img src="public/images/selectedAll.png" alt="selected all of session" width="150">
 
   - Yksittäisen tiedoston voi valita klikkamalla sen valintaruutua.
          Kun vain osa tiedostoista on valittu, Istunnon nimen edessä valintaruutu  näytetään: 
 
-    ![partiallySelected](public/images/selectedPart.png)
-
+    <img src="public/images/selectedPart.png" alt="selected part of session" width="150">
+   
 -	Kun tiedostoja valittuna, “**Tyhjennä valitut tiedostot**” -painike muuttuu punaiseksi.
 
-      ![clearFilters](public/images/clearFilter.png)
+  <img src="public/images/clearFilter.png" alt="session list" width="320">
+
 
 -	Valinnan poistaminen
      -	Klikkaa valintaruutua uudelleen poistetaan valinnan.
@@ -93,14 +95,14 @@ Kun olet valinnut haluamasi tiedostot, voit sulkea ikkunan ja siirtyä tietostoj
 ## 5. Analyysisivun ohjauspaneeli
 ### 5.1 Tiedostot ja tulostus
 
-  ![filesAndPrintButton](public/images/filesPrintButtons.png)
+  <img src="public/images/filesPrintButtons.png" alt="files and print buttons" width="200">
 
 -	**Tiedostot**: Avaa ikkuna, jossa voit ladata, suodattaa ja valinta tiedostoja analyysiä varten.
 -	**Tulosta**: Luo tulostettavan PDF-raportin nykyisestä analyysinäkymästä(sisältää kaaviot ja valitut parametrit)
 
 ### 5.2 Tietojen näyttöasetukset
 
-  ![filterAndErrorBansSelectBox](public/images/filterErrorBansSelectBox.png)
+  <img src="public/images/filterErrorBansSelectBox.png" alt="filter and error bans select box" width="300">
 
 -	Käytä valintaruutuja määrittääksesi, mitä tietoja näytetäään tai piilotetään graafikuvassa.
      -	**Suodata tiedot**: Suodattaa tai tasoittaa raakadataa, jotta kaavioiden luettavuus paranee.
@@ -111,17 +113,17 @@ Kun olet valinnut haluamasi tiedostot, voit sulkea ikkunan ja siirtyä tietostoj
      -	Kun hiiren painikkeen päälle, se muuttuu punaiseksi.
 -	Klikkaamalla sitä poistetaan kaikki valitut käsiteltävät tiedostot ja avaa ikkunan, josta voit ladata, suodattaa ja valinta tiedostoja analyysiä varten.
 
-      ![CloseFiles](public/images/closeFiles.png)
+  <img src="public/images/closeFiles.png" alt="close all files" width="300">
 
 ### 5.4 Ohjelmatyypin valinta
 
-  ![programTypeButtons](public/images/programTypesButtons.png)
+  <img src="public/images/programTypesButtons.png" alt="program type buttons" width="300">
 
   Valittujen tiedostojen ohjelmatyypit näkyvät painikkeina. Voit valita, mikä ohjelmatyyppi haluat näyttää, klikkaamalla vastaavaa painiketta.
   
 ### 5.5 Valittujen tiedostojen näyttö ja hallinta
 
-  ![fileRepetitions](public/images/fileRepetitions.png)
+  <img src="public/images/fileRepetitions.png" alt="the repetitions of selected files" width="450">
 
 -	Vasemmalla puolella on kaksi osioita -**Vasen** ja **Oikea**, jossa kummassakin on tiedostot.
      -	Jokaisella tiedostolla on oma värimerkintä(piste)
@@ -134,4 +136,4 @@ Kun olet valinnut haluamasi tiedostot, voit sulkea ikkunan ja siirtyä tietostoj
 ### 5.6 Toistojen valinta
 Toistot voi näyttää tai piilottaa valintaruudun avulla.
 
-  ![repetitionSelection](public/images/repetitions.png)
+  <img src="public/images/repetitions.png" alt="repetition selection" width="250">
