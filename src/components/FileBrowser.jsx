@@ -306,7 +306,7 @@ export function FileBrowser() {
 
         <div class="flex justify-center">
           <Button variant="primary" size="xl" onClick={handleOpenDirectory}>
-            Valitse Kansio
+            Valitse kansio
           </Button>
         </div>
 
@@ -651,7 +651,7 @@ export function FileBrowser() {
           class="p-2 border rounded-lg"
         />
         <Button variant="info" size="lg" type="submit">
-          Haku
+          Hae
         </Button>
       </form>
     );
@@ -690,7 +690,7 @@ export function FileBrowser() {
           size="sm"
           onClick={clearSelectedFiles}
         >
-          Tyhjennä valitut tiedostot
+          Sulje valitut tiedostot
         </Button>
       </div>
     );

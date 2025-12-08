@@ -92,7 +92,7 @@ export function Sidebar() {
                 onClick={clearSelectedFiles}
                 class="self-center"
               >
-                Tyhjennä
+                Sulje tiedostot
               </Button>
             </div>
           </div>
