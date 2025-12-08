@@ -19,6 +19,11 @@ onmessage = async (message) => {
         dataFiltering,
         disabledList,
       );
+
+      if (rawObject == null) {
+        continue;
+      }
+
       files.push({
         ...filesToParse[i],
         name: file.name,

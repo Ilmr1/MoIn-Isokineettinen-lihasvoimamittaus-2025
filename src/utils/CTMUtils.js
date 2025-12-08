@@ -1413,9 +1413,14 @@ const formatRawCTMObject = (rawObject, dataFiltering, disabledList) => {
 };
 
 export const parseTextToObject = (text, dataFiltering, disabledList) => {
-  const object = ctmTextToRawObject(text);
-  const formatted = formatRawCTMObject(object, dataFiltering, disabledList);
-  return formatted;
+  try {
+    const object = ctmTextToRawObject(text);
+    const formatted = formatRawCTMObject(object, dataFiltering, disabledList);
+    return formatted;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 };
 
 export const getLegSide = (CTMdata) => {
