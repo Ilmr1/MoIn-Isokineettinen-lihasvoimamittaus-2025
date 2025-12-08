@@ -91,8 +91,8 @@ function Chart(props) {
         }
       }
 
-      const xStartValue = arrayUtils.findByMaxDelta(startAngles, 0) || -1;
-      const xEndValue = arrayUtils.findByMaxDelta(endAngles, 0) || 1;
+      const xStartValue = Math.abs(arrayUtils.findByMaxDelta(startAngles, 0)) || -1;
+      const xEndValue = Math.abs(arrayUtils.findByMaxDelta(endAngles, 0)) || 1;
 
       return {
         minValue: 0,
@@ -389,8 +389,8 @@ function Chart(props) {
                       />
                       <ChartXAxisFloor
                         {...borderArea}
-                        startValue={combinedValues().xStartValue}
-                        endValue={combinedValues().xEndValue}
+                        startValue={Math.abs(combinedValues().xStartValue)}
+                        endValue={Math.abs(combinedValues().xEndValue)}
                         x={lineArea.x}
                         width={lineArea.width}
                       />
