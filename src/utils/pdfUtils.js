@@ -488,7 +488,10 @@ export async function generatePDF() {
   const patientMeasurements = files[0].rawObject.measurement;
   const [dd, mm, yyyy] = patientMeasurements["date(dd/mm/yyyy)"].split(".");
   const formattedDate = `${yyyy}-${mm}-${dd}`;
-  const firstName = patientInfo.subjectNameFirst.toLowerCase();
-  const lastName = patientInfo.subjectName.toLowerCase();
-  pdf.save(`${firstName}-${lastName}_${formattedDate}.pdf`);
+  // convert to lowercase if the value exists, otherwise empty string
+  const firstName = patientInfo.subjectNameFirst ? String(patientInfo.subjectNameFirst).toLowerCase() : "";
+  const lastName = patientInfo.subjectName ? String(patientInfo.subjectName).toLowerCase() : "";
+  
+  const namePart = [firstName, lastName].filter(Boolean).join("-");
+  pdf.save(`${namePart}_${formattedDate}.pdf`);
 }
