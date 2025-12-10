@@ -635,14 +635,14 @@ const createLowpass11Hz = (sampleRate) => {
 
 const createRepetitionsSection = (points, splits, sampleRate) => {
   const samplerate = sampleRate;
-  const dt = 1 / samplerate;
+  const dt = 1 / samplerate; 
   const resultsByColor = { red: [], blue: [] };
 
   splits.forEach(({ startIndex, endIndex, color, disabled }) => {
     if (disabled) {
       return;
     }
-
+    // Initialize metrics for this segment
     let torqueExtreme = 0;
     let speedExtreme = 0;
     let work = 0;
@@ -655,6 +655,8 @@ const createRepetitionsSection = (points, splits, sampleRate) => {
     let speedPeakIndex = startIndex;
     let count = 0;
 
+    // Iterate over data points to calculate torque, speed, power, and work
+    // Track peaks, averages, and extremes
     for (let i = startIndex; i < endIndex; i++) {
       const torque = points.power.points[i];
       const speed = points.speed.points[i];
@@ -667,6 +669,7 @@ const createRepetitionsSection = (points, splits, sampleRate) => {
       count++;
       if (power > powerPeak) powerPeak = power;
 
+      // Calculate work using trapezoidal rule
       if (i < endIndex - 1) {
         const tau0 = torque;
         const tau1 = points.power.points[i + 1];
@@ -731,6 +734,7 @@ const createRepetitionsSection = (points, splits, sampleRate) => {
     speedPeakPos2: resultsByColor.blue.map((r) => r.speedPeakAngle),
   };
 };
+// Computes summary metrics from repetitions
 const createAnalysis = (repetitions, weight) => {
   return {
     110: arrayUtils.maxValue(repetitions.torquePeak1),
