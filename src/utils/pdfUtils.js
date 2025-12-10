@@ -485,5 +485,10 @@ export async function generatePDF() {
     // render analysis tables for the other pages
     addAnalysisTable(pdf, group, patientInfo);
   }
-  pdf.save("make.pdf");
+  const patientMeasurements = files[0].rawObject.measurement;
+  const [dd, mm, yyyy] = patientMeasurements["date(dd/mm/yyyy)"].split(".");
+  const formattedDate = `${yyyy}-${mm}-${dd}`;
+  const firstName = patientInfo.subjectNameFirst.toLowerCase();
+  const lastName = patientInfo.subjectName.toLowerCase();
+  pdf.save(`${firstName}-${lastName}_${formattedDate}.pdf`);
 }
