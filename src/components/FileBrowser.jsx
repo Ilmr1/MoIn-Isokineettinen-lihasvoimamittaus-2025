@@ -296,9 +296,9 @@ export function FileBrowser() {
       <dialog id="file-popup" class="space-y-4">
         <Button
           variant="dangerAlt"
-          size="sm"
+          size="xs"
           id="file-popup-close"
-          class="mt-4 mr-4"
+          class="mt-2 mr-2"
           onClick={() => document.querySelector("#file-popup").close()}
         >
           ✖︎
@@ -674,7 +674,7 @@ export function FileBrowser() {
               ? "danger"
               : "secondary"
           }
-          size="sm"
+          size="xs"
           onClick={() => {
             storeSessionFilters({
               foot: "",
@@ -687,7 +687,7 @@ export function FileBrowser() {
         </Button>
         <Button
           variant={activeFiles().length ? "danger" : "secondary"}
-          size="sm"
+          size="xs"
           onClick={clearSelectedFiles}
         >
           Sulje valitut tiedostot

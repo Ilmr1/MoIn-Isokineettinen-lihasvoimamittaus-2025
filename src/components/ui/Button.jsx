@@ -19,6 +19,8 @@ function getVariantClasses(variant) {
 
 function getSizeClasses(size) {
   switch (size) {
+    case "xs":
+      return "px-2 py-1 text-xs";
     case "sm":
       return "px-3 py-1 text-sm";
     case "lg":
