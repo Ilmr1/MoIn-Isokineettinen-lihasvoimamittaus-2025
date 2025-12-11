@@ -88,7 +88,7 @@ export function Sidebar() {
               </div>
               <Button
                 variant="dangerAlt"
-                size="sm"
+                size="xs"
                 onClick={clearSelectedFiles}
                 class="self-center"
               >
@@ -169,7 +169,7 @@ function ActiveFilesAndRepetitions() {
                           </Button>
 
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="dangerAlt"
                             label="︎×"
                             onClick={() =>
