@@ -304,10 +304,23 @@ export function FileBrowser() {
           ✖︎
         </Button>
 
-        <div class="flex justify-center">
+        <div className="flex justify-center">
           <Button variant="primary" size="xl" onClick={handleOpenDirectory}>
             Valitse kansio
           </Button>
+        </div>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600 mb-1">Eikö sinulla ole dataa?</p>
+          <a
+            href="/MoIn-Isokineettinen-lihasvoimamittaus-2025/esimerkkiasiakas.zip"
+            download
+            className="text-blue-600 underline hover:text-blue-800 text-sm font-medium"
+          >
+            Lataa esimerkkidata (ZIP)
+          </a>
+          <p className="text-xs text-gray-500 mt-1">
+            (Lataa, pura ZIP-tiedosto ja valitse sitten kansio yläpuolelta)
+          </p>
         </div>
 
         <ListOfRecentFolders/>
